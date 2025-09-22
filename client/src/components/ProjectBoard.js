@@ -14,6 +14,7 @@ const ProjectBoard = () => {
   const [cards, setCards] = useState([]);
   const [columns, setColumns] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("todo");
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollContainerRef = useRef(null);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -128,20 +129,43 @@ const ProjectBoard = () => {
     try {
       // Find the column
       const column = columns.find((col) => col.status === status);
-      if (!column || column.isDefault) {
-        showToast("Cannot rename default columns", "error");
+      if (!column) {
+        showToast("Column not found", "error");
         return;
       }
 
-      const response = await columnAPI.updateColumn(id, column._id, {
+      const newStatus = newTitle.toLowerCase().replace(/\s+/g, "_");
+      let response;
+
+      // All columns are now custom columns, so always update existing entry
+      response = await columnAPI.updateColumn(id, column._id, {
         name: newTitle,
+        status: newStatus,
+        position: column.position, // Preserve original position
       });
+
       if (response.data.success) {
+        // Update existing custom column
         setColumns((prev) =>
           prev.map((col) =>
-            col._id === column._id ? { ...col, name: newTitle } : col
+            col._id === column._id
+              ? {
+                  ...col,
+                  name: newTitle,
+                  status: newStatus,
+                  position: column.position, // Keep original position
+                }
+              : col
           )
         );
+
+        // Update cards with the old status to use the new status
+        setCards((prev) =>
+          prev.map((card) =>
+            card.status === status ? { ...card, status: newStatus } : card
+          )
+        );
+
         showToast("Column renamed successfully!", "success");
       }
     } catch (error) {
@@ -202,8 +226,9 @@ const ProjectBoard = () => {
   };
 
   const handleAddCardToColumn = (status) => {
+    console.log("Add card button clicked for status:", status);
+    setSelectedStatus(status);
     setShowCreateModal(true);
-    // You could also set a default status here if needed
   };
 
   const handleScroll = () => {
@@ -248,7 +273,7 @@ const ProjectBoard = () => {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col max-h-full">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white mb-8 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -269,7 +294,10 @@ const ProjectBoard = () => {
           </div>
 
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              setSelectedStatus("todo");
+              setShowCreateModal(true);
+            }}
             className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
@@ -279,7 +307,7 @@ const ProjectBoard = () => {
       </div>
 
       {/* Board */}
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-hidden min-h-0">
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
@@ -307,7 +335,6 @@ const ProjectBoard = () => {
                     onColumnRename={handleColumnRename}
                     onColumnDelete={handleColumnDelete}
                     onAddCard={handleAddCardToColumn}
-                    isDefault={column.isDefault}
                   />
                 </div>
               );
@@ -357,6 +384,7 @@ const ProjectBoard = () => {
           projectId={id}
           onClose={() => setShowCreateModal(false)}
           onCardCreated={handleCardCreated}
+          defaultStatus={selectedStatus}
         />
       )}
 

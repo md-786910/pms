@@ -38,13 +38,8 @@ const InvitationPage = () => {
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [showSignupForm, setShowSignupForm] = useState(false);
-  const [signupData, setSignupData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     fetchInvitation();
@@ -108,59 +103,30 @@ const InvitationPage = () => {
   };
 
   const handleAcceptInvitation = async () => {
-    if (!user && !showSignupForm) {
-      // Show signup form for new users
-      setShowSignupForm(true);
+    if (!password) {
+      showToast("Please enter a password", "error");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showToast("Passwords do not match", "error");
+      return;
+    }
+
+    if (password.length < 6) {
+      showToast("Password must be at least 6 characters", "error");
       return;
     }
 
     setAccepting(true);
     try {
-      let requestBody;
-
-      if (user) {
-        // Existing user
-        const authToken = localStorage.getItem("authToken");
-        if (!authToken) {
-          showToast("Please log in to accept the invitation", "error");
-          navigate("/login");
-          return;
-        }
-
-        // Check if user's email matches invitation email
-        if (invitation && user.email !== invitation.email) {
-          const confirmJoin = window.confirm(
-            `You are logged in as ${user.email}, but this invitation was sent to ${invitation.email}. Do you want to continue joining the project?`
-          );
-          if (!confirmJoin) {
-            setAccepting(false);
-            return;
-          }
-        }
-
-        requestBody = { userId: user._id };
-      } else {
-        // New user - create account
-        if (signupData.password !== signupData.confirmPassword) {
-          showToast("Passwords do not match", "error");
-          setAccepting(false);
-          return;
-        }
-
-        if (signupData.password.length < 6) {
-          showToast("Password must be at least 6 characters", "error");
-          setAccepting(false);
-          return;
-        }
-
-        requestBody = {
-          userData: {
-            name: signupData.name,
-            email: signupData.email,
-            password: signupData.password,
-          },
-        };
-      }
+      const requestBody = {
+        userData: {
+          name: invitation.email.split("@")[0], // Use email prefix as name
+          email: invitation.email,
+          password: password,
+        },
+      };
 
       console.log("Accepting invitation with request body:", requestBody);
       const response = await fetch(
@@ -184,12 +150,14 @@ const InvitationPage = () => {
           showToast("Successfully joined the project!", "success");
         }
 
-        // If new user was created, log them in
-        if (!user && data.user) {
+        // Log the new user in
+        if (data.user && data.token) {
           localStorage.setItem("authToken", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
         }
 
+        // Clear any pending invitation since we're accepting it
+        localStorage.removeItem("pendingInvitation");
         navigate(`/project/${data.project._id}`);
       } else {
         console.error("Invitation acceptance error:", data);
@@ -204,11 +172,15 @@ const InvitationPage = () => {
   };
 
   const handleLogin = () => {
-    navigate("/login");
+    // Store the invitation token so we can redirect back after login
+    localStorage.setItem("pendingInvitation", token);
+    navigate("/");
   };
 
   const handleRegister = () => {
-    navigate("/register");
+    // Store the invitation token so we can redirect back after registration
+    localStorage.setItem("pendingInvitation", token);
+    navigate("/");
   };
 
   if (loading) {
@@ -308,9 +280,62 @@ const InvitationPage = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            {user ? (
+            {/* Create Account Form */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 text-center">
+                Create Account to Join Project
+              </h3>
               <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={invitation.email.split("@")[0]}
+                    disabled
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={invitation.email}
+                    disabled
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
                 <button
                   onClick={handleAcceptInvitation}
                   disabled={accepting}
@@ -321,107 +346,10 @@ const InvitationPage = () => {
                   ) : (
                     <CheckCircle className="w-5 h-5 mr-2" />
                   )}
-                  {accepting ? "Joining Project..." : "Join Project"}
+                  {accepting ? "Creating Account..." : "Accept Invitation"}
                 </button>
-                <p className="text-sm text-gray-500 text-center">
-                  Logged in as: {user.name}
-                </p>
               </div>
-            ) : showSignupForm ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 text-center">
-                  Create Account to Join Project
-                </h3>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={signupData.name}
-                    onChange={(e) =>
-                      setSignupData({ ...signupData, name: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={signupData.email}
-                    onChange={(e) =>
-                      setSignupData({ ...signupData, email: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={signupData.password}
-                    onChange={(e) =>
-                      setSignupData({ ...signupData, password: e.target.value })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <input
-                    type="password"
-                    placeholder="Confirm Password"
-                    value={signupData.confirmPassword}
-                    onChange={(e) =>
-                      setSignupData({
-                        ...signupData,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <button
-                    onClick={handleAcceptInvitation}
-                    disabled={accepting}
-                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {accepting ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                    )}
-                    {accepting
-                      ? "Creating Account..."
-                      : "Create Account & Join"}
-                  </button>
-                  <button
-                    onClick={() => setShowSignupForm(false)}
-                    className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Back
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600 text-center mb-4">
-                  You need to create an account or log in to accept this
-                  invitation.
-                </p>
-                <div className="space-y-2">
-                  <button
-                    onClick={handleLogin}
-                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Log In
-                  </button>
-                  <button
-                    onClick={() => setShowSignupForm(true)}
-                    className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Create Account
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
 
             {/* Expiration Info */}
             <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">

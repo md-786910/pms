@@ -247,28 +247,51 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Card Header with Actions */}
-        <div className="p-4 pb-2">
+        {/* Card Header with Issue Number */}
+        <div className="p-3 pb-2">
           <div className="flex items-start justify-between mb-2">
-            {isEditingTitle ? (
-              <input
-                ref={titleInputRef}
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyPress={handleTitleKeyPress}
-                className="font-medium text-gray-900 text-sm leading-tight flex-1 pr-2 bg-transparent border-none outline-none focus:outline-none"
-              />
-            ) : (
-              <h4
-                className="font-medium text-gray-900 text-sm leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 flex-1 pr-2"
-                onClick={handleTitleEdit}
-                title="Click to edit title"
-              >
-                {card.title}
-              </h4>
-            )}
+            <div className="flex-1">
+              {isEditingTitle ? (
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyPress={handleTitleKeyPress}
+                  className="font-medium text-gray-900 text-sm leading-tight w-full bg-transparent border-none outline-none focus:outline-none"
+                />
+              ) : (
+                <div>
+                  <h4
+                    className="font-medium text-gray-900 text-sm leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1"
+                    onClick={handleTitleEdit}
+                    title="Click to edit title"
+                  >
+                    {card.title}
+                  </h4>
+                  {/* Issue Number and Priority */}
+                  <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <span className="bg-gray-100 px-2 py-0.5 rounded">
+                      #{card._id?.slice(-4) || "0000"}
+                    </span>
+                    {card.priority && (
+                      <span
+                        className={`px-2 py-0.5 rounded text-xs ${
+                          card.priority === "high"
+                            ? "bg-red-100 text-red-700"
+                            : card.priority === "medium"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {card.priority}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Action Buttons - Show on Hover */}
             <div
@@ -356,67 +379,33 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
         </div>
 
         {/* Card Footer */}
-        <div className="px-4 pb-4">
-          {/* Labels/Tags */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            {/* Priority Label */}
-            {card.priority && (
-              <span
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  card.priority === "high"
-                    ? "bg-red-100 text-red-700"
-                    : card.priority === "medium"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-green-100 text-green-700"
-                }`}
-              >
-                <Tag className="w-3 h-3 mr-1" />
-                {card.priority}
-              </span>
-            )}
-
-            {/* Due Date */}
-            {dueDateInfo && (
-              <span
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${dueDateInfo.color}`}
-              >
-                <Calendar className="w-3 h-3 mr-1" />
-                {dueDateInfo.text}
-              </span>
-            )}
-
-            {/* Checklist Progress */}
-            {card.checklists && card.checklists.length > 0 && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                <CheckSquare className="w-3 h-3 mr-1" />
-                {card.checklists.reduce(
-                  (acc, list) =>
-                    acc + list.items.filter((item) => item.completed).length,
-                  0
-                )}
-                /
-                {card.checklists.reduce(
-                  (acc, list) => acc + list.items.length,
-                  0
-                )}
-              </span>
-            )}
-          </div>
-
-          {/* Bottom Row */}
+        <div className="px-3 pb-3">
+          {/* Bottom Row with Icons */}
           <div className="flex items-center justify-between">
-            {/* Left side - Comments and Attachments */}
+            {/* Left side - Comments, Attachments, Labels */}
             <div className="flex items-center space-x-3 text-xs text-gray-500">
-              {card.comments.length > 0 && (
+              {card.comments && card.comments.length > 0 && (
                 <div className="flex items-center space-x-1">
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span className="font-medium">{card.comments.length}</span>
                 </div>
               )}
-              {card.attachments.length > 0 && (
+              {card.attachments && card.attachments.length > 0 && (
                 <div className="flex items-center space-x-1">
                   <Paperclip className="w-3.5 h-3.5" />
                   <span className="font-medium">{card.attachments.length}</span>
+                </div>
+              )}
+              {card.labels && card.labels.length > 0 && (
+                <div className="flex items-center space-x-1">
+                  <Tag className="w-3.5 h-3.5" />
+                  <span className="font-medium">{card.labels.length}</span>
+                </div>
+              )}
+              {dueDateInfo && (
+                <div className="flex items-center space-x-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span className="font-medium">{dueDateInfo.text}</span>
                 </div>
               )}
             </div>
@@ -443,11 +432,32 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
           </div>
         </div>
 
-        {/* Card Items Section */}
+        {/* Card Items Section with Progress */}
         {items.length > 0 && (
-          <div className="px-4 pb-2">
+          <div className="px-3 pb-2">
+            {/* Progress Bar */}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-500 font-medium">
+                {items.filter((item) => item.completed).length}/{items.length}{" "}
+                items
+              </span>
+              <div className="w-16 h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-300"
+                  style={{
+                    width: `${
+                      (items.filter((item) => item.completed).length /
+                        items.length) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Items List */}
             <div className="space-y-1">
-              {items.map((item) => (
+              {items.slice(0, 3).map((item) => (
                 <div
                   key={item._id}
                   className="flex items-center space-x-2 text-xs text-gray-600"
@@ -457,13 +467,13 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
                       e.stopPropagation();
                       handleToggleItem(item._id, item.completed);
                     }}
-                    className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                    className={`w-3 h-3 rounded border flex items-center justify-center transition-colors ${
                       item.completed
                         ? "bg-green-500 border-green-500 text-white"
                         : "border-gray-300 hover:border-gray-400"
                     }`}
                   >
-                    {item.completed && <CheckSquare className="w-3 h-3" />}
+                    {item.completed && <CheckSquare className="w-2 h-2" />}
                   </button>
                   <span
                     className={`flex-1 ${
@@ -483,12 +493,17 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
                   </button>
                 </div>
               ))}
+              {items.length > 3 && (
+                <p className="text-xs text-gray-400 pl-5">
+                  +{items.length - 3} more items
+                </p>
+              )}
             </div>
           </div>
         )}
 
         {/* Add Item Section */}
-        <div className="px-4 pb-4">
+        <div className="px-3 pb-3">
           {showAddItem ? (
             <div className="space-y-2">
               <input
@@ -536,7 +551,7 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
                 e.stopPropagation();
                 setShowAddItem(true);
               }}
-              className="w-full flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 py-1 rounded hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 py-1 rounded hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
             >
               <Plus className="w-3 h-3" />
               <span>Add an item</span>

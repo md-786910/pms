@@ -16,7 +16,6 @@ const ListColumn = ({
   onColumnRename,
   onColumnDelete,
   onAddCard,
-  isDefault = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -118,28 +117,24 @@ const ListColumn = ({
 
             {showMenu && (
               <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                {!isDefault && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setIsEditing(true);
-                        setShowMenu(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      <span>Rename Column</span>
-                    </button>
-                    <div className="border-t border-gray-100 my-1"></div>
-                    <button
-                      onClick={handleDelete}
-                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete Column</span>
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Rename Column</span>
+                </button>
+                <div className="border-t border-gray-100 my-1"></div>
+                <button
+                  onClick={handleDelete}
+                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Column</span>
+                </button>
                 <button
                   onClick={() => {
                     onAddCard(status);
@@ -177,6 +172,17 @@ const ListColumn = ({
             <p className="text-xs text-gray-400">No cards yet</p>
           </div>
         )}
+      </div>
+
+      {/* Add Card Button - Always Visible */}
+      <div className="p-3 border-t border-gray-100">
+        <button
+          onClick={() => onAddCard(status)}
+          className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add a card</span>
+        </button>
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ function AppContent() {
                   }
                 />
 
-                <div className="flex-1 flex flex-col min-h-screen">
+                <div className="flex-1 flex flex-col h-screen overflow-hidden">
                   <Header
                     onMenuClick={() => setSidebarOpen(!sidebarOpen)}
                     onToggleSidebar={() =>
@@ -56,7 +56,7 @@ function AppContent() {
                     sidebarCollapsed={sidebarCollapsed}
                   />
 
-                  <main className="flex-1 p-6 overflow-hidden transition-all duration-300">
+                  <main className="flex-1 p-6 overflow-auto transition-all duration-300">
                     <Routes>
                       <Route path="/" element={<ProjectList />} />
                       <Route path="/admin" element={<AdminPanel />} />

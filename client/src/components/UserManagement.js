@@ -35,7 +35,6 @@ const UserManagement = () => {
     name: "",
     email: "",
     role: "member",
-    password: "",
   });
 
   const [resetPasswordForm, setResetPasswordForm] = useState({
@@ -50,6 +49,22 @@ const UserManagement = () => {
   useEffect(() => {
     filterUsers();
   }, [users, searchTerm, roleFilter]);
+
+  // Check if user is admin
+  if (!currentUser || currentUser.role !== "admin") {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Access Denied
+          </h3>
+          <p className="text-gray-600">
+            You need admin privileges to access this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const fetchUsers = async () => {
     try {
@@ -97,12 +112,17 @@ const UserManagement = () => {
     setLoading(true);
 
     try {
-      const response = await userAPI.updateUser(selectedUser.id, userForm);
+      // Only send name, email, and role - no password
+      const { name, email, role } = userForm;
+      const response = await userAPI.updateUser(
+        selectedUser._id || selectedUser.id,
+        { name, email, role }
+      );
 
       showToast("User updated successfully", "success");
       setShowEditUser(false);
       setSelectedUser(null);
-      setUserForm({ name: "", email: "", role: "member", password: "" });
+      setUserForm({ name: "", email: "", role: "member" });
       fetchUsers();
     } catch (error) {
       console.error("Error updating user:", error);
@@ -125,7 +145,7 @@ const UserManagement = () => {
 
     try {
       const response = await userAPI.resetUserPassword(
-        selectedUser.id,
+        selectedUser._id || selectedUser.id,
         resetPasswordForm.newPassword
       );
 
@@ -144,7 +164,7 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (userId === currentUser.id) {
+    if (userId === (currentUser._id || currentUser.id)) {
       showToast("Cannot delete your own account", "error");
       return;
     }
@@ -170,7 +190,6 @@ const UserManagement = () => {
       name: user.name,
       email: user.email,
       role: user.role,
-      password: "",
     });
     setShowEditUser(true);
   };
@@ -275,7 +294,7 @@ const UserManagement = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user._id || user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
@@ -286,7 +305,7 @@ const UserManagement = () => {
                           {user.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ID: {user.id}
+                          ID: {user._id || user.id}
                         </div>
                       </div>
                     </div>
@@ -326,9 +345,10 @@ const UserManagement = () => {
                       >
                         <Key className="w-4 h-4" />
                       </button>
-                      {user.id !== currentUser.id && (
+                      {(user._id || user.id) !==
+                        (currentUser._id || currentUser.id) && (
                         <button
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => handleDeleteUser(user._id || user.id)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete User"
                         >
@@ -480,20 +500,6 @@ const UserManagement = () => {
                   <option value="member">Member</option>
                   <option value="admin">Admin</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  New Password (optional)
-                </label>
-                <input
-                  type="password"
-                  value={userForm.password}
-                  onChange={(e) =>
-                    setUserForm({ ...userForm, password: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Leave blank to keep current password"
-                />
               </div>
               <div className="flex space-x-3 pt-4">
                 <button

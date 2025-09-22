@@ -143,8 +143,15 @@ router.post(
 
       await user.save();
 
-      // Send welcome email
-      await sendWelcomeEmail(user);
+      // Send welcome email (async, non-blocking)
+      setImmediate(async () => {
+        try {
+          await sendWelcomeEmail(user);
+          console.log(`Welcome email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error("Error sending welcome email:", emailError);
+        }
+      });
 
       res.status(201).json({
         success: true,

@@ -7,6 +7,7 @@ import {
   Paperclip,
   Plus,
   Edit2,
+  Edit,
   Trash2,
   Save,
   X as XIcon,
@@ -31,7 +32,7 @@ const CardModal = ({
   onCardDeleted,
   onStatusChange,
 }) => {
-  const { users } = useUser();
+  const { users, user } = useUser();
   const { currentProject } = useProject();
   const { showToast } = useNotification();
 
@@ -56,17 +57,44 @@ const CardModal = ({
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [editingComment, setEditingComment] = useState(null);
+  const [editCommentText, setEditCommentText] = useState("");
+  const [columns, setColumns] = useState([]);
+  const [loadingColumns, setLoadingColumns] = useState(false);
 
-  const statusOptions = [
-    { value: "todo", label: "To Do", color: "blue" },
-    { value: "doing", label: "Doing", color: "yellow" },
-    { value: "review", label: "Review", color: "purple" },
-    { value: "done", label: "Done", color: "green" },
-  ];
+  // Dynamic status options based on project columns
+  const statusOptions = columns.map((column) => ({
+    value: column.status,
+    label: column.name,
+    color: column.color || "blue",
+  }));
+
+  // Add current card status if it's not in the columns (fallback)
+  const allStatusOptions = [...statusOptions];
+  if (card.status && !statusOptions.find((s) => s.value === card.status)) {
+    allStatusOptions.push({
+      value: card.status,
+      label: card.status,
+      color: "gray",
+    });
+  }
 
   const getAssignees = () => {
+    if (!card.assignees || !Array.isArray(card.assignees)) {
+      return [];
+    }
+
     return card.assignees
-      .map((userId) => users.find((user) => user.id === userId))
+      .map((assignee) => {
+        // If assignee is already a populated user object
+        if (typeof assignee === "object" && assignee.name) {
+          return assignee;
+        }
+        // If assignee is a user ID, find the user
+        return users.find(
+          (user) => user._id === assignee || user.id === assignee
+        );
+      })
       .filter(Boolean);
   };
 
@@ -99,9 +127,9 @@ const CardModal = ({
         onCardUpdated(response.data.card);
         onStatusChange(card._id, newStatus);
 
-        const statusLabel = statusOptions.find(
-          (s) => s.value === newStatus
-        )?.label;
+        const statusLabel =
+          allStatusOptions.find((s) => s.value === newStatus)?.label ||
+          newStatus;
         showToast(`Card moved to ${statusLabel}`, "success");
       }
     } catch (error) {
@@ -179,10 +207,108 @@ const CardModal = ({
     }
   };
 
+  // Fetch columns for the project
+  const fetchColumns = async () => {
+    if (!currentProject?._id) return;
+
+    try {
+      setLoadingColumns(true);
+      const { columnAPI } = await import("../utils/api");
+      const response = await columnAPI.getColumns(currentProject._id);
+      if (response.data.success) {
+        setColumns(response.data.columns);
+      }
+    } catch (error) {
+      console.error("Error fetching columns:", error);
+    } finally {
+      setLoadingColumns(false);
+    }
+  };
+
+  // Refresh columns when project changes
+  React.useEffect(() => {
+    if (currentProject?._id) {
+      fetchColumns();
+    }
+  }, [currentProject?._id]);
+
   // Fetch items when component mounts
   React.useEffect(() => {
     fetchItems();
   }, [card._id]);
+
+  // Label Management
+  const handleAddLabel = async () => {
+    if (!newLabel.trim()) return;
+
+    try {
+      const response = await cardAPI.addLabel(card._id, {
+        name: newLabel.trim(),
+        color: "blue", // Default color
+      });
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        setNewLabel("");
+        showToast("Label added successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error adding label:", error);
+      showToast("Failed to add label", "error");
+    }
+  };
+
+  const handleRemoveLabel = async (labelId) => {
+    try {
+      const response = await cardAPI.removeLabel(card._id, labelId);
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        showToast("Label removed successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error removing label:", error);
+      showToast("Failed to remove label", "error");
+    }
+  };
+
+  // Attachment Management
+  const handleAddAttachment = async () => {
+    if (!attachmentUrl.trim()) return;
+
+    try {
+      const response = await cardAPI.addAttachment(card._id, {
+        filename: attachmentUrl.split("/").pop(),
+        originalName: attachmentUrl.split("/").pop(),
+        mimeType: "application/octet-stream",
+        size: 0,
+        url: attachmentUrl,
+      });
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        setAttachmentUrl("");
+        showToast("Attachment added successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error adding attachment:", error);
+      showToast("Failed to add attachment", "error");
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    try {
+      const response = await cardAPI.deleteAttachment(card._id, attachmentId);
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        showToast("Attachment deleted successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error deleting attachment:", error);
+      showToast("Failed to delete attachment", "error");
+    }
+  };
 
   const handleDelete = async () => {
     if (
@@ -209,90 +335,55 @@ const CardModal = ({
     if (!commentText.trim()) return;
 
     try {
-      const response = await fetch(`/api/cards/${card.id}/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: commentText }),
-      });
+      console.log("Adding comment:", commentText);
+      const response = await cardAPI.addComment(card._id, commentText);
+      console.log("Comment response:", response.data);
 
-      if (!response.ok) {
-        throw new Error("Failed to add comment");
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        setCommentText("");
+        showToast("Comment added successfully!", "success");
       }
-
-      const newComment = await response.json();
-      const updatedCard = {
-        ...card,
-        comments: [...card.comments, newComment],
-      };
-      onCardUpdated(updatedCard);
-      setCommentText("");
-      showToast("Comment added successfully!", "success");
     } catch (error) {
       console.error("Error adding comment:", error);
+      console.error("Error response:", error.response?.data);
       showToast("Failed to add comment", "error");
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (window.confirm("Are you sure you want to delete this comment?")) {
-      try {
-        const response = await fetch(
-          `/api/cards/${card.id}/comments/${commentId}`,
-          {
-            method: "DELETE",
-          }
-        );
+  const handleUpdateComment = async (commentId, newText) => {
+    try {
+      const response = await cardAPI.updateComment(
+        card._id,
+        commentId,
+        newText
+      );
 
-        if (!response.ok) {
-          throw new Error("Failed to delete comment");
-        }
-
-        const updatedCard = {
-          ...card,
-          comments: card.comments.filter((c) => c.id !== commentId),
-        };
-        onCardUpdated(updatedCard);
-        showToast("Comment deleted successfully!", "success");
-      } catch (error) {
-        console.error("Error deleting comment:", error);
-        showToast("Failed to delete comment", "error");
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        showToast("Comment updated successfully!", "success");
+        setEditingComment(null);
+        setEditCommentText("");
       }
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      showToast("Failed to update comment", "error");
     }
   };
 
-  const handleAddAttachment = async () => {
-    if (!attachmentUrl.trim()) return;
+  const handleStartEditComment = (comment) => {
+    setEditingComment(comment._id || comment.id);
+    setEditCommentText(comment.text);
+  };
 
-    try {
-      const response = await fetch(`/api/cards/${card.id}/attachments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: attachmentUrl.split("/").pop() || "Attachment",
-          url: attachmentUrl.trim(),
-          type: "link",
-        }),
-      });
+  const handleCancelEditComment = () => {
+    setEditingComment(null);
+    setEditCommentText("");
+  };
 
-      if (!response.ok) {
-        throw new Error("Failed to add attachment");
-      }
-
-      const newAttachment = await response.json();
-      const updatedCard = {
-        ...card,
-        attachments: [...card.attachments, newAttachment],
-      };
-      onCardUpdated(updatedCard);
-      setAttachmentUrl("");
-      showToast("Attachment added successfully!", "success");
-    } catch (error) {
-      console.error("Error adding attachment:", error);
-      showToast("Failed to add attachment", "error");
+  const handleSaveEditComment = () => {
+    if (editCommentText.trim()) {
+      handleUpdateComment(editingComment, editCommentText.trim());
     }
   };
 
@@ -364,61 +455,6 @@ const CardModal = ({
     );
   };
 
-  const handleDeleteAttachment = async (attachmentId) => {
-    if (window.confirm("Are you sure you want to delete this attachment?")) {
-      try {
-        const response = await fetch(
-          `/api/cards/${card.id}/attachments/${attachmentId}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete attachment");
-        }
-
-        const updatedCard = {
-          ...card,
-          attachments: card.attachments.filter((a) => a.id !== attachmentId),
-        };
-        onCardUpdated(updatedCard);
-        showToast("Attachment deleted successfully!", "success");
-      } catch (error) {
-        console.error("Error deleting attachment:", error);
-        showToast("Failed to delete attachment", "error");
-      }
-    }
-  };
-
-  const handleAddLabel = () => {
-    if (!newLabel.trim()) return;
-
-    const updatedCard = {
-      ...card,
-      labels: [
-        ...(card.labels || []),
-        {
-          id: Date.now().toString(),
-          name: newLabel.trim(),
-          color: "blue",
-        },
-      ],
-    };
-    onCardUpdated(updatedCard);
-    setNewLabel("");
-    showToast("Label added successfully!", "success");
-  };
-
-  const handleRemoveLabel = (labelId) => {
-    const updatedCard = {
-      ...card,
-      labels: (card.labels || []).filter((l) => l.id !== labelId),
-    };
-    onCardUpdated(updatedCard);
-    showToast("Label removed successfully!", "success");
-  };
-
   const handleSetPriority = (priority) => {
     const updatedCard = {
       ...card,
@@ -472,27 +508,46 @@ const CardModal = ({
 
   const handleUnassignUser = async (userId) => {
     try {
-      const response = await fetch(`/api/cards/${card.id}/assign/${userId}`, {
-        method: "DELETE",
-      });
+      const response = await cardAPI.unassignUser(card._id, userId);
 
-      if (!response.ok) {
-        throw new Error("Failed to unassign user");
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        showToast("User unassigned successfully!", "success");
       }
-
-      const updatedCard = await response.json();
-      onCardUpdated(updatedCard);
-      showToast("User unassigned successfully!", "success");
     } catch (error) {
       console.error("Error unassigning user:", error);
       showToast("Failed to unassign user", "error");
     }
   };
 
+  const handleUserAssigned = async () => {
+    // Refresh the card data when users are assigned/unassigned
+    try {
+      const response = await cardAPI.getCard(card._id);
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+      }
+    } catch (error) {
+      console.error("Error refreshing card data:", error);
+    }
+    setShowAssignModal(false);
+  };
+
   const assignees = getAssignees();
   const projectMembers =
     currentProject?.members
-      .map((userId) => users.find((user) => user.id === userId))
+      .map((member) => {
+        if (typeof member === "string") {
+          return users.find(
+            (user) => user._id === member || user.id === member
+          );
+        }
+        return member.user
+          ? users.find(
+              (user) => user._id === member.user || user.id === member.user
+            )
+          : member;
+      })
       .filter(Boolean) || [];
 
   return (
@@ -635,7 +690,9 @@ const CardModal = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteAttachment(attachment.id);
+                              handleDeleteAttachment(
+                                attachment._id || attachment.id
+                              );
                             }}
                             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200"
                             title="Delete image"
@@ -655,36 +712,84 @@ const CardModal = ({
                   </label>
 
                   <div className="space-y-2 mb-3 max-h-64 overflow-y-auto pr-2">
-                    {card.comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="bg-gray-50 rounded-lg p-3 group hover:bg-gray-100 transition-colors duration-200"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
-                              {comment.userName.charAt(0)}
+                    {card.comments
+                      .sort((a, b) => {
+                        // Sort by updatedAt if available, otherwise by timestamp
+                        const aTime = a.updatedAt || a.timestamp || a.createdAt;
+                        const bTime = b.updatedAt || b.timestamp || b.createdAt;
+                        return new Date(bTime) - new Date(aTime);
+                      })
+                      .map((comment) => (
+                        <div
+                          key={comment._id || comment.id}
+                          className="bg-gray-50 rounded-lg p-3 group hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
+                                {comment.user?.name?.charAt(0) || "U"}
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-900">
+                                  {comment.user?.name || "Unknown User"}
+                                </span>
+                                <span className="text-xs text-gray-500 ml-2">
+                                  {new Date(
+                                    comment.timestamp || comment.createdAt
+                                  ).toLocaleString()}
+                                  {comment.updatedAt &&
+                                    comment.updatedAt !== comment.timestamp && (
+                                      <span className="text-gray-400 ml-1">
+                                        (edited)
+                                      </span>
+                                    )}
+                                </span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="font-medium text-gray-900">
-                                {comment.userName}
-                              </span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                {new Date(comment.createdAt).toLocaleString()}
-                              </span>
-                            </div>
+                            {(comment.user?._id === user?._id ||
+                              comment.user?._id === user?.id) && (
+                              <button
+                                onClick={() => handleStartEditComment(comment)}
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
+                                title="Edit comment"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
-                          <button
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200"
-                            title="Delete comment"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                          {editingComment === (comment._id || comment.id) ? (
+                            <div className="space-y-2">
+                              <textarea
+                                value={editCommentText}
+                                onChange={(e) =>
+                                  setEditCommentText(e.target.value)
+                                }
+                                className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                rows="3"
+                                placeholder="Edit your comment..."
+                              />
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={handleSaveEditComment}
+                                  className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={handleCancelEditComment}
+                                  className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-700">
+                              {comment.text}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-700">{comment.text}</p>
-                      </div>
-                    ))}
+                      ))}
                   </div>
 
                   <div className="flex space-x-2">
@@ -721,12 +826,19 @@ const CardModal = ({
                     value={card.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    disabled={loadingColumns}
                   >
-                    {statusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
+                    {loadingColumns ? (
+                      <option value="">Loading columns...</option>
+                    ) : allStatusOptions.length > 0 ? (
+                      allStatusOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No columns available</option>
+                    )}
                   </select>
                 </div>
 
@@ -790,12 +902,14 @@ const CardModal = ({
                   <div className="flex flex-wrap gap-1 mb-2 max-h-32 overflow-y-auto">
                     {card.labels?.map((label) => (
                       <span
-                        key={label.id}
+                        key={label._id || label.id}
                         className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
                       >
                         {label.name}
                         <button
-                          onClick={() => handleRemoveLabel(label.id)}
+                          onClick={() =>
+                            handleRemoveLabel(label._id || label.id)
+                          }
                           className="ml-1 hover:text-blue-900"
                         >
                           ×
@@ -839,19 +953,21 @@ const CardModal = ({
                     {assignees.length > 0 ? (
                       assignees.map((user) => (
                         <div
-                          key={user.id}
+                          key={user._id || user.id}
                           className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                         >
                           <div className="flex items-center space-x-2">
                             <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
-                              {user.avatar}
+                              {user.avatar || user.name?.charAt(0) || "U"}
                             </div>
                             <span className="text-xs text-gray-700">
-                              {user.name}
+                              {user.name || "Unknown User"}
                             </span>
                           </div>
                           <button
-                            onClick={() => handleUnassignUser(user.id)}
+                            onClick={() =>
+                              handleUnassignUser(user._id || user.id)
+                            }
                             className="text-red-500 hover:text-red-700 text-xs"
                           >
                             Remove
@@ -899,7 +1015,9 @@ const CardModal = ({
                             </a>
                             <button
                               onClick={() =>
-                                handleDeleteAttachment(attachment.id)
+                                handleDeleteAttachment(
+                                  attachment._id || attachment.id
+                                )
                               }
                               className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
                               title="Delete attachment"
@@ -1072,7 +1190,7 @@ const CardModal = ({
           project={currentProject}
           card={card}
           onClose={() => setShowAssignModal(false)}
-          onUserAssigned={handleAssignUser}
+          onUserAssigned={handleUserAssigned}
         />
       )}
 

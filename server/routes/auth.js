@@ -72,8 +72,15 @@ router.post(
       // Generate token
       const token = generateToken(user._id);
 
-      // Send welcome email
-      await sendWelcomeEmail(user);
+      // Send welcome email (async, non-blocking)
+      setImmediate(async () => {
+        try {
+          await sendWelcomeEmail(user);
+          console.log(`Welcome email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error("Error sending welcome email:", emailError);
+        }
+      });
 
       res.status(201).json({
         success: true,
@@ -202,16 +209,19 @@ router.post(
       const resetToken = user.generatePasswordResetToken();
       await user.save();
 
-      // Send reset email
-      const emailResult = await sendPasswordResetEmail(user, resetToken);
-
-      if (!emailResult.success) {
-        console.error("Email sending failed:", emailResult.error);
-        return res.status(500).json({
-          success: false,
-          message: "Failed to send reset email",
-        });
-      }
+      // Send reset email (async, non-blocking)
+      setImmediate(async () => {
+        try {
+          const emailResult = await sendPasswordResetEmail(user, resetToken);
+          if (emailResult.success) {
+            console.log(`Password reset email sent to ${user.email}`);
+          } else {
+            console.error("Email sending failed:", emailResult.error);
+          }
+        } catch (emailError) {
+          console.error("Error sending password reset email:", emailError);
+        }
+      });
 
       res.json({
         success: true,

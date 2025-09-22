@@ -32,63 +32,14 @@ const getColumns = async (req, res) => {
       });
     }
 
-    // Get custom columns
+    // Get only custom columns (no default columns)
     const customColumns = await Column.find({ project: projectId })
       .populate("createdBy", "name email avatar color")
       .sort({ position: 1 });
 
-    // Get default columns (todo, doing, review, done)
-    const defaultColumns = [
-      {
-        _id: "todo",
-        name: "To Do",
-        status: "todo",
-        color: "blue",
-        position: 0,
-        isDefault: true,
-        project: projectId,
-        createdBy: null,
-      },
-      {
-        _id: "doing",
-        name: "Doing",
-        status: "doing",
-        color: "yellow",
-        position: 1,
-        isDefault: true,
-        project: projectId,
-        createdBy: null,
-      },
-      {
-        _id: "review",
-        name: "Review",
-        status: "review",
-        color: "purple",
-        position: 2,
-        isDefault: true,
-        project: projectId,
-        createdBy: null,
-      },
-      {
-        _id: "done",
-        name: "Done",
-        status: "done",
-        color: "green",
-        position: 3,
-        isDefault: true,
-        project: projectId,
-        createdBy: null,
-      },
-    ];
-
-    // Merge and sort all columns
-    const allColumns = [...defaultColumns, ...customColumns].sort(
-      (a, b) => a.position - b.position
-    );
-
     res.json({
       success: true,
-      columns: allColumns,
+      columns: customColumns,
     });
   } catch (error) {
     console.error("Get columns error:", error);
@@ -115,7 +66,12 @@ const createColumn = async (req, res) => {
 
     const projectId = req.params.projectId || req.params.id;
     const userId = req.user._id;
-    const { name, color = "gray" } = req.body;
+    const {
+      name,
+      color = "gray",
+      status: customStatus,
+      position: customPosition,
+    } = req.body;
 
     // Check if user has access to this project
     const project = await Project.findById(projectId);
@@ -138,16 +94,21 @@ const createColumn = async (req, res) => {
       });
     }
 
-    // Generate unique status for the column
-    const status = `custom_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+    // Use custom status if provided, otherwise generate unique status
+    const status =
+      customStatus ||
+      `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Get the next position
-    const lastColumn = await Column.findOne({ project: projectId }).sort({
-      position: -1,
-    });
-    const position = lastColumn ? lastColumn.position + 1 : 4;
+    // Use custom position if provided, otherwise get the next position
+    let position;
+    if (customPosition !== undefined) {
+      position = customPosition;
+    } else {
+      const lastColumn = await Column.findOne({ project: projectId }).sort({
+        position: -1,
+      });
+      position = lastColumn ? lastColumn.position + 1 : 4;
+    }
 
     const column = new Column({
       name,

@@ -118,12 +118,12 @@ export const cardAPI = {
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),
   addComment: (id, comment) => api.post(`/cards/${id}/comments`, { comment }),
-  deleteComment: (id, commentId) =>
-    api.delete(`/cards/${id}/comments/${commentId}`),
-  addAttachment: (id, formData) =>
-    api.post(`/cards/${id}/attachments`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+  updateComment: (id, commentId, text) =>
+    api.put(`/cards/${id}/comments/${commentId}`, { text }),
+  addLabel: (id, labelData) => api.post(`/cards/${id}/labels`, labelData),
+  removeLabel: (id, labelId) => api.delete(`/cards/${id}/labels/${labelId}`),
+  addAttachment: (id, attachmentData) =>
+    api.post(`/cards/${id}/attachments`, attachmentData),
   deleteAttachment: (id, attachmentId) =>
     api.delete(`/cards/${id}/attachments/${attachmentId}`),
 };

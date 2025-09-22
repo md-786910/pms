@@ -16,10 +16,13 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
       if (card) {
         // Assign to card
         const { cardAPI } = await import("../utils/api");
-        await cardAPI.assignUser(card._id, { userId: user._id });
-        showToast("User assigned to card successfully!", "success");
-        if (onUserAssigned) {
-          onUserAssigned();
+        const response = await cardAPI.assignUser(card._id, user._id);
+
+        if (response.data.success) {
+          showToast("User assigned to card successfully!", "success");
+          if (onUserAssigned) {
+            onUserAssigned();
+          }
         }
       } else {
         // Assign to project
@@ -40,10 +43,13 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
       if (card) {
         // Remove from card
         const { cardAPI } = await import("../utils/api");
-        await cardAPI.unassignUser(card._id, user._id);
-        showToast("User removed from card successfully!", "success");
-        if (onUserAssigned) {
-          onUserAssigned();
+        const response = await cardAPI.unassignUser(card._id, user._id);
+
+        if (response.data.success) {
+          showToast("User removed from card successfully!", "success");
+          if (onUserAssigned) {
+            onUserAssigned();
+          }
         }
       } else {
         // Remove from project
@@ -60,15 +66,19 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
 
   const isAssigned = (user) => {
     if (card) {
-      return card.assignees?.some(
-        (assignee) =>
-          (typeof assignee === "object" ? assignee._id : assignee) === user._id
-      );
+      return card.assignees?.some((assignee) => {
+        if (typeof assignee === "object") {
+          return assignee._id === user._id || assignee.id === user._id;
+        }
+        return assignee === user._id;
+      });
     }
-    return project.members?.some(
-      (member) =>
-        (typeof member === "object" ? member.user?._id : member) === user._id
-    );
+    return project.members?.some((member) => {
+      if (typeof member === "object") {
+        return member.user?._id === user._id || member.user === user._id;
+      }
+      return member === user._id;
+    });
   };
 
   return (
@@ -100,12 +110,15 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {(card
                 ? users.filter((user) =>
-                    project.members?.some(
-                      (member) =>
-                        (typeof member === "object"
-                          ? member.user?._id
-                          : member) === user._id
-                    )
+                    project.members?.some((member) => {
+                      if (typeof member === "object") {
+                        return (
+                          member.user?._id === user._id ||
+                          member.user === user._id
+                        );
+                      }
+                      return member === user._id;
+                    })
                   )
                 : users
               ).map((user) => {

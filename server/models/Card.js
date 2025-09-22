@@ -20,7 +20,6 @@ const cardSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["todo", "doing", "review", "done"],
       default: "todo",
     },
     priority: {
@@ -56,15 +55,18 @@ const cardSchema = new mongoose.Schema(
           ref: "User",
           required: true,
         },
-        comment: {
+        text: {
           type: String,
           required: true,
           trim: true,
           maxlength: [500, "Comment cannot be more than 500 characters"],
         },
-        createdAt: {
+        timestamp: {
           type: Date,
           default: Date.now,
+        },
+        updatedAt: {
+          type: Date,
         },
       },
     ],

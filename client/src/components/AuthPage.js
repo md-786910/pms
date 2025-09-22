@@ -61,7 +61,15 @@ const AuthPage = () => {
 
         login(response.data.user);
         showToast("Login successful! Welcome back.", "success");
-        navigate("/");
+
+        // Check for pending invitation
+        const pendingInvitation = localStorage.getItem("pendingInvitation");
+        if (pendingInvitation) {
+          localStorage.removeItem("pendingInvitation");
+          navigate(`/invite/${pendingInvitation}`);
+        } else {
+          navigate("/");
+        }
       }
     } catch (error) {
       console.error("Login error:", error);

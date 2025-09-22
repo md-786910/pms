@@ -2,6 +2,7 @@ const Project = require("../models/Project");
 const User = require("../models/User");
 const Card = require("../models/Card");
 const Notification = require("../models/Notification");
+const Invitation = require("../models/Invitation");
 const { sendProjectInvitationEmail } = require("../config/email");
 
 // @route   GET /api/projects
@@ -65,9 +66,13 @@ const getProject = async (req, res) => {
     }
 
     // Check if user has access to this project
-    const isOwner = project.owner._id.toString() === userId.toString();
+    const isOwner =
+      project.owner && project.owner._id.toString() === userId.toString();
     const isMember = project.members.some(
-      (member) => member.user._id.toString() === userId.toString()
+      (member) =>
+        member &&
+        member.user &&
+        member.user._id.toString() === userId.toString()
     );
 
     if (!isOwner && !isMember && userRole !== "admin") {
@@ -277,10 +282,13 @@ const addMember = async (req, res) => {
     const userToAdd = await User.findOne({ email });
 
     if (userToAdd) {
-      // User exists - add directly to project
+      // User exists - create invitation instead of adding directly
       // Check if user is already a member
       const isAlreadyMember = project.members.some(
-        (member) => member.user.toString() === userToAdd._id.toString()
+        (member) =>
+          member &&
+          member.user &&
+          member.user.toString() === userToAdd._id.toString()
       );
 
       if (isAlreadyMember) {
@@ -290,41 +298,96 @@ const addMember = async (req, res) => {
         });
       }
 
-      // Add member to project
-      project.members.push({
-        user: userToAdd._id,
+      // Check if invitation already exists (any status)
+      const existingInvitation = await Invitation.findOne({
+        email: userToAdd.email,
+        project: projectId,
+      });
+
+      if (existingInvitation) {
+        if (existingInvitation.status === "accepted") {
+          return res.status(400).json({
+            success: false,
+            message: "User has already accepted an invitation for this project",
+          });
+        } else {
+          // For pending, expired, or cancelled invitations, resend the invitation
+          existingInvitation.status = "pending";
+          existingInvitation.invitedBy = userId;
+          existingInvitation.role = role;
+          existingInvitation.generateToken(); // Generate new token for security
+          await existingInvitation.save();
+
+          // Send invitation email (async, non-blocking)
+          setImmediate(async () => {
+            try {
+              await sendProjectInvitationEmail(
+                userToAdd,
+                project,
+                req.user,
+                existingInvitation.token
+              );
+              console.log(
+                `Project invitation email resent to ${userToAdd.email}`
+              );
+            } catch (emailError) {
+              console.error(
+                "Error resending project invitation email:",
+                emailError
+              );
+            }
+          });
+
+          return res.json({
+            success: true,
+            message: "Invitation resent successfully",
+            invitation: {
+              email: existingInvitation.email,
+              role: existingInvitation.role,
+              expiresAt: existingInvitation.expiresAt,
+            },
+          });
+        }
+      }
+
+      // Create new invitation for existing user
+      const invitation = new Invitation({
+        email: userToAdd.email,
+        project: projectId,
+        invitedBy: userId,
         role,
       });
 
-      await project.save();
+      // Generate invitation token
+      invitation.generateToken();
+      await invitation.save();
 
-      // Create notification for the new member
-      const notification = new Notification({
-        user: userToAdd._id,
-        sender: userId,
-        type: "project_invite",
-        title: "Added to Project",
-        message: `You have been added to the project "${project.name}"`,
-        relatedProject: projectId,
+      // Send invitation email (async, non-blocking)
+      setImmediate(async () => {
+        try {
+          await sendProjectInvitationEmail(
+            userToAdd,
+            project,
+            req.user,
+            invitation.token
+          );
+          console.log(`Project invitation email sent to ${userToAdd.email}`);
+        } catch (emailError) {
+          console.error("Error sending project invitation email:", emailError);
+        }
       });
-
-      await notification.save();
-
-      // Send email invitation
-      await sendProjectInvitationEmail(userToAdd, project, req.user);
-
-      // Populate the project with user details
-      await project.populate("owner", "name email avatar color");
-      await project.populate("members.user", "name email avatar color");
 
       res.json({
         success: true,
-        message: "Member added successfully",
-        project,
+        message: "Invitation sent successfully",
+        invitation: {
+          email: invitation.email,
+          role: invitation.role,
+          expiresAt: invitation.expiresAt,
+        },
       });
     } else {
       // User doesn't exist - create invitation
-      const Invitation = require("../models/Invitation");
 
       // Check if invitation already exists (any status)
       const existingInvitation = await Invitation.findOne({
@@ -333,31 +396,36 @@ const addMember = async (req, res) => {
       });
 
       if (existingInvitation) {
-        if (existingInvitation.status === "pending") {
-          return res.status(400).json({
-            success: false,
-            message: "Invitation already sent to this email",
-          });
-        } else if (existingInvitation.status === "accepted") {
+        if (existingInvitation.status === "accepted") {
           return res.status(400).json({
             success: false,
             message: "User has already accepted an invitation for this project",
           });
         } else {
-          // For expired or cancelled invitations, update the existing one
+          // For pending, expired, or cancelled invitations, resend the invitation
           existingInvitation.status = "pending";
           existingInvitation.invitedBy = userId;
           existingInvitation.role = role;
-          existingInvitation.generateToken();
+          existingInvitation.generateToken(); // Generate new token for security
           await existingInvitation.save();
 
-          // Send invitation email
-          await sendProjectInvitationEmail(
-            { email, name: email.split("@")[0] },
-            project,
-            req.user,
-            existingInvitation.token
-          );
+          // Send invitation email (async, non-blocking)
+          setImmediate(async () => {
+            try {
+              await sendProjectInvitationEmail(
+                { email, name: email.split("@")[0] },
+                project,
+                req.user,
+                existingInvitation.token
+              );
+              console.log(`Project invitation email resent to ${email}`);
+            } catch (emailError) {
+              console.error(
+                "Error resending project invitation email:",
+                emailError
+              );
+            }
+          });
 
           return res.json({
             success: true,
@@ -383,13 +451,20 @@ const addMember = async (req, res) => {
       invitation.generateToken();
       await invitation.save();
 
-      // Send invitation email
-      await sendProjectInvitationEmail(
-        { email, name: email.split("@")[0] }, // Create a temporary user object for email
-        project,
-        req.user,
-        invitation.token
-      );
+      // Send invitation email (async, non-blocking)
+      setImmediate(async () => {
+        try {
+          await sendProjectInvitationEmail(
+            { email, name: email.split("@")[0] }, // Create a temporary user object for email
+            project,
+            req.user,
+            invitation.token
+          );
+          console.log(`Project invitation email sent to ${email}`);
+        } catch (emailError) {
+          console.error("Error sending project invitation email:", emailError);
+        }
+      });
 
       res.json({
         success: true,
@@ -449,7 +524,7 @@ const removeMember = async (req, res) => {
 
     // Remove member from project
     project.members = project.members.filter(
-      (member) => member.user.toString() !== memberId
+      (member) => member && member.user && member.user.toString() !== memberId
     );
 
     await project.save();

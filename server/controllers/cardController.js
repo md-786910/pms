@@ -3,6 +3,10 @@ const Project = require("../models/Project");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const { validationResult } = require("express-validator");
+const {
+  sendCardAssignedEmail,
+  sendCardUnassignedEmail,
+} = require("../config/email");
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
@@ -37,7 +41,19 @@ const getCards = async (req, res) => {
     const cards = await Card.find({ project: projectId })
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
+      .populate("comments.user", "name email avatar color")
       .sort({ createdAt: -1 });
+
+    // Sort comments in each card with latest at top
+    cards.forEach((card) => {
+      if (card.comments && card.comments.length > 0) {
+        card.comments.sort((a, b) => {
+          const aTime = a.updatedAt || a.timestamp || a.createdAt;
+          const bTime = b.updatedAt || b.timestamp || b.createdAt;
+          return new Date(bTime) - new Date(aTime);
+        });
+      }
+    });
 
     res.json({
       success: true,
@@ -64,6 +80,7 @@ const getCard = async (req, res) => {
     const card = await Card.findById(cardId)
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
+      .populate("comments.user", "name email avatar color")
       .populate("project", "name");
 
     if (!card) {
@@ -84,6 +101,15 @@ const getCard = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Sort comments with latest at top
+    if (card.comments && card.comments.length > 0) {
+      card.comments.sort((a, b) => {
+        const aTime = a.updatedAt || a.timestamp || a.createdAt;
+        const bTime = b.updatedAt || b.timestamp || b.createdAt;
+        return new Date(bTime) - new Date(aTime);
       });
     }
 
@@ -337,6 +363,12 @@ const updateStatus = async (req, res) => {
     const userId = req.user._id;
     const userRole = req.user.role;
 
+    // Handle case where status might be an object
+    let actualStatus = status;
+    if (typeof status === "object" && status !== null) {
+      actualStatus = status.status || status.value || status;
+    }
+
     const card = await Card.findById(cardId);
 
     if (!card) {
@@ -361,14 +393,14 @@ const updateStatus = async (req, res) => {
     }
 
     const oldStatus = card.status;
-    card.status = status;
+    card.status = actualStatus;
 
     // Add activity log entry
     card.activityLog.push({
       action: "status_changed",
       user: userId,
       timestamp: new Date(),
-      details: `Status changed from ${oldStatus} to ${status}`,
+      details: `Status changed from ${oldStatus} to ${actualStatus}`,
     });
 
     await card.save();
@@ -463,6 +495,25 @@ const assignUser = async (req, res) => {
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
 
+    // Send email notification to the assigned user (async, non-blocking)
+    if (assigneeId !== userId.toString()) {
+      setImmediate(async () => {
+        try {
+          const assignee = await User.findById(assigneeId);
+          const assignedBy = await User.findById(userId);
+          const project = await Project.findById(card.project);
+
+          if (assignee && assignedBy && project) {
+            await sendCardAssignedEmail(assignee, card, project, assignedBy);
+            console.log(`Card assignment email sent to ${assignee.email}`);
+          }
+        } catch (emailError) {
+          console.error("Error sending card assignment email:", emailError);
+          // Email failure doesn't affect the main request
+        }
+      });
+    }
+
     res.json({
       success: true,
       message: "User assigned successfully",
@@ -525,9 +576,48 @@ const unassignUser = async (req, res) => {
 
     await card.save();
 
+    // Create notification for the unassigned user
+    if (assigneeId !== userId.toString()) {
+      const notification = new Notification({
+        user: assigneeId,
+        sender: userId,
+        type: "card_unassigned",
+        title: "Card Unassigned",
+        message: `You have been removed from the card "${card.title}"`,
+        relatedProject: card.project,
+        relatedCard: card._id,
+      });
+
+      await notification.save();
+    }
+
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Send email notification to the unassigned user (async, non-blocking)
+    if (assigneeId !== userId.toString()) {
+      setImmediate(async () => {
+        try {
+          const assignee = await User.findById(assigneeId);
+          const unassignedBy = await User.findById(userId);
+          const project = await Project.findById(card.project);
+
+          if (assignee && unassignedBy && project) {
+            await sendCardUnassignedEmail(
+              assignee,
+              card,
+              project,
+              unassignedBy
+            );
+            console.log(`Card unassignment email sent to ${assignee.email}`);
+          }
+        } catch (emailError) {
+          console.error("Error sending card unassignment email:", emailError);
+          // Email failure doesn't affect the main request
+        }
+      });
+    }
 
     res.json({
       success: true,
@@ -613,15 +703,16 @@ const addComment = async (req, res) => {
   }
 };
 
-// @route   DELETE /api/cards/:id/comments/:commentId
-// @desc    Delete comment from card
+// @route   PUT /api/cards/:id/comments/:commentId
+// @desc    Update comment in card
 // @access  Private
-const deleteComment = async (req, res) => {
+const updateComment = async (req, res) => {
   try {
     const cardId = req.params.id;
     const commentId = req.params.commentId;
     const userId = req.user._id;
     const userRole = req.user.role;
+    const { text } = req.body;
 
     const card = await Card.findById(cardId);
 
@@ -646,35 +737,36 @@ const deleteComment = async (req, res) => {
       });
     }
 
-    // Find and remove the comment
-    const commentIndex = card.comments.findIndex(
+    // Find the comment
+    const comment = card.comments.find(
       (comment) => comment._id.toString() === commentId
     );
 
-    if (commentIndex === -1) {
+    if (!comment) {
       return res.status(404).json({
         success: false,
         message: "Comment not found",
       });
     }
 
-    // Check if user is the comment author or admin
-    const comment = card.comments[commentIndex];
+    // Check if user is the author of the comment or has admin privileges
     if (comment.user.toString() !== userId.toString() && userRole !== "admin") {
       return res.status(403).json({
         success: false,
-        message: "Access denied. You can only delete your own comments.",
+        message: "Access denied. You can only update your own comments.",
       });
     }
 
-    card.comments.splice(commentIndex, 1);
+    // Update the comment
+    comment.text = text;
+    comment.updatedAt = new Date();
 
     // Add activity log entry
     card.activityLog.push({
-      action: "comment_deleted",
+      action: "comment_updated",
       user: userId,
       timestamp: new Date(),
-      details: "Deleted a comment",
+      details: "Updated a comment",
     });
 
     await card.save();
@@ -686,14 +778,235 @@ const deleteComment = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Comment deleted successfully",
+      message: "Comment updated successfully",
       card,
     });
   } catch (error) {
-    console.error("Delete comment error:", error);
+    console.error("Update comment error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while deleting comment",
+      message: "Server error while updating comment",
+    });
+  }
+};
+
+// @route   POST /api/cards/:id/labels
+// @desc    Add label to card
+// @access  Private
+const addLabel = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const { name, color = "blue" } = req.body;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Check if label already exists
+    const existingLabel = card.labels.find(
+      (label) => label.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (existingLabel) {
+      return res.status(400).json({
+        success: false,
+        message: "Label already exists on this card",
+      });
+    }
+
+    card.labels.push({ name, color });
+    await card.save();
+
+    res.json({
+      success: true,
+      message: "Label added successfully",
+      card,
+    });
+  } catch (error) {
+    console.error("Add label error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while adding label",
+    });
+  }
+};
+
+// @route   DELETE /api/cards/:id/labels/:labelId
+// @desc    Remove label from card
+// @access  Private
+const removeLabel = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const labelId = req.params.labelId;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    card.labels = card.labels.filter(
+      (label) => label._id.toString() !== labelId
+    );
+    await card.save();
+
+    res.json({
+      success: true,
+      message: "Label removed successfully",
+      card,
+    });
+  } catch (error) {
+    console.error("Remove label error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while removing label",
+    });
+  }
+};
+
+// @route   POST /api/cards/:id/attachments
+// @desc    Add attachment to card
+// @access  Private
+const addAttachment = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const { filename, originalName, mimeType, size, url } = req.body;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    const attachment = {
+      filename,
+      originalName,
+      mimeType,
+      size,
+      url,
+      uploadedBy: userId,
+    };
+
+    card.attachments.push(attachment);
+    await card.save();
+
+    res.json({
+      success: true,
+      message: "Attachment added successfully",
+      card,
+    });
+  } catch (error) {
+    console.error("Add attachment error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while adding attachment",
+    });
+  }
+};
+
+// @route   DELETE /api/cards/:id/attachments/:attachmentId
+// @desc    Remove attachment from card
+// @access  Private
+const removeAttachment = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const attachmentId = req.params.attachmentId;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    card.attachments = card.attachments.filter(
+      (attachment) => attachment._id.toString() !== attachmentId
+    );
+    await card.save();
+
+    res.json({
+      success: true,
+      message: "Attachment removed successfully",
+      card,
+    });
+  } catch (error) {
+    console.error("Remove attachment error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while removing attachment",
     });
   }
 };
@@ -708,5 +1021,9 @@ module.exports = {
   assignUser,
   unassignUser,
   addComment,
-  deleteComment,
+  updateComment,
+  addLabel,
+  removeLabel,
+  addAttachment,
+  removeAttachment,
 };

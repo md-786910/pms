@@ -7,11 +7,17 @@ const notificationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     type: {
       type: String,
       enum: [
         "project_invite",
+        "project_joined",
         "card_assigned",
+        "card_unassigned",
         "card_updated",
         "comment_added",
         "due_date_reminder",

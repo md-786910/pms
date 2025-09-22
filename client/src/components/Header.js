@@ -4,12 +4,12 @@ import {
   Bell,
   User,
   LogOut,
-  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
+import AdvancedSearch from "./AdvancedSearch";
 
 const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const { user, logout } = useUser();
@@ -34,6 +34,11 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
 
+          {/* Mobile Search */}
+          <div className="md:hidden">
+            <AdvancedSearch />
+          </div>
+
           <button
             onClick={onToggleSidebar}
             className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
@@ -57,6 +62,11 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
         </div>
 
         <div className="flex items-center space-x-4">
+          {/* Advanced Search */}
+          <div className="hidden md:block">
+            <AdvancedSearch />
+          </div>
+
           {/* Notifications */}
           <div className="relative">
             <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
@@ -93,10 +103,6 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                   </p>
                   <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
-                <button className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                  <Settings className="w-4 h-4" />
-                  <span>Settings</span>
-                </button>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"

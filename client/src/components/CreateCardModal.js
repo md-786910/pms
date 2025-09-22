@@ -3,11 +3,16 @@ import { X } from "lucide-react";
 import { useNotification } from "../contexts/NotificationContext";
 import { cardAPI } from "../utils/api";
 
-const CreateCardModal = ({ projectId, onClose, onCardCreated }) => {
+const CreateCardModal = ({
+  projectId,
+  onClose,
+  onCardCreated,
+  defaultStatus = "todo",
+}) => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    dueDate: "",
+    status: defaultStatus,
   });
   const [loading, setLoading] = useState(false);
   const { showToast } = useNotification();
@@ -22,15 +27,23 @@ const CreateCardModal = ({ projectId, onClose, onCardCreated }) => {
 
     setLoading(true);
     try {
-      const response = await cardAPI.createCard({
-        ...formData,
+      const cardData = {
+        title: formData.title,
+        description: formData.description,
         project: projectId,
-      });
+        status: formData.status,
+      };
 
+      console.log("Creating card with data:", cardData);
+
+      const response = await cardAPI.createCard(cardData);
+
+      console.log("Card created successfully:", response.data);
       onCardCreated(response.data.card);
       onClose();
     } catch (error) {
       console.error("Error creating card:", error);
+      console.error("Error response:", error.response?.data);
       showToast("Failed to create card", "error");
     } finally {
       setLoading(false);
@@ -94,23 +107,6 @@ const CreateCardModal = ({ projectId, onClose, onCardCreated }) => {
               className="input-field resize-none"
               rows={4}
               placeholder="Enter card description"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="dueDate"
-              className="block text-sm font-medium text-secondary-700 mb-2"
-            >
-              Due Date
-            </label>
-            <input
-              type="datetime-local"
-              id="dueDate"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
-              className="input-field"
             />
           </div>
 

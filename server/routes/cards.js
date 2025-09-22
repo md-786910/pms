@@ -10,7 +10,11 @@ const {
   assignUser,
   unassignUser,
   addComment,
-  deleteComment,
+  updateComment,
+  addLabel,
+  removeLabel,
+  addAttachment,
+  removeAttachment,
 } = require("../controllers/cardController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
 
@@ -45,10 +49,7 @@ router.post(
       .isLength({ max: 1000 })
       .withMessage("Description cannot be more than 1000 characters"),
     body("project").isMongoId().withMessage("Valid project ID is required"),
-    body("status")
-      .optional()
-      .isIn(["todo", "doing", "review", "done"])
-      .withMessage("Status must be todo, doing, review, or done"),
+    body("status").optional().isString().withMessage("Status must be a string"),
     body("priority")
       .optional()
       .isIn(["low", "medium", "high", "urgent"])
@@ -64,8 +65,16 @@ router.post(
     body("labels").optional().isArray().withMessage("Labels must be an array"),
     body("dueDate")
       .optional()
-      .isISO8601()
-      .withMessage("Due date must be a valid date"),
+      .custom((value) => {
+        if (value === "" || value === null || value === undefined) {
+          return true; // Allow empty values
+        }
+        return (
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ||
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/.test(value)
+        );
+      })
+      .withMessage("Due date must be a valid date format"),
   ],
   createCard
 );
@@ -86,10 +95,7 @@ router.put(
       .trim()
       .isLength({ max: 1000 })
       .withMessage("Description cannot be more than 1000 characters"),
-    body("status")
-      .optional()
-      .isIn(["todo", "doing", "review", "done"])
-      .withMessage("Status must be todo, doing, review, or done"),
+    body("status").optional().isString().withMessage("Status must be a string"),
     body("priority")
       .optional()
       .isIn(["low", "medium", "high", "urgent"])
@@ -123,8 +129,10 @@ router.put(
   "/:id/status",
   [
     body("status")
-      .isIn(["todo", "doing", "review", "done"])
-      .withMessage("Status must be todo, doing, review, or done"),
+      .notEmpty()
+      .withMessage("Status is required")
+      .isString()
+      .withMessage("Status must be a string"),
   ],
   updateStatus
 );
@@ -157,9 +165,79 @@ router.post(
   addComment
 );
 
-// @route   DELETE /api/cards/:id/comments/:commentId
-// @desc    Delete comment from card
+// @route   PUT /api/cards/:id/comments/:commentId
+// @desc    Update comment in card
 // @access  Private
-router.delete("/:id/comments/:commentId", deleteComment);
+router.put(
+  "/:id/comments/:commentId",
+  [
+    body("text")
+      .trim()
+      .isLength({ min: 1, max: 500 })
+      .withMessage("Comment must be between 1 and 500 characters"),
+  ],
+  updateComment
+);
+
+// @route   POST /api/cards/:id/labels
+// @desc    Add label to card
+// @access  Private
+router.post(
+  "/:id/labels",
+  [
+    body("name")
+      .trim()
+      .isLength({ min: 1, max: 50 })
+      .withMessage("Label name must be between 1 and 50 characters"),
+    body("color")
+      .optional()
+      .isIn([
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "purple",
+        "orange",
+        "pink",
+        "gray",
+      ])
+      .withMessage("Invalid color"),
+  ],
+  addLabel
+);
+
+// @route   DELETE /api/cards/:id/labels/:labelId
+// @desc    Remove label from card
+// @access  Private
+router.delete("/:id/labels/:labelId", removeLabel);
+
+// @route   POST /api/cards/:id/attachments
+// @desc    Add attachment to card
+// @access  Private
+router.post(
+  "/:id/attachments",
+  [
+    body("filename")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("Filename is required"),
+    body("originalName")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("Original name is required"),
+    body("mimeType")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("MIME type is required"),
+    body("size").isNumeric().withMessage("Size must be a number"),
+    body("url").isURL().withMessage("Valid URL is required"),
+  ],
+  addAttachment
+);
+
+// @route   DELETE /api/cards/:id/attachments/:attachmentId
+// @desc    Remove attachment from card
+// @access  Private
+router.delete("/:id/attachments/:attachmentId", removeAttachment);
 
 module.exports = router;

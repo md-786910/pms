@@ -188,94 +188,114 @@ const AdminPanel = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {projects?.map((project) => (
-                <div
-                  key={project._id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Settings className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {project.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {project.description}
-                      </p>
-                      <div className="flex items-center space-x-4 mt-1">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex -space-x-1">
-                            {project.members
-                              ?.slice(0, 3)
-                              .map((member, index) => (
-                                <div
-                                  key={member.user?._id || member.user || index}
-                                  className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm"
-                                  title={member.user?.name || "Member"}
-                                >
-                                  {member.user?.name?.charAt(0).toUpperCase() ||
-                                    "M"}
-                                </div>
-                              ))}
-                            {project.members?.length > 3 && (
-                              <div className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-gray-600 font-medium shadow-sm">
-                                +{project.members.length - 3}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {project.members?.length || 0} members
-                          </span>
+              {projects &&
+                Array.isArray(projects) &&
+                projects.map((project) => {
+                  // Safety check for project object
+                  if (!project || !project._id) {
+                    return null;
+                  }
+                  return (
+                    <div
+                      key={project._id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Settings className="w-5 h-5 text-blue-600" />
                         </div>
-                        <span className="text-xs text-gray-500">
-                          Created{" "}
-                          {new Date(project.createdAt).toLocaleDateString()}
-                        </span>
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {project.name || "Unnamed Project"}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {project.description || "No description"}
+                          </p>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex -space-x-1">
+                                {project.members
+                                  ?.filter((member) => member && member.user) // Filter out invalid members
+                                  ?.slice(0, 3)
+                                  .map((member, index) => (
+                                    <div
+                                      key={
+                                        member.user?._id || member.user || index
+                                      }
+                                      className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm"
+                                      title={member.user?.name || "Member"}
+                                    >
+                                      {member.user?.name
+                                        ?.charAt(0)
+                                        .toUpperCase() || "M"}
+                                    </div>
+                                  ))}
+                                {project.members?.filter(
+                                  (member) => member && member.user
+                                )?.length > 3 && (
+                                  <div className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-gray-600 font-medium shadow-sm">
+                                    +
+                                    {project.members.filter(
+                                      (member) => member && member.user
+                                    ).length - 3}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {project.members?.filter(
+                                  (member) => member && member.user
+                                )?.length || 0}{" "}
+                                members
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              Created{" "}
+                              {new Date(project.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          to={`/project/${project._id}`}
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          title="View Project"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Link>
+                        <button
+                          onClick={() => handleEditProject(project)}
+                          className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors duration-200"
+                          title="Edit Project"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleInviteUsers(project)}
+                          className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                          title="Invite Users"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleAssignUsers(project)}
+                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                          title="Manage Members"
+                        >
+                          <Users className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(project._id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="Delete Project"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Link
-                      to={`/project/${project._id}`}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                      title="View Project"
-                    >
-                      <Calendar className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleEditProject(project)}
-                      className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors duration-200"
-                      title="Edit Project"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleInviteUsers(project)}
-                      className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
-                      title="Invite Users"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleAssignUsers(project)}
-                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                      title="Manage Members"
-                    >
-                      <Users className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteProject(project._id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                      title="Delete Project"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
             </div>
           )}
         </div>
