@@ -23,7 +23,9 @@ import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { cardAPI, cardItemAPI } from "../utils/api";
+import Avatar from "./Avatar";
 import AssignUserModal from "./AssignUserModal";
+import ConfirmationModal from "./ConfirmationModal";
 
 const CardModal = ({
   card,
@@ -47,6 +49,7 @@ const CardModal = ({
   const [commentText, setCommentText] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newChecklist, setNewChecklist] = useState("");
@@ -310,24 +313,26 @@ const CardModal = ({
     }
   };
 
-  const handleDelete = async () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this card? This action cannot be undone."
-      )
-    ) {
-      try {
-        const response = await cardAPI.deleteCard(card._id);
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
 
-        if (response.data.success) {
-          onCardDeleted(card._id);
-          onClose();
-          showToast("Card deleted successfully!", "success");
-        }
-      } catch (error) {
-        console.error("Error deleting card:", error);
-        showToast("Failed to delete card", "error");
+  const confirmDelete = async () => {
+    try {
+      setLoading(true);
+      const response = await cardAPI.deleteCard(card._id);
+
+      if (response.data.success) {
+        onCardDeleted(card._id);
+        onClose();
+        showToast("Card deleted successfully!", "success");
       }
+    } catch (error) {
+      console.error("Error deleting card:", error);
+      showToast("Failed to delete card", "error");
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -726,9 +731,7 @@ const CardModal = ({
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
-                                {comment.user?.name?.charAt(0) || "U"}
-                              </div>
+                              <Avatar user={comment.user} size="sm" />
                               <div>
                                 <span className="font-medium text-gray-900">
                                   {comment.user?.name || "Unknown User"}
@@ -957,9 +960,7 @@ const CardModal = ({
                           className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                         >
                           <div className="flex items-center space-x-2">
-                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
-                              {user.avatar || user.name?.charAt(0) || "U"}
-                            </div>
+                            <Avatar user={user} size="xs" />
                             <span className="text-xs text-gray-700">
                               {user.name || "Unknown User"}
                             </span>
@@ -1247,6 +1248,19 @@ const CardModal = ({
           </div>
         </div>
       )}
+
+      {/* Delete Card Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Card"
+        message={`Are you sure you want to delete "${card.title}"? This action cannot be undone.`}
+        confirmText="Delete Card"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={loading}
+      />
     </>
   );
 };

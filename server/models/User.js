@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
         "Please enter a valid email",
       ],
     },
@@ -32,18 +32,49 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: function () {
-        return this.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase();
+        if (!this.name) return "U";
+        const nameParts = this.name.trim().split(" ");
+        if (nameParts.length >= 2) {
+          // First letter of first name + first letter of last name
+          return (
+            nameParts[0][0] + nameParts[nameParts.length - 1][0]
+          ).toUpperCase();
+        } else if (nameParts.length === 1) {
+          // If only one name, use first two letters
+          return nameParts[0].substring(0, 2).toUpperCase();
+        }
+        return "U";
       },
     },
     color: {
       type: String,
       default: function () {
-        const colors = ["blue", "green", "purple", "orange", "pink"];
-        return `bg-${colors[Math.floor(Math.random() * colors.length)]}-500`;
+        const colors = [
+          "bg-blue-600",
+          "bg-green-600",
+          "bg-purple-600",
+          "bg-orange-600",
+          "bg-pink-600",
+          "bg-red-600",
+          "bg-indigo-600",
+          "bg-teal-600",
+          "bg-yellow-600",
+          "bg-gray-600",
+          "bg-cyan-600",
+          "bg-emerald-600",
+          "bg-violet-600",
+          "bg-rose-600",
+          "bg-sky-600",
+          "bg-lime-600",
+        ];
+        // Generate consistent color based on user's name/email
+        const seed = (this.name || this.email || "default")
+          .split("")
+          .reduce((a, b) => {
+            a = (a << 5) - a + b.charCodeAt(0);
+            return a & a;
+          }, 0);
+        return colors[Math.abs(seed) % colors.length];
       },
     },
     isActive: {

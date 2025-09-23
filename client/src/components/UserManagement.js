@@ -16,6 +16,8 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { userAPI } from "../utils/api";
+import Avatar from "./Avatar";
+import ConfirmationModal from "./ConfirmationModal";
 
 const UserManagement = () => {
   const { user: currentUser } = useUser();
@@ -27,7 +29,9 @@ const UserManagement = () => {
   const [showAddUser, setShowAddUser] = useState(false);
   const [showEditUser, setShowEditUser] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Form states
@@ -163,24 +167,33 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (userId === (currentUser._id || currentUser.id)) {
+  const handleDeleteUser = (user) => {
+    if (user._id === (currentUser._id || currentUser.id)) {
       showToast("Cannot delete your own account", "error");
       return;
     }
 
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      try {
-        const response = await userAPI.deleteUser(userId);
+    setUserToDelete(user);
+    setShowDeleteConfirm(true);
+  };
 
-        showToast("User deleted successfully", "success");
-        fetchUsers();
-      } catch (error) {
-        console.error("Error deleting user:", error);
-        const message =
-          error.response?.data?.message || "Failed to delete user";
-        showToast(message, "error");
-      }
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setLoading(true);
+      const response = await userAPI.deleteUser(userToDelete._id);
+
+      showToast("User deleted successfully", "success");
+      fetchUsers();
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      const message = error.response?.data?.message || "Failed to delete user";
+      showToast(message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -297,9 +310,7 @@ const UserManagement = () => {
                 <tr key={user._id || user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium">
-                        {user.avatar || user.name.charAt(0)}
-                      </div>
+                      <Avatar user={user} size="md" showTooltip={true} />
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
                           {user.name}
@@ -348,7 +359,7 @@ const UserManagement = () => {
                       {(user._id || user.id) !==
                         (currentUser._id || currentUser.id) && (
                         <button
-                          onClick={() => handleDeleteUser(user._id || user.id)}
+                          onClick={() => handleDeleteUser(user)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete User"
                         >
@@ -587,6 +598,26 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setUserToDelete(null);
+        }}
+        onConfirm={confirmDeleteUser}
+        title="Delete User"
+        message={
+          userToDelete
+            ? `Are you sure you want to delete ${userToDelete.name}? This action will deactivate their account and cannot be undone.`
+            : "Are you sure you want to delete this user?"
+        }
+        confirmText="Delete User"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={loading}
+      />
     </div>
   );
 };

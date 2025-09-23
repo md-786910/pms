@@ -6,6 +6,7 @@ import { useNotification } from "../contexts/NotificationContext";
 import { cardAPI, columnAPI } from "../utils/api";
 import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
+import ConfirmationModal from "./ConfirmationModal";
 
 const ProjectBoard = () => {
   const { id } = useParams();
@@ -14,6 +15,8 @@ const ProjectBoard = () => {
   const [cards, setCards] = useState([]);
   const [columns, setColumns] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("todo");
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollContainerRef = useRef(null);
@@ -174,29 +177,35 @@ const ProjectBoard = () => {
     }
   };
 
-  const handleColumnDelete = async (status) => {
-    try {
-      // Find the column
-      const column = columns.find((col) => col.status === status);
-      if (!column || column.isDefault) {
-        showToast("Cannot delete default columns", "error");
-        return;
-      }
+  const handleColumnDelete = (status) => {
+    // Find the column
+    const column = columns.find((col) => col.status === status);
+    if (!column || column.isDefault) {
+      showToast("Cannot delete default columns", "error");
+      return;
+    }
 
-      if (
-        window.confirm(
-          "Are you sure you want to delete this column? All cards in this column will be moved to 'To Do'."
-        )
-      ) {
-        const response = await columnAPI.deleteColumn(id, column._id);
-        if (response.data.success) {
-          setColumns((prev) => prev.filter((col) => col._id !== column._id));
-          showToast("Column deleted successfully!", "success");
-        }
+    setColumnToDelete(column);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteColumn = async () => {
+    if (!columnToDelete) return;
+
+    try {
+      const response = await columnAPI.deleteColumn(id, columnToDelete._id);
+      if (response.data.success) {
+        setColumns((prev) =>
+          prev.filter((col) => col._id !== columnToDelete._id)
+        );
+        showToast("Column deleted successfully!", "success");
       }
     } catch (error) {
       console.error("Error deleting column:", error);
       showToast("Failed to delete column", "error");
+    } finally {
+      setShowDeleteConfirm(false);
+      setColumnToDelete(null);
     }
   };
 
@@ -459,6 +468,26 @@ const ProjectBoard = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Column Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setColumnToDelete(null);
+        }}
+        onConfirm={confirmDeleteColumn}
+        title="Delete Column"
+        message={
+          columnToDelete
+            ? `Are you sure you want to delete the "${columnToDelete.name}" column? All cards in this column will be moved to "To Do".`
+            : "Are you sure you want to delete this column?"
+        }
+        confirmText="Delete Column"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={false}
+      />
     </div>
   );
 };

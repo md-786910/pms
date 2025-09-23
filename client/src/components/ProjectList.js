@@ -4,6 +4,7 @@ import { Plus, FolderOpen, Users, Calendar, MoreVertical } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
 import CreateProjectModal from "./CreateProjectModal";
+import Avatar from "./Avatar";
 
 const ProjectList = () => {
   const { projects, loading } = useProject();
@@ -135,10 +136,9 @@ const ProjectCard = ({ project }) => {
             {project.members?.slice(0, 4).map((member, index) => (
               <div
                 key={member.user?._id || member.user || index}
-                className="w-8 h-8 bg-primary-500 rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm"
-                title={member.user?.name || "Member"}
+                className="border-2 border-white shadow-sm rounded-full"
               >
-                {member.user?.name?.charAt(0).toUpperCase() || "M"}
+                <Avatar user={member.user} size="sm" showTooltip={true} />
               </div>
             ))}
             {project.members && project.members.length > 4 && (

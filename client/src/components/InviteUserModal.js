@@ -3,6 +3,7 @@ import { X, Mail, UserPlus, Send } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
+import Avatar from "./Avatar";
 
 const InviteUserModal = ({ project, onClose, onUserInvited }) => {
   const { users } = useUser();
@@ -34,7 +35,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
           "member"
         );
         showToast(
-          response.message || `User invited to project successfully!`,
+          response.message || "User invited to project successfully!",
           "success"
         );
         if (onUserInvited) {
@@ -68,7 +69,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
             results.push({
               success: true,
               user: user.name,
-              message: response.message,
+              message: response.message || "User added successfully",
             });
           } catch (error) {
             results.push({
@@ -243,13 +244,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                           onChange={() => handleUserToggle(user)}
                           className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
                         />
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium ${
-                            user.color || "bg-blue-500"
-                          }`}
-                        >
-                          {user.name?.charAt(0).toUpperCase() || "U"}
-                        </div>
+                        <Avatar user={user} size="sm" />
                         <div className="flex-1">
                           <p className="font-medium text-secondary-900">
                             {user.name}

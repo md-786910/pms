@@ -3,12 +3,20 @@ import { X, UserPlus, UserMinus } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
+import Avatar from "./Avatar";
 
-const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
+const AssignUserModal = ({
+  project,
+  card,
+  onClose,
+  onUserAssigned,
+  onProjectUpdated,
+}) => {
   const { users } = useUser();
-  const { addProjectMember, removeProjectMember } = useProject();
+  const { addProjectMember, removeProjectMember, fetchProject } = useProject();
   const { showToast } = useNotification();
   const [loading, setLoading] = useState({});
+  const [localProject, setLocalProject] = useState(project);
 
   const handleAssignUser = async (user) => {
     setLoading((prev) => ({ ...prev, [user._id]: true }));
@@ -26,8 +34,29 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
         }
       } else {
         // Assign to project
-        await addProjectMember(project._id, user.email, "member");
-        showToast("User added to project successfully!", "success");
+        const response = await addProjectMember(
+          project._id,
+          user.email,
+          "member"
+        );
+        showToast(
+          response.message || "User added to project successfully!",
+          "success"
+        );
+
+        // Update local project state
+        console.log("📝 AssignUser response:", response);
+        if (response.project) {
+          setLocalProject(response.project);
+          console.log("✅ Local project state updated");
+        } else {
+          console.log("⚠️ No project data in response");
+        }
+
+        // Notify parent component to refresh
+        if (onProjectUpdated) {
+          onProjectUpdated();
+        }
       }
     } catch (error) {
       console.error("Error assigning user:", error);
@@ -53,8 +82,25 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
         }
       } else {
         // Remove from project
-        await removeProjectMember(project._id, user._id);
-        showToast("User removed from project successfully!", "success");
+        const response = await removeProjectMember(project._id, user._id);
+        showToast(
+          response.message || "User removed from project successfully!",
+          "success"
+        );
+
+        // Update local project state
+        console.log("📝 RemoveUser response:", response);
+        if (response.project) {
+          setLocalProject(response.project);
+          console.log("✅ Local project state updated");
+        } else {
+          console.log("⚠️ No project data in response");
+        }
+
+        // Notify parent component to refresh
+        if (onProjectUpdated) {
+          onProjectUpdated();
+        }
       }
     } catch (error) {
       console.error("Error removing user:", error);
@@ -73,7 +119,9 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
         return assignee === user._id;
       });
     }
-    return project.members?.some((member) => {
+    // Use localProject state for real-time updates
+    const currentProject = localProject || project;
+    return currentProject.members?.some((member) => {
       if (typeof member === "object") {
         return member.user?._id === user._id || member.user === user._id;
       }
@@ -90,7 +138,7 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
               {card ? "Assign Users to Card" : "Manage Project Members"}
             </h2>
             <p className="text-sm text-secondary-600 mt-1">
-              {card ? card.title : project.name}
+              {card ? card.title : (localProject || project).name}
             </p>
           </div>
           <button
@@ -109,8 +157,9 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {(card
-                ? users.filter((user) =>
-                    project.members?.some((member) => {
+                ? users.filter((user) => {
+                    const currentProject = localProject || project;
+                    return currentProject.members?.some((member) => {
                       if (typeof member === "object") {
                         return (
                           member.user?._id === user._id ||
@@ -118,8 +167,8 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
                         );
                       }
                       return member === user._id;
-                    })
-                  )
+                    });
+                  })
                 : users
               ).map((user) => {
                 const isAssignedUser = isAssigned(user);
@@ -131,13 +180,7 @@ const AssignUserModal = ({ project, card, onClose, onUserAssigned }) => {
                     className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg"
                   >
                     <div className="flex items-center space-x-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-medium ${
-                          user.color || "bg-blue-500"
-                        }`}
-                      >
-                        {user.name?.charAt(0).toUpperCase() || "U"}
-                      </div>
+                      <Avatar user={user} size="sm" />
                       <div>
                         <p className="font-medium text-secondary-900">
                           {user.name}

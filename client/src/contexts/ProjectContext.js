@@ -104,13 +104,19 @@ export const ProjectProvider = ({ children }) => {
   const addProjectMember = async (projectId, email, role = "member") => {
     try {
       const response = await projectAPI.addMember(projectId, { email, role });
-      setAllProjects((prev) =>
-        prev.map((p) => (p._id === projectId ? response.data.project : p))
-      );
-      if (currentProject && currentProject._id === projectId) {
-        setCurrentProject(response.data.project);
+
+      // Update project data if available
+      if (response.data.project) {
+        setAllProjects((prev) =>
+          prev.map((p) => (p._id === projectId ? response.data.project : p))
+        );
+        if (currentProject && currentProject._id === projectId) {
+          setCurrentProject(response.data.project);
+        }
       }
-      return response.data.project;
+
+      // Return the full response data so we can access message and other properties
+      return response.data;
     } catch (error) {
       console.error("Error adding project member:", error);
       throw error;
@@ -120,13 +126,19 @@ export const ProjectProvider = ({ children }) => {
   const removeProjectMember = async (projectId, userId) => {
     try {
       const response = await projectAPI.removeMember(projectId, userId);
-      setAllProjects((prev) =>
-        prev.map((p) => (p._id === projectId ? response.data.project : p))
-      );
-      if (currentProject && currentProject._id === projectId) {
-        setCurrentProject(response.data.project);
+
+      // Update project data if available
+      if (response.data.project) {
+        setAllProjects((prev) =>
+          prev.map((p) => (p._id === projectId ? response.data.project : p))
+        );
+        if (currentProject && currentProject._id === projectId) {
+          setCurrentProject(response.data.project);
+        }
       }
-      return response.data.project;
+
+      // Return the full response data so we can access message and other properties
+      return response.data;
     } catch (error) {
       console.error("Error removing project member:", error);
       throw error;

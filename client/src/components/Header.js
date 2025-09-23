@@ -10,6 +10,7 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import AdvancedSearch from "./AdvancedSearch";
+import Avatar from "./Avatar";
 
 const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const { user, logout } = useUser();
@@ -85,7 +86,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200"
             >
-              <div className="avatar bg-blue-600">{user?.avatar || "U"}</div>
+              <Avatar user={user} size="sm" />
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">
                   {user?.name}

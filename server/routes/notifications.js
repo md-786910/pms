@@ -50,7 +50,9 @@ router.post(
     body("type")
       .isIn([
         "project_invite",
+        "project_joined",
         "card_assigned",
+        "card_unassigned",
         "card_updated",
         "comment_added",
         "due_date_reminder",

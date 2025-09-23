@@ -27,7 +27,7 @@ const seedDatabase = async () => {
       password: "admin123",
       role: "admin",
       avatar: "SA",
-      color: "bg-red-500",
+      color: "bg-red-600",
       emailVerified: true,
       isActive: true,
     });
@@ -42,7 +42,7 @@ const seedDatabase = async () => {
       password: "member123",
       role: "member",
       avatar: "JD",
-      color: "bg-blue-500",
+      color: "bg-blue-600",
       emailVerified: true,
       isActive: true,
     });
@@ -76,7 +76,8 @@ const seedDatabase = async () => {
     const sampleCards = [
       {
         title: "Welcome to the Project",
-        description: "This is your first card. You can edit, move, and manage it.",
+        description:
+          "This is your first card. You can edit, move, and manage it.",
         project: sampleProject._id,
         status: "todo",
         priority: "medium",
@@ -150,7 +151,6 @@ const seedDatabase = async () => {
     console.log("\n📋 Default Credentials:");
     console.log("Admin: admin@pms.com / admin123");
     console.log("Member: john@pms.com / member123");
-
   } catch (error) {
     console.error("❌ Error seeding database:", error);
     process.exit(1);
@@ -165,4 +165,3 @@ if (require.main === module) {
 }
 
 module.exports = seedDatabase;
-

@@ -17,6 +17,8 @@ import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import AssignUserModal from "./AssignUserModal";
 import InviteUserModal from "./InviteUserModal";
+import Avatar from "./Avatar";
+import ConfirmationModal from "./ConfirmationModal";
 
 const AdminPanel = () => {
   const { projects, loading, deleteProject, fetchProjects } = useProject();
@@ -26,20 +28,26 @@ const AdminPanel = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleDeleteProject = async (projectId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this project? This action cannot be undone."
-      )
-    ) {
-      try {
-        await deleteProject(projectId);
-        showToast("Project deleted successfully", "success");
-      } catch (error) {
-        showToast("Failed to delete project", "error");
-      }
+  const handleDeleteProject = (project) => {
+    setProjectToDelete(project);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+
+    try {
+      await deleteProject(projectToDelete._id);
+      showToast("Project deleted successfully", "success");
+      setShowDeleteConfirm(false);
+      setProjectToDelete(null);
+    } catch (error) {
+      showToast("Failed to delete project", "error");
     }
   };
 
@@ -56,6 +64,14 @@ const AdminPanel = () => {
   const handleInviteUsers = (project) => {
     setSelectedProject(project);
     setShowInviteModal(true);
+  };
+
+  const handleProjectUpdated = async () => {
+    // Refresh projects when users are added/removed
+    console.log("🔄 Refreshing projects after user change...");
+    await fetchProjects();
+    setRefreshKey((prev) => prev + 1); // Force re-render
+    console.log("✅ Projects refreshed");
   };
 
   if (loading) {
@@ -187,7 +203,7 @@ const AdminPanel = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4" key={refreshKey}>
               {projects &&
                 Array.isArray(projects) &&
                 projects.map((project) => {
@@ -222,12 +238,13 @@ const AdminPanel = () => {
                                       key={
                                         member.user?._id || member.user || index
                                       }
-                                      className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm"
-                                      title={member.user?.name || "Member"}
+                                      className="border-2 border-white shadow-sm rounded-full"
                                     >
-                                      {member.user?.name
-                                        ?.charAt(0)
-                                        .toUpperCase() || "M"}
+                                      <Avatar
+                                        user={member.user}
+                                        size="xs"
+                                        showTooltip={true}
+                                      />
                                     </div>
                                   ))}
                                 {project.members?.filter(
@@ -286,7 +303,7 @@ const AdminPanel = () => {
                           <Users className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteProject(project._id)}
+                          onClick={() => handleDeleteProject(project)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                           title="Delete Project"
                         >
@@ -326,6 +343,7 @@ const AdminPanel = () => {
           onUserAssigned={() => {
             showToast("User assigned successfully!", "success");
           }}
+          onProjectUpdated={handleProjectUpdated}
         />
       )}
 
@@ -336,12 +354,32 @@ const AdminPanel = () => {
             setShowInviteModal(false);
             setSelectedProject(null);
           }}
-          onUserInvited={() => {
-            fetchProjects(); // Refresh projects list
+          onUserInvited={async () => {
+            await handleProjectUpdated(); // Refresh projects list
             showToast("User invited successfully!", "success");
           }}
         />
       )}
+
+      {/* Delete Project Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setProjectToDelete(null);
+        }}
+        onConfirm={confirmDeleteProject}
+        title="Delete Project"
+        message={
+          projectToDelete
+            ? `Are you sure you want to delete "${projectToDelete.name}"? This action will permanently remove the project and all its data (cards, columns, notifications, etc.) and cannot be undone.`
+            : "Are you sure you want to delete this project?"
+        }
+        confirmText="Delete Project"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={false}
+      />
     </div>
   );
 };

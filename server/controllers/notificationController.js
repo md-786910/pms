@@ -8,6 +8,7 @@ const Card = require("../models/Card");
 // @access  Private
 const getNotifications = async (req, res) => {
   try {
+    console.log("🔔 Getting notifications for user:", req.user._id);
     const userId = req.user._id;
     const { page = 1, limit = 20, unreadOnly = false } = req.query;
 
@@ -25,6 +26,13 @@ const getNotifications = async (req, res) => {
       .skip((page - 1) * limit);
 
     const total = await Notification.countDocuments(query);
+
+    console.log(
+      "📊 Found",
+      notifications.length,
+      "notifications for user",
+      userId
+    );
 
     res.json({
       success: true,

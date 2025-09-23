@@ -227,18 +227,19 @@ const deleteProject = async (req, res) => {
       });
     }
 
-    // Delete all cards associated with this project
-    await Card.deleteMany({ project: projectId });
+    // Start asynchronous cleanup process
+    const {
+      scheduleProjectCleanup,
+    } = require("../services/projectCleanupService");
+    scheduleProjectCleanup(projectId);
 
-    // Delete all notifications related to this project
-    await Notification.deleteMany({ relatedProject: projectId });
-
-    // Delete the project
+    // Delete the project immediately (synchronous)
     await Project.findByIdAndDelete(projectId);
 
     res.json({
       success: true,
-      message: "Project deleted successfully",
+      message:
+        "Project deleted successfully. Related data cleanup is in progress.",
     });
   } catch (error) {
     console.error("Delete project error:", error);
@@ -282,7 +283,7 @@ const addMember = async (req, res) => {
     const userToAdd = await User.findOne({ email });
 
     if (userToAdd) {
-      // User exists - create invitation instead of adding directly
+      // User exists - add them directly to the project
       // Check if user is already a member
       const isAlreadyMember = project.members.some(
         (member) =>
@@ -298,93 +299,54 @@ const addMember = async (req, res) => {
         });
       }
 
-      // Check if invitation already exists (any status)
-      const existingInvitation = await Invitation.findOne({
-        email: userToAdd.email,
-        project: projectId,
+      // Add user directly to project
+      project.members.push({
+        user: userToAdd._id,
+        role: role,
       });
 
-      if (existingInvitation) {
-        if (existingInvitation.status === "accepted") {
-          return res.status(400).json({
-            success: false,
-            message: "User has already accepted an invitation for this project",
-          });
-        } else {
-          // For pending, expired, or cancelled invitations, resend the invitation
-          existingInvitation.status = "pending";
-          existingInvitation.invitedBy = userId;
-          existingInvitation.role = role;
-          existingInvitation.generateToken(); // Generate new token for security
-          await existingInvitation.save();
+      await project.save();
 
-          // Send invitation email (async, non-blocking)
-          setImmediate(async () => {
-            try {
-              await sendProjectInvitationEmail(
-                userToAdd,
-                project,
-                req.user,
-                existingInvitation.token
-              );
-              console.log(
-                `Project invitation email resent to ${userToAdd.email}`
-              );
-            } catch (emailError) {
-              console.error(
-                "Error resending project invitation email:",
-                emailError
-              );
-            }
-          });
-
-          return res.json({
-            success: true,
-            message: "Invitation resent successfully",
-            invitation: {
-              email: existingInvitation.email,
-              role: existingInvitation.role,
-              expiresAt: existingInvitation.expiresAt,
-            },
-          });
-        }
-      }
-
-      // Create new invitation for existing user
-      const invitation = new Invitation({
-        email: userToAdd.email,
-        project: projectId,
-        invitedBy: userId,
-        role,
+      // Create notification for the added member
+      const notification = new Notification({
+        user: userToAdd._id,
+        sender: userId,
+        type: "project_joined",
+        title: "Added to Project",
+        message: `You have been added to the project "${project.name}"`,
+        relatedProject: projectId,
       });
 
-      // Generate invitation token
-      invitation.generateToken();
-      await invitation.save();
+      await notification.save();
 
-      // Send invitation email (async, non-blocking)
+      // Send notification email to existing user (no password creation needed)
       setImmediate(async () => {
         try {
           await sendProjectInvitationEmail(
             userToAdd,
             project,
             req.user,
-            invitation.token
+            null // No token for existing users
           );
-          console.log(`Project invitation email sent to ${userToAdd.email}`);
+          console.log(
+            `Project notification email sent to existing user ${userToAdd.email}`
+          );
         } catch (emailError) {
-          console.error("Error sending project invitation email:", emailError);
+          console.error(
+            "Error sending project notification email:",
+            emailError
+          );
         }
       });
 
-      res.json({
+      // Populate the project with user details
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+
+      return res.json({
         success: true,
-        message: "Invitation sent successfully",
-        invitation: {
-          email: invitation.email,
-          role: invitation.role,
-          expiresAt: invitation.expiresAt,
-        },
+        message: "User added to project successfully",
+        project,
       });
     } else {
       // User doesn't exist - create invitation
@@ -522,12 +484,52 @@ const removeMember = async (req, res) => {
       });
     }
 
+    // Get user email before removing them
+    const userToRemove = await User.findById(memberId);
+    if (!userToRemove) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     // Remove member from project
     project.members = project.members.filter(
       (member) => member && member.user && member.user.toString() !== memberId
     );
 
     await project.save();
+
+    // Update invitation status to cancelled when user is removed
+    const invitationUpdateResult = await Invitation.updateMany(
+      {
+        project: projectId,
+        email: userToRemove.email,
+      },
+      { status: "cancelled" }
+    );
+
+    console.log(
+      `Updated ${invitationUpdateResult.modifiedCount} invitations to cancelled for user ${userToRemove.email} in project ${projectId}`
+    );
+
+    // Also check if there are any invitations that weren't updated
+    const remainingInvitations = await Invitation.find({
+      project: projectId,
+      email: userToRemove.email,
+      status: { $ne: "cancelled" },
+    });
+
+    if (remainingInvitations.length > 0) {
+      console.log(
+        `Warning: Found ${remainingInvitations.length} invitations that weren't updated to cancelled:`,
+        remainingInvitations.map((inv) => ({
+          id: inv._id,
+          status: inv.status,
+          email: inv.email,
+        }))
+      );
+    }
 
     // Remove user from all cards in this project
     await Card.updateMany(

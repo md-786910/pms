@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import { notificationAPI } from "../utils/api";
 
 const NotificationContext = createContext();
 
@@ -23,18 +23,21 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get("/api/notifications");
-      setNotifications(response.data);
+      console.log("🔔 Fetching notifications...");
+      const response = await notificationAPI.getNotifications();
+      console.log("📊 Notifications response:", response.data);
+      setNotifications(response.data.notifications || []);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("❌ Error fetching notifications:", error);
+      console.error("Error details:", error.response?.data || error.message);
     }
   };
 
   const markAsRead = async (notificationId) => {
     try {
-      await axios.put(`/api/notifications/${notificationId}/read`);
+      await notificationAPI.markAsRead(notificationId);
       setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
       );
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -43,7 +46,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put("/api/notifications/mark-all-read");
+      await notificationAPI.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
@@ -52,8 +55,8 @@ export const NotificationProvider = ({ children }) => {
 
   const deleteNotification = async (notificationId) => {
     try {
-      await axios.delete(`/api/notifications/${notificationId}`);
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      await notificationAPI.deleteNotification(notificationId);
+      setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
     } catch (error) {
       console.error("Error deleting notification:", error);
     }
@@ -61,7 +64,7 @@ export const NotificationProvider = ({ children }) => {
 
   const addNotification = async (type, message, userId = "1") => {
     try {
-      const response = await axios.post("/api/notifications", {
+      const response = await notificationAPI.createNotification({
         type,
         message,
         userId,

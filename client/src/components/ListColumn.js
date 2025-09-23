@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MoreVertical, Edit2, Trash2, Plus } from "lucide-react";
 import CardItem from "./CardItem";
+import ConfirmationModal from "./ConfirmationModal";
 
 const ListColumn = ({
   title,
@@ -20,6 +21,7 @@ const ListColumn = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const menuRef = useRef(null);
 
@@ -54,14 +56,13 @@ const ListColumn = ({
   };
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete the "${title}" column? All cards in this column will be moved to "To Do".`
-      )
-    ) {
-      onColumnDelete(status);
-    }
+    setShowDeleteConfirm(true);
     setShowMenu(false);
+  };
+
+  const confirmDelete = () => {
+    onColumnDelete(status);
+    setShowDeleteConfirm(false);
   };
 
   const handleAddCard = () => {
@@ -184,6 +185,19 @@ const ListColumn = ({
           <span>Add a card</span>
         </button>
       </div>
+
+      {/* Delete Column Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Column"
+        message={`Are you sure you want to delete the "${title}" column? All cards in this column will be moved to "To Do".`}
+        confirmText="Delete Column"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={false}
+      />
     </div>
   );
 };

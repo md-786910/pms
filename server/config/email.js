@@ -83,14 +83,14 @@ const emailTemplates = {
           }
           <div style="text-align: center; margin: 30px 0;">
             <a href="${invitationUrl}" style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              ${token ? "Create Account & Join Project" : "Accept Invitation"}
+              ${token ? "Create Account & Join Project" : "View Project"}
             </a>
           </div>
           <p style="color: #666; line-height: 1.6; font-size: 14px;">
             ${
               token
                 ? "Click the button above to create your account and join the project. This invitation will expire in 7 days."
-                : "Click the button above to accept the invitation and start collaborating on this project."
+                : "You have been added to this project! Click the button above to view and start collaborating."
             }
           </p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">

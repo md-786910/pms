@@ -16,12 +16,15 @@ import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { cardItemAPI } from "../utils/api";
 import CardModal from "./CardModal";
+import Avatar from "./Avatar";
+import ConfirmationModal from "./ConfirmationModal";
 
 const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
   const { users } = useUser();
   const { showToast } = useNotification();
   const [showModal, setShowModal] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(card.title);
@@ -172,17 +175,21 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
     setShowModal(true);
   };
 
-  const handleQuickDelete = async (e) => {
+  const handleQuickDelete = (e) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this card?")) {
-      try {
-        const { cardAPI } = await import("../utils/api");
-        await cardAPI.deleteCard(card._id);
-        onCardDeleted(card._id);
-        showToast("Card deleted successfully!", "success");
-      } catch (error) {
-        showToast("Failed to delete card", "error");
-      }
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmQuickDelete = async () => {
+    try {
+      const { cardAPI } = await import("../utils/api");
+      await cardAPI.deleteCard(card._id);
+      onCardDeleted(card._id);
+      showToast("Card deleted successfully!", "success");
+    } catch (error) {
+      showToast("Failed to delete card", "error");
+    } finally {
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -416,10 +423,9 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
                 {assignees.slice(0, 3).map((user) => (
                   <div
                     key={user.id}
-                    className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm ${user.color}`}
-                    title={user.name}
+                    className="border-2 border-white shadow-sm rounded-full"
                   >
-                    {user.avatar}
+                    <Avatar user={user} size="xs" showTooltip={true} />
                   </div>
                 ))}
                 {assignees.length > 3 && (
@@ -576,6 +582,19 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
           onStatusChange={onStatusChange}
         />
       )}
+
+      {/* Delete Card Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmQuickDelete}
+        title="Delete Card"
+        message={`Are you sure you want to delete "${card.title}"? This action cannot be undone.`}
+        confirmText="Delete Card"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={false}
+      />
     </>
   );
 };
