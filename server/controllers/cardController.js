@@ -7,6 +7,7 @@ const {
   sendCardAssignedEmail,
   sendCardUnassignedEmail,
 } = require("../config/email");
+const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
@@ -960,6 +961,86 @@ const addAttachment = async (req, res) => {
   }
 };
 
+// @route   POST /api/cards/:id/upload-files
+// @desc    Upload files to card
+// @access  Private
+const uploadFiles = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+    const uploadedFiles = req.files || [];
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    if (uploadedFiles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No files uploaded",
+      });
+    }
+
+    // Add uploaded files as attachments
+    const attachments = uploadedFiles.map((file) => ({
+      filename: file.filename,
+      originalName: file.originalName,
+      mimeType: file.mimeType,
+      size: file.size,
+      url: file.url,
+      uploadedBy: userId,
+    }));
+
+    card.attachments.push(...attachments);
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "files_uploaded",
+      user: userId,
+      timestamp: new Date(),
+      details: `Uploaded ${uploadedFiles.length} file(s)`,
+    });
+
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+
+    res.json({
+      success: true,
+      message: `${uploadedFiles.length} file(s) uploaded successfully`,
+      card,
+      uploadedFiles: attachments,
+    });
+  } catch (error) {
+    console.error("Upload files error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while uploading files",
+    });
+  }
+};
+
 // @route   DELETE /api/cards/:id/attachments/:attachmentId
 // @desc    Remove attachment from card
 // @access  Private
@@ -992,10 +1073,44 @@ const removeAttachment = async (req, res) => {
       });
     }
 
+    // Find the attachment to get file info before removing
+    const attachmentToRemove = card.attachments.find(
+      (attachment) => attachment._id.toString() === attachmentId
+    );
+
+    if (!attachmentToRemove) {
+      return res.status(404).json({
+        success: false,
+        message: "Attachment not found",
+      });
+    }
+
+    // Remove attachment from card
     card.attachments = card.attachments.filter(
       (attachment) => attachment._id.toString() !== attachmentId
     );
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "attachment_removed",
+      user: userId,
+      timestamp: new Date(),
+      details: `Removed attachment: ${attachmentToRemove.originalName}`,
+    });
+
     await card.save();
+
+    // Delete the physical file
+    const filePath = getFilePathFromUrl(attachmentToRemove.url);
+    const fileDeleted = deleteFile(filePath);
+
+    if (!fileDeleted) {
+      console.warn(`Failed to delete file: ${filePath}`);
+    }
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
 
     res.json({
       success: true,
@@ -1026,4 +1141,5 @@ module.exports = {
   removeLabel,
   addAttachment,
   removeAttachment,
+  uploadFiles,
 };

@@ -104,10 +104,14 @@ const CardModal = ({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const response = await cardAPI.updateCard(card._id, {
-        ...card,
-        ...formData,
-      });
+      // Only send the fields that can be updated
+      const updateData = {
+        title: formData.title,
+        description: formData.description,
+        dueDate: formData.dueDate,
+      };
+
+      const response = await cardAPI.updateCard(card._id, updateData);
 
       if (response.data.success) {
         onCardUpdated(response.data.card);
@@ -392,61 +396,83 @@ const CardModal = ({
     }
   };
 
-  const handleImageUpload = async (file) => {
-    if (!file) return;
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
 
-    // Check if file is an image
-    if (!file.type.startsWith("image/")) {
-      showToast("Please select a valid image file", "error");
+    // Check file count limit
+    if (files.length > 5) {
+      showToast("Maximum 5 files can be uploaded at once", "error");
       return;
     }
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Image size must be less than 5MB", "error");
-      return;
+    // Check file sizes (max 10MB each)
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        showToast(`File "${file.name}" size must be less than 10MB`, "error");
+        return;
+      }
     }
 
     try {
-      // Create a preview URL for immediate display
-      const previewUrl = URL.createObjectURL(file);
+      setLoading(true);
 
-      // For demo purposes, we'll create a mock attachment
-      // In a real app, you'd upload to a cloud service
-      const newAttachment = {
-        id: Date.now().toString(),
-        name: file.name,
-        url: previewUrl,
-        type: "image",
-        uploadedAt: new Date().toISOString(),
-        size: file.size,
-        mimeType: file.type,
-      };
+      // Create FormData for file upload
+      const formData = new FormData();
 
-      const updatedCard = {
-        ...card,
-        attachments: [...card.attachments, newAttachment],
-      };
-      onCardUpdated(updatedCard);
-      showToast("Image uploaded successfully!", "success");
+      // Append all files
+      for (const file of files) {
+        formData.append("images", file);
+      }
+
+      // Upload the files using the API
+      const response = await cardAPI.uploadFiles(card._id, formData);
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        const fileCount = files.length;
+        const imageCount = files.filter((f) =>
+          f.type.startsWith("image/")
+        ).length;
+        const docCount = fileCount - imageCount;
+
+        let message = `${fileCount} file(s) uploaded successfully!`;
+        if (imageCount > 0 && docCount > 0) {
+          message = `${imageCount} image(s) and ${docCount} document(s) uploaded successfully!`;
+        } else if (imageCount > 0) {
+          message = `${imageCount} image(s) uploaded successfully!`;
+        } else if (docCount > 0) {
+          message = `${docCount} document(s) uploaded successfully!`;
+        }
+
+        showToast(message, "success");
+      }
     } catch (error) {
-      console.error("Error uploading image:", error);
-      showToast("Failed to upload image", "error");
+      console.error("Error uploading files:", error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to upload files";
+      showToast(errorMessage, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      handleImageUpload(file);
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      handleFileUpload(files);
     }
+    // Reset the input value to allow selecting the same files again
+    event.target.value = "";
   };
 
   const isImageAttachment = (attachment) => {
     return (
       attachment.type === "image" ||
       attachment.mimeType?.startsWith("image/") ||
-      /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(attachment.name)
+      (attachment.originalName &&
+        /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(attachment.originalName)) ||
+      (attachment.filename &&
+        /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(attachment.filename))
     );
   };
 
@@ -458,6 +484,28 @@ const CardModal = ({
     return card.attachments.filter(
       (attachment) => !isImageAttachment(attachment)
     );
+  };
+
+  const getFileIcon = (attachment) => {
+    const mimeType = attachment.mimeType || "";
+    const fileName =
+      attachment.originalName || attachment.filename || attachment.name || "";
+
+    if (mimeType.includes("pdf")) return "📄";
+    if (mimeType.includes("word") || fileName.match(/\.(doc|docx)$/i))
+      return "📝";
+    if (mimeType.includes("excel") || fileName.match(/\.(xls|xlsx)$/i))
+      return "📊";
+    if (mimeType.includes("powerpoint") || fileName.match(/\.(ppt|pptx)$/i))
+      return "📋";
+    if (mimeType.includes("zip") || fileName.match(/\.(zip|rar|7z)$/i))
+      return "🗜️";
+    if (mimeType.includes("text") || fileName.match(/\.(txt|csv)$/i))
+      return "📄";
+    if (mimeType.includes("json") || fileName.match(/\.json$/i)) return "🔧";
+    if (mimeType.includes("xml") || fileName.match(/\.xml$/i)) return "📋";
+
+    return "📎"; // Default file icon
   };
 
   const handleSetPriority = (priority) => {
@@ -677,7 +725,7 @@ const CardModal = ({
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
                       {getImageAttachments().map((attachment) => (
                         <div
-                          key={attachment.id}
+                          key={attachment._id || attachment.id}
                           className="relative group cursor-pointer"
                           onClick={() => {
                             setSelectedImage(attachment);
@@ -685,9 +733,20 @@ const CardModal = ({
                           }}
                         >
                           <img
-                            src={attachment.url}
-                            alt={attachment.name}
+                            src={
+                              attachment.url.startsWith("http")
+                                ? attachment.url
+                                : `http://localhost:5000${attachment.url}`
+                            }
+                            alt={
+                              attachment.originalName ||
+                              attachment.filename ||
+                              attachment.name
+                            }
                             className="w-full h-28 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors duration-200"
+                            onError={(e) => {
+                              e.target.src = "/placeholder-image.png"; // Fallback image
+                            }}
                           />
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center">
                             <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
@@ -986,28 +1045,40 @@ const CardModal = ({
                 {/* File Attachments */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Files ({getOtherAttachments().length})
+                    Documents ({getOtherAttachments().length})
                   </label>
 
                   <div className="space-y-1 mb-2 max-h-40 overflow-y-auto">
                     {getOtherAttachments().length > 0 ? (
                       getOtherAttachments().map((attachment) => (
                         <div
-                          key={attachment.id}
+                          key={attachment._id || attachment.id}
                           className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors duration-200"
                         >
-                          <Paperclip className="w-3 h-3 text-gray-500" />
+                          <span className="text-lg">
+                            {getFileIcon(attachment)}
+                          </span>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 text-xs truncate">
-                              {attachment.name}
+                              {attachment.originalName ||
+                                attachment.filename ||
+                                attachment.name}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {new Date(attachment.uploadedAt).toLocaleString()}
+                              {attachment.uploadedAt
+                                ? new Date(
+                                    attachment.uploadedAt
+                                  ).toLocaleString()
+                                : "Unknown date"}
                             </p>
                           </div>
                           <div className="flex items-center space-x-1">
                             <a
-                              href={attachment.url}
+                              href={
+                                attachment.url.startsWith("http")
+                                  ? attachment.url
+                                  : `http://localhost:5000${attachment.url}`
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 text-xs"
@@ -1036,22 +1107,28 @@ const CardModal = ({
                   </div>
 
                   <div className="space-y-2">
-                    {/* Image Upload */}
-                    <div className="flex space-x-1">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                        id="image-upload"
-                      />
-                      <label
-                        htmlFor="image-upload"
-                        className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs cursor-pointer flex items-center justify-center space-x-1"
-                      >
-                        <Upload className="w-3 h-3" />
-                        <span>Upload Image</span>
-                      </label>
+                    {/* File Upload */}
+                    <div className="space-y-1">
+                      <div className="flex space-x-1">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,.7z,.json,.xml,.odt,.ods,.odp"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          id="file-upload"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs cursor-pointer flex items-center justify-center space-x-1"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>Upload Files (Max 5)</span>
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 text-center">
+                        Max 5 files, 10MB each. Supports images and documents.
+                      </p>
                     </div>
 
                     {/* URL Attachment */}
@@ -1205,7 +1282,9 @@ const CardModal = ({
                 <ImageIcon className="w-6 h-6 text-blue-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {selectedImage.name}
+                    {selectedImage.originalName ||
+                      selectedImage.filename ||
+                      selectedImage.name}
                   </h3>
                   <p className="text-sm text-gray-500">
                     {selectedImage.size &&
@@ -1219,8 +1298,16 @@ const CardModal = ({
               </div>
               <div className="flex items-center space-x-2">
                 <a
-                  href={selectedImage.url}
-                  download={selectedImage.name}
+                  href={
+                    selectedImage.url.startsWith("http")
+                      ? selectedImage.url
+                      : `http://localhost:5000${selectedImage.url}`
+                  }
+                  download={
+                    selectedImage.originalName ||
+                    selectedImage.filename ||
+                    selectedImage.name
+                  }
                   className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                   title="Download image"
                 >
@@ -1239,9 +1326,20 @@ const CardModal = ({
             <div className="p-4 max-h-[calc(90vh-120px)] overflow-y-auto">
               <div className="flex justify-center">
                 <img
-                  src={selectedImage.url}
-                  alt={selectedImage.name}
+                  src={
+                    selectedImage.url.startsWith("http")
+                      ? selectedImage.url
+                      : `http://localhost:5000${selectedImage.url}`
+                  }
+                  alt={
+                    selectedImage.originalName ||
+                    selectedImage.filename ||
+                    selectedImage.name
+                  }
                   className="max-w-full max-h-[calc(90vh-200px)] object-contain rounded-lg shadow-lg"
+                  onError={(e) => {
+                    e.target.src = "/placeholder-image.png"; // Fallback image
+                  }}
                 />
               </div>
             </div>

@@ -15,8 +15,10 @@ const {
   removeLabel,
   addAttachment,
   removeAttachment,
+  uploadFiles,
 } = require("../controllers/cardController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
+const { uploadMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -111,8 +113,17 @@ router.put(
     body("labels").optional().isArray().withMessage("Labels must be an array"),
     body("dueDate")
       .optional()
-      .isISO8601()
-      .withMessage("Due date must be a valid date"),
+      .custom((value) => {
+        if (value === "" || value === null || value === undefined) {
+          return true; // Allow empty values
+        }
+        return (
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ||
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/.test(value) ||
+          /^\d{4}-\d{2}-\d{2}$/.test(value)
+        );
+      })
+      .withMessage("Due date must be a valid date format"),
   ],
   updateCard
 );
@@ -234,6 +245,11 @@ router.post(
   ],
   addAttachment
 );
+
+// @route   POST /api/cards/:id/upload-files
+// @desc    Upload files to card
+// @access  Private
+router.post("/:id/upload-files", uploadMiddleware, uploadFiles);
 
 // @route   DELETE /api/cards/:id/attachments/:attachmentId
 // @desc    Remove attachment from card

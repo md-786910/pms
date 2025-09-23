@@ -126,6 +126,25 @@ export const cardAPI = {
     api.post(`/cards/${id}/attachments`, attachmentData),
   deleteAttachment: (id, attachmentId) =>
     api.delete(`/cards/${id}/attachments/${attachmentId}`),
+  uploadFiles: (id, formData) => {
+    const uploadApi = axios.create({
+      baseURL: "http://localhost:5000/api",
+      timeout: 30000, // 30 seconds for file uploads
+      withCredentials: true,
+    });
+
+    // Add auth token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      uploadApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return uploadApi.post(`/cards/${id}/upload-files`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };
 
 export const cardItemAPI = {
