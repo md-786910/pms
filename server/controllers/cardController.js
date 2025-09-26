@@ -640,7 +640,7 @@ const unassignUser = async (req, res) => {
 const addComment = async (req, res) => {
   try {
     const cardId = req.params.id;
-    const { comment } = req.body;
+    const { comment, mentions = [] } = req.body;
     const userId = req.user._id;
     const userRole = req.user.role;
 
@@ -684,6 +684,87 @@ const addComment = async (req, res) => {
     });
 
     await card.save();
+
+    // Process mentions
+    if (mentions && mentions.length > 0) {
+      console.log("Processing mentions:", mentions);
+
+      // Get mentioned users
+      const mentionedUserIds = mentions
+        .filter((mention) => mention.type === "user")
+        .map((mention) => mention.id);
+
+      // Get card assignees for @card mentions
+      const cardAssignees = card.assignees.map((assignee) =>
+        assignee.toString()
+      );
+
+      // Get project members for @board mentions
+      const projectMembers = project.members.map((member) =>
+        member.user.toString()
+      );
+
+      // Determine who to notify
+      let usersToNotify = [];
+
+      mentions.forEach((mention) => {
+        if (mention.type === "user" && mention.id !== userId.toString()) {
+          usersToNotify.push(mention.id);
+        } else if (mention.type === "group" && mention.id === "card") {
+          usersToNotify.push(
+            ...cardAssignees.filter((id) => id !== userId.toString())
+          );
+        } else if (mention.type === "group" && mention.id === "board") {
+          usersToNotify.push(
+            ...projectMembers.filter((id) => id !== userId.toString())
+          );
+        }
+      });
+
+      // Remove duplicates
+      usersToNotify = [...new Set(usersToNotify)];
+
+      console.log("Users to notify:", usersToNotify);
+
+      // Create notifications for mentioned users
+      if (usersToNotify.length > 0) {
+        const notifications = usersToNotify.map((userId) => ({
+          user: userId,
+          type: "comment_mention",
+          title: "You were mentioned in a comment",
+          message: `${req.user.name} mentioned you in a comment on "${card.title}"`,
+          relatedCard: card._id,
+          relatedProject: card.project,
+          isRead: false,
+        }));
+
+        await Notification.insertMany(notifications);
+        console.log(`Created ${notifications.length} mention notifications`);
+
+        // Send email notifications (async)
+        setImmediate(async () => {
+          try {
+            const { sendMentionEmail } = require("../config/email");
+            const mentionedUsers = await User.find({
+              _id: { $in: usersToNotify },
+            });
+
+            for (const mentionedUser of mentionedUsers) {
+              await sendMentionEmail(
+                mentionedUser,
+                req.user,
+                card,
+                comment,
+                project
+              );
+              console.log(`Mention email sent to ${mentionedUser.email}`);
+            }
+          } catch (emailError) {
+            console.error("Error sending mention emails:", emailError);
+          }
+        });
+      }
+    }
 
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");

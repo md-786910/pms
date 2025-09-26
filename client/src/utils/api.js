@@ -117,7 +117,8 @@ export const cardAPI = {
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),
-  addComment: (id, comment) => api.post(`/cards/${id}/comments`, { comment }),
+  addComment: (id, comment, mentions = []) =>
+    api.post(`/cards/${id}/comments`, { comment, mentions }),
   updateComment: (id, commentId, text) =>
     api.put(`/cards/${id}/comments/${commentId}`, { text }),
   addLabel: (id, labelData) => api.post(`/cards/${id}/labels`, labelData),
