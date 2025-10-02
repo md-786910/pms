@@ -19,7 +19,14 @@ import CardModal from "./CardModal";
 import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
 
-const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
+const CardItem = ({
+  card,
+  onCardUpdated,
+  onCardDeleted,
+  onStatusChange,
+  onCardClick,
+  projectId,
+}) => {
   const { users } = useUser();
   const { showToast } = useNotification();
   const [showModal, setShowModal] = useState(false);
@@ -172,7 +179,11 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
 
   const handleQuickEdit = (e) => {
     e.stopPropagation();
-    setShowModal(true);
+    if (onCardClick) {
+      onCardClick(card);
+    } else {
+      setShowModal(true);
+    }
   };
 
   const handleQuickDelete = (e) => {
@@ -207,7 +218,11 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
 
   const handleQuickAssign = (e) => {
     e.stopPropagation();
-    setShowModal(true);
+    if (onCardClick) {
+      onCardClick(card);
+    } else {
+      setShowModal(true);
+    }
   };
 
   const handleTitleEdit = (e) => {
@@ -389,21 +404,8 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
               "attachments"
             );
 
-            // Temporary test: Add a test image if no attachments exist
-            const testAttachments =
-              card.attachments?.length === 0
-                ? [
-                    {
-                      url: "https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=Test+Image",
-                      originalName: "test-image.png",
-                      mimeType: "image/png",
-                      filename: "test-image.png",
-                    },
-                  ]
-                : card.attachments;
-
             // Get the first image attachment
-            const firstImage = testAttachments?.find((attachment) => {
+            const firstImage = card.attachments?.find((attachment) => {
               console.log("Checking attachment:", attachment);
               // Check by MIME type first
               if (attachment.mimeType?.startsWith("image/")) {
@@ -497,11 +499,16 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
                   </div>
                 </div>
               );
-            } else if (card.description) {
+            } else if (
+              card.description &&
+              card.description.trim() &&
+              card.description !== "<p><br></p>" &&
+              card.description !== "<p></p>"
+            ) {
               console.log("No images found, showing description");
               return (
                 <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                  {card.description}
+                  {card.description.replace(/<[^>]*>/g, "")}
                 </p>
               );
             } else if (card.attachments && card.attachments.length > 0) {
@@ -705,7 +712,13 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
         {/* Click overlay for opening modal */}
         <div
           className="absolute inset-0 cursor-pointer"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            if (onCardClick) {
+              onCardClick(card);
+            } else {
+              setShowModal(true);
+            }
+          }}
         />
       </div>
 

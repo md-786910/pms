@@ -11,7 +11,7 @@ const cardSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [1000, "Description cannot be more than 1000 characters"],
+      maxlength: [10000, "Description cannot be more than 10000 characters"],
     },
     project: {
       type: mongoose.Schema.Types.ObjectId,

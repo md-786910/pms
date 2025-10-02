@@ -100,9 +100,14 @@ const ProjectCard = ({ project }) => {
             <h3 className="text-lg font-semibold group-hover:text-primary-100 transition-colors duration-200">
               {project.name}
             </h3>
-            <p className="text-primary-100 text-sm mt-1 line-clamp-2">
-              {project.description}
-            </p>
+            {project.description &&
+              project.description.trim() &&
+              project.description !== "<p><br></p>" &&
+              project.description !== "<p></p>" && (
+                <p className="text-primary-100 text-sm mt-1 line-clamp-2">
+                  {project.description.replace(/<[^>]*>/g, "")}
+                </p>
+              )}
           </div>
           <button
             onClick={(e) => e.preventDefault()}

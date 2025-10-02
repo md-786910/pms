@@ -48,8 +48,8 @@ router.post(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 1000 })
-      .withMessage("Description cannot be more than 1000 characters"),
+      .isLength({ max: 10000 })
+      .withMessage("Description cannot be more than 10000 characters"),
     body("project").isMongoId().withMessage("Valid project ID is required"),
     body("status").optional().isString().withMessage("Status must be a string"),
     body("priority")
@@ -95,8 +95,8 @@ router.put(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 1000 })
-      .withMessage("Description cannot be more than 1000 characters"),
+      .isLength({ max: 10000 })
+      .withMessage("Description cannot be more than 10000 characters"),
     body("status").optional().isString().withMessage("Status must be a string"),
     body("priority")
       .optional()

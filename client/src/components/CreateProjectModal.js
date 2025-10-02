@@ -89,9 +89,9 @@ const CreateProjectModal = ({ onClose }) => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={3}
-                placeholder="Enter project description"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] resize-y"
+                placeholder="Enter project description (use @ to mention someone, # for tags)"
+                rows={4}
               />
             </div>
           </div>

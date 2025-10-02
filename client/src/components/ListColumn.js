@@ -14,6 +14,8 @@ const ListColumn = ({
   onCardUpdated,
   onCardDeleted,
   onStatusChange,
+  onCardClick,
+  projectId,
   onColumnRename,
   onColumnDelete,
   onAddCard,
@@ -161,6 +163,8 @@ const ListColumn = ({
             onCardUpdated={onCardUpdated}
             onCardDeleted={onCardDeleted}
             onStatusChange={onStatusChange}
+            onCardClick={onCardClick}
+            projectId={projectId}
           />
         ))}
 

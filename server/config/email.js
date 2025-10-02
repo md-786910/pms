@@ -222,6 +222,53 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  mentionEmail: (
+    mentionedUserName,
+    commenterName,
+    cardTitle,
+    projectName,
+    commentText,
+    cardUrl
+  ) => ({
+    subject: `You were mentioned in a comment: "${cardTitle}" - ${projectName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">💬 Mention Notification</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${mentionedUserName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            <strong>${commenterName}</strong> mentioned you in a comment on the card 
+            <strong>"${cardTitle}"</strong> in project <strong>"${projectName}"</strong>.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 10px 0; font-size: 18px;">💬 Comment</h3>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff;">
+              <p style="color: #495057; margin: 0; line-height: 1.5;">${commentText}</p>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cardUrl}" style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Card & Reply
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            Click the button above to view the card and respond to the comment.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 // Email sending functions
@@ -291,7 +338,7 @@ const sendWelcomeEmail = async (user) => {
 const sendCardAssignedEmail = async (assignee, card, project, assignedBy) => {
   const cardUrl = `${
     process.env.CLIENT_URL || "http://localhost:3000"
-  }/project/${project._id}`;
+  }/project/${project._id}/card/${card._id}`;
 
   const template = emailTemplates.cardAssigned(
     assignee.name,
@@ -312,7 +359,7 @@ const sendCardUnassignedEmail = async (
 ) => {
   const cardUrl = `${
     process.env.CLIENT_URL || "http://localhost:3000"
-  }/project/${project._id}`;
+  }/project/${project._id}/card/${card._id}`;
 
   const template = emailTemplates.cardUnassigned(
     assignee.name,
@@ -325,6 +372,29 @@ const sendCardUnassignedEmail = async (
   return await sendEmail(assignee.email, template.subject, template.html);
 };
 
+const sendMentionEmail = async (
+  mentionedUser,
+  commenter,
+  card,
+  commentText,
+  project
+) => {
+  const cardUrl = `${
+    process.env.CLIENT_URL || "http://localhost:3000"
+  }/project/${project._id}/card/${card._id}`;
+
+  const template = emailTemplates.mentionEmail(
+    mentionedUser.name,
+    commenter.name,
+    card.title,
+    project.name,
+    commentText,
+    cardUrl
+  );
+
+  return await sendEmail(mentionedUser.email, template.subject, template.html);
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -333,4 +403,5 @@ module.exports = {
   sendWelcomeEmail,
   sendCardAssignedEmail,
   sendCardUnassignedEmail,
+  sendMentionEmail,
 };

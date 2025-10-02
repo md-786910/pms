@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, X, Filter, Calendar, User, Tag, Hash } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
 import { cardAPI } from "../utils/api";
@@ -12,6 +13,7 @@ const AdvancedSearch = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const searchRef = useRef(null);
+  const navigate = useNavigate();
   const { projects } = useProject();
   const { user } = useUser();
 
@@ -79,6 +81,12 @@ const AdvancedSearch = () => {
           try {
             const response = await cardAPI.getCards(project._id);
             if (response.data.success) {
+              // Get columns to map status IDs to readable names
+              const columnsResponse = await import("../utils/api").then((api) =>
+                api.columnAPI.getColumns(project._id)
+              );
+              const columns = columnsResponse.data.columns || [];
+
               const cardResults =
                 response.data.cards
                   ?.filter(
@@ -86,24 +94,38 @@ const AdvancedSearch = () => {
                       card.title?.toLowerCase().includes(query.toLowerCase()) ||
                       card.description
                         ?.toLowerCase()
+                        .replace(/<[^>]*>/g, "") // Strip HTML tags for search
                         .includes(query.toLowerCase()) ||
                       card.status?.toLowerCase().includes(query.toLowerCase())
                   )
-                  .map((card) => ({
-                    id: card._id,
-                    type: "card",
-                    title: card.title,
-                    subtitle: card.description || "No description",
-                    status: card.status,
-                    icon: Tag,
-                    url: `/project/${project._id}`,
-                    metadata: {
-                      project: project.name,
-                      assignees: card.assignees?.length || 0,
-                      priority: card.priority,
-                      dueDate: card.dueDate,
-                    },
-                  })) || [];
+                  .map((card) => {
+                    // Find readable column name for status
+                    const column = columns.find(
+                      (col) => col.status === card.status
+                    );
+                    const readableStatus = column ? column.name : card.status;
+
+                    // Strip HTML tags from description for display
+                    const cleanDescription = card.description
+                      ? card.description.replace(/<[^>]*>/g, "").trim()
+                      : "No description";
+
+                    return {
+                      id: card._id,
+                      type: "card",
+                      title: card.title,
+                      subtitle: cleanDescription,
+                      status: readableStatus,
+                      icon: Tag,
+                      url: `/project/${project._id}/card/${card._id}`, // Direct card link
+                      metadata: {
+                        project: project.name,
+                        assignees: card.assignees?.length || 0,
+                        priority: card.priority,
+                        dueDate: card.dueDate,
+                      },
+                    };
+                  }) || [];
 
               results.push(...cardResults);
             }
@@ -144,8 +166,8 @@ const AdvancedSearch = () => {
   }, [searchQuery, activeFilter, projects]);
 
   const handleResultClick = (result) => {
-    // Navigate to the result
-    window.location.href = result.url;
+    // Navigate to the result using React Router
+    navigate(result.url);
     setIsOpen(false);
     setSearchQuery("");
     setSearchResults([]);

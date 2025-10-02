@@ -1,23 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   X,
-  Calendar,
-  Users,
-  MessageSquare,
-  Paperclip,
-  Plus,
   Edit2,
   Edit,
   Trash2,
   Save,
   X as XIcon,
-  Tag,
   CheckSquare,
-  Clock,
   Image as ImageIcon,
   Upload,
   Eye,
   Download,
+  Plus,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -26,8 +20,8 @@ import { cardAPI, cardItemAPI } from "../utils/api";
 import Avatar from "./Avatar";
 import AssignUserModal from "./AssignUserModal";
 import ConfirmationModal from "./ConfirmationModal";
-import MentionDropdown from "./MentionDropdown";
-import { useMentions } from "../hooks/useMentions";
+import SimpleQuillEditor from "./SimpleQuillEditor";
+import SimpleCommentEditor from "./SimpleCommentEditor";
 
 const CardModal = ({
   card,
@@ -40,20 +34,10 @@ const CardModal = ({
   const { currentProject } = useProject();
   const { showToast } = useNotification();
 
-  // Mention functionality
+  // Mention functionality - now handled by QuillEditor
   const handleMentionSelect = (mention, newText) => {
     setMentions((prev) => [...prev, mention]);
   };
-
-  const {
-    showMentions,
-    mentionPosition,
-    mentionQuery,
-    textRef: commentTextRef,
-    handleTextChange: handleCommentTextChange,
-    handleMentionSelect: handleCommentMentionSelect,
-    closeMentions: closeCommentMentions,
-  } = useMentions(handleMentionSelect);
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -128,6 +112,52 @@ const CardModal = ({
         );
       })
       .filter(Boolean);
+  };
+
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 59, g: 130, b: 246 }; // Default blue
+  };
+
+  // Render comment text with styled mentions
+  const renderCommentWithMentions = (text) => {
+    if (!text) return "";
+
+    // Split text by mentions (@username)
+    const parts = text.split(/(@\w+)/g);
+
+    return parts
+      .map((part, index) => {
+        if (part.startsWith("@")) {
+          const username = part.substring(1);
+          const user = currentProject?.members?.find(
+            (member) =>
+              member.user.name.toLowerCase().replace(/\s+/g, "") ===
+              username.toLowerCase()
+          );
+
+          if (user) {
+            const userColor = user.user.color || "#3b82f6";
+            // Convert hex to RGB for better opacity control
+            const rgb = hexToRgb(userColor);
+            const backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`;
+
+            return `<span style="background-color: ${backgroundColor}; color: ${userColor}; padding: 2px 8px; border-radius: 6px; font-weight: 600; display: inline-block; margin: 0 2px; font-size: 14px; line-height: 1.2; border: 1px solid ${userColor}20; box-shadow: 0 1px 2px ${userColor}20; vertical-align: baseline; text-decoration: none;">${part}</span>`;
+          } else {
+            // Show unstyled mention if user not found
+            return `<span style="color: #ef4444; font-weight: 500;">${part}</span>`;
+          }
+        }
+        return part;
+      })
+      .join("");
   };
 
   const handleSave = async () => {
@@ -1214,639 +1244,72 @@ const CardModal = ({
                     )}
                   </div>
 
-                  {isEditing ? (
-                    <div className="border border-gray-300 rounded-lg overflow-hidden">
-                      {/* Rich Text Toolbar */}
-                      <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (showRichText) {
-                                const selection = window.getSelection();
-                                if (selection.rangeCount > 0) {
-                                  const range = selection.getRangeAt(0);
-                                  const text = range.toString();
-                                  if (text) {
-                                    // Toggle text case
-                                    const newText =
-                                      text === text.toUpperCase()
-                                        ? text.toLowerCase()
-                                        : text.toUpperCase();
-                                    document.execCommand(
-                                      "insertText",
-                                      false,
-                                      newText
-                                    );
-                                  }
-                                }
-                              }
-                            }}
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Text case (Aa)"
-                          >
-                            <span className="text-sm font-medium">Aa</span>
-                          </button>
-                          <div className="w-px h-4 bg-gray-300"></div>
-                          <button
-                            type="button"
-                            onClick={handleBold}
-                            className={`p-1.5 rounded transition-colors duration-200 font-bold ${
-                              activeFormatting.bold
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title="Bold"
-                          >
-                            B
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleItalic}
-                            className={`p-1.5 rounded transition-colors duration-200 italic ${
-                              activeFormatting.italic
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title="Italic"
-                          >
-                            I
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (showRichText) {
-                                document.execCommand("underline", false, null);
-                                setTimeout(() => {
-                                  const editor =
-                                    document.querySelector(".rich-text-editor");
-                                  if (editor) {
-                                    const markdown = htmlToMarkdown(
-                                      editor.innerHTML
-                                    );
-                                    setFormData({
-                                      ...formData,
-                                      description: markdown,
-                                    });
-                                  }
-                                }, 10);
-                              } else {
-                                insertMarkdown(
-                                  "<u>",
-                                  "</u>",
-                                  "underlined text"
-                                );
-                              }
-                            }}
-                            className={`p-1.5 rounded transition-colors duration-200 ${
-                              activeFormatting.underline
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title="Underline"
-                          >
-                            <span className="text-sm font-medium underline">
-                              U
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleClearFormatting}
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Clear formatting"
-                          >
-                            🧹
-                          </button>
-                        </div>
-
-                        <div className="w-px h-4 bg-gray-300"></div>
-
-                        <div className="flex items-center space-x-1">
-                          <button
-                            type="button"
-                            onClick={handleList}
-                            className={`p-1.5 rounded transition-colors duration-200 ${
-                              activeFormatting.list
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title="Lists"
-                          >
-                            <span className="text-sm">☰</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleLink}
-                            className={`p-1.5 rounded transition-colors duration-200 ${
-                              activeFormatting.link
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title="Link"
-                          >
-                            🔗
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (showRichText) {
-                                const url = prompt("Enter image URL:");
-                                if (url) {
-                                  document.execCommand(
-                                    "insertImage",
-                                    false,
-                                    url
-                                  );
-                                  // Update the form data after inserting image
-                                  setTimeout(() => {
-                                    const editor =
-                                      document.querySelector(
-                                        ".rich-text-editor"
-                                      );
-                                    if (editor) {
-                                      const markdown = htmlToMarkdown(
-                                        editor.innerHTML
-                                      );
-                                      setFormData({
-                                        ...formData,
-                                        description: markdown,
-                                      });
-                                    }
-                                  }, 10);
-                                }
-                              } else {
-                                insertMarkdown(
-                                  "![",
-                                  `](${prompt("Enter image URL:") || "url"})`,
-                                  "alt text"
-                                );
-                              }
-                            }}
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Insert Image"
-                          >
-                            🖼️
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (showRichText) {
-                                const options = [
-                                  "Horizontal Rule",
-                                  "Code Block",
-                                  "Quote",
-                                  "Table",
-                                ];
-                                const choice = prompt(
-                                  `Choose content type:\n1. Horizontal Rule\n2. Code Block\n3. Quote\n4. Table\n\nEnter number (1-4):`
-                                );
-
-                                switch (choice) {
-                                  case "1":
-                                    document.execCommand(
-                                      "insertHorizontalRule",
-                                      false,
-                                      null
-                                    );
-                                    break;
-                                  case "2":
-                                    const code = prompt("Enter code:");
-                                    if (code) {
-                                      document.execCommand(
-                                        "insertText",
-                                        false,
-                                        `\n\`\`\`\n${code}\n\`\`\`\n`
-                                      );
-                                    }
-                                    break;
-                                  case "3":
-                                    const quote = prompt("Enter quote text:");
-                                    if (quote) {
-                                      document.execCommand(
-                                        "formatBlock",
-                                        false,
-                                        "blockquote"
-                                      );
-                                      document.execCommand(
-                                        "insertText",
-                                        false,
-                                        quote
-                                      );
-                                    }
-                                    break;
-                                  case "4":
-                                    document.execCommand(
-                                      "insertText",
-                                      false,
-                                      "\n| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Row 1    | Row 1    | Row 1    |\n| Row 2    | Row 2    | Row 2    |\n"
-                                    );
-                                    break;
-                                }
-
-                                // Update the form data after inserting content
-                                setTimeout(() => {
-                                  const editor =
-                                    document.querySelector(".rich-text-editor");
-                                  if (editor) {
-                                    const markdown = htmlToMarkdown(
-                                      editor.innerHTML
-                                    );
-                                    setFormData({
-                                      ...formData,
-                                      description: markdown,
-                                    });
-                                  }
-                                }, 10);
-                              } else {
-                                const options = [
-                                  "Horizontal Rule",
-                                  "Code Block",
-                                  "Quote",
-                                ];
-                                const choice = prompt(
-                                  `Choose content type:\n1. Horizontal Rule\n2. Code Block\n3. Quote\n\nEnter number (1-3):`
-                                );
-
-                                switch (choice) {
-                                  case "1":
-                                    insertMarkdown("\n---\n", "", "");
-                                    break;
-                                  case "2":
-                                    const code = prompt("Enter code:");
-                                    if (code) {
-                                      insertMarkdown(
-                                        "\n```\n",
-                                        "\n```\n",
-                                        code
-                                      );
-                                    }
-                                    break;
-                                  case "3":
-                                    const quote = prompt("Enter quote text:");
-                                    if (quote) {
-                                      insertMarkdown("\n> ", "", quote);
-                                    }
-                                    break;
-                                }
-                              }
-                            }}
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Add content"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const url = prompt("Enter attachment URL:");
-                              if (url) {
-                                const filename =
-                                  url.split("/").pop() || "attachment";
-                                if (showRichText) {
-                                  document.execCommand(
-                                    "insertText",
-                                    false,
-                                    `📎 ${filename}`
-                                  );
-                                  // Update the form data after inserting attachment
-                                  setTimeout(() => {
-                                    const editor =
-                                      document.querySelector(
-                                        ".rich-text-editor"
-                                      );
-                                    if (editor) {
-                                      const markdown = htmlToMarkdown(
-                                        editor.innerHTML
-                                      );
-                                      setFormData({
-                                        ...formData,
-                                        description: markdown,
-                                      });
-                                    }
-                                  }, 10);
-                                } else {
-                                  insertMarkdown(
-                                    `📎 [${filename}](${url})`,
-                                    "",
-                                    ""
-                                  );
-                                }
-                              }
-                            }}
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Insert Attachment"
-                          >
-                            <Paperclip className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        <div className="flex-1"></div>
-
-                        <div className="flex items-center space-x-1">
-                          <button
-                            type="button"
-                            onClick={() => setShowRichText(!showRichText)}
-                            className={`p-1.5 rounded transition-colors duration-200 ${
-                              showRichText
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title={
-                              showRichText ? "Markdown mode" : "Rich text mode"
-                            }
-                          >
-                            <span className="text-sm font-medium">
-                              {showRichText ? "M↓" : "✏️"}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowPreview(!showPreview)}
-                            className={`p-1.5 rounded transition-colors duration-200 ${
-                              showPreview
-                                ? "bg-blue-100 text-blue-600"
-                                : "hover:bg-gray-200"
-                            }`}
-                            title={showPreview ? "Edit mode" : "Preview mode"}
-                          >
-                            <span className="text-sm font-medium">
-                              {showPreview ? "✏️" : "👁️"}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Markdown"
-                          >
-                            <span className="text-sm font-medium">M↓</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowFormattingHelp(!showFormattingHelp)
-                            }
-                            className="p-1.5 rounded hover:bg-gray-200 transition-colors duration-200"
-                            title="Formatting help"
-                          >
-                            <span className="text-sm">?</span>
-                          </button>
-                        </div>
+                  {/* Description Content */}
+                  <div className="relative">
+                    {isEditing ? (
+                      <div className="simple-quill-editor description-editor">
+                        <SimpleQuillEditor
+                          value={formData.description || ""}
+                          onChange={(content) => {
+                            setFormData({
+                              ...formData,
+                              description: content,
+                            });
+                          }}
+                          placeholder="Add a description..."
+                        />
                       </div>
-
-                      {/* Text Editor / Rich Text / Preview */}
-                      <div className="relative">
-                        {showPreview ? (
+                    ) : (
+                      <div
+                        className="w-full p-4 min-h-[80px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        {formData.description && formData.description.trim() ? (
                           <div
-                            className="w-full p-4 min-h-[120px] prose prose-sm max-w-none markdown-preview"
+                            className="prose prose-sm max-w-none"
                             style={{
                               fontSize: "14px",
                               lineHeight: "1.5",
                               color: "#374151",
                             }}
                             dangerouslySetInnerHTML={{
-                              __html:
-                                renderMarkdown(formData.description) ||
-                                '<p style="color: #6b7280; font-style: italic;">No content to preview</p>',
-                            }}
-                          />
-                        ) : showRichText ? (
-                          <div
-                            ref={(el) => {
-                              if (el && !el.dataset.initialized) {
-                                el.dataset.initialized = "true";
-                                // Clean up any existing malformed HTML
-                                const cleanDescription = formData.description
-                                  ? htmlToMarkdown(formData.description)
-                                  : "";
-                                el.innerHTML = cleanDescription
-                                  ? renderMarkdown(cleanDescription)
-                                  : "<p><br></p>";
-                              }
-                            }}
-                            className="w-full p-4 min-h-[120px] prose prose-sm max-w-none markdown-preview rich-text-editor"
-                            style={{
-                              fontSize: "14px",
-                              lineHeight: "1.5",
-                              color: "#374151",
-                              border: "none",
-                              outline: "none",
-                              resize: "none",
-                              whiteSpace: "pre-wrap",
-                              wordWrap: "break-word",
-                            }}
-                            contentEditable
-                            suppressContentEditableWarning
-                            onInput={(e) => {
-                              const html = e.target.innerHTML;
-                              // Clean up malformed HTML before converting
-                              const cleanHtml = html
-                                .replace(/<div[^>]*><\/div>/g, "") // Remove empty divs
-                                .replace(/<div[^>]*>/g, "") // Remove div opening tags
-                                .replace(/<\/div>/g, "") // Remove div closing tags
-                                .replace(/<span[^>]*>/g, "") // Remove span opening tags
-                                .replace(/<\/span>/g, "") // Remove span closing tags
-                                .replace(/<font[^>]*>/g, "") // Remove font opening tags
-                                .replace(/<\/font>/g, "") // Remove font closing tags
-                                .replace(/<br\s*\/?>/g, "\n") // Convert br to newlines
-                                .replace(/&nbsp;/g, " "); // Convert non-breaking spaces
-
-                              // Convert HTML back to markdown for storage
-                              const markdown = htmlToMarkdown(cleanHtml);
-                              setFormData({
-                                ...formData,
-                                description: markdown,
-                              });
-                            }}
-                            onKeyDown={(e) => {
-                              // Handle keyboard shortcuts
-                              if (e.ctrlKey || e.metaKey) {
-                                switch (e.key) {
-                                  case "b":
-                                    e.preventDefault();
-                                    handleBold();
-                                    break;
-                                  case "i":
-                                    e.preventDefault();
-                                    handleItalic();
-                                    break;
-                                  case "k":
-                                    e.preventDefault();
-                                    handleLink();
-                                    break;
-                                  case "u":
-                                    e.preventDefault();
-                                    document.execCommand(
-                                      "underline",
-                                      false,
-                                      null
-                                    );
-                                    setTimeout(() => {
-                                      const editor =
-                                        document.querySelector(
-                                          ".rich-text-editor"
-                                        );
-                                      if (editor) {
-                                        const markdown = htmlToMarkdown(
-                                          editor.innerHTML
-                                        );
-                                        setFormData({
-                                          ...formData,
-                                          description: markdown,
-                                        });
-                                      }
-                                    }, 10);
-                                    break;
-                                }
-                              }
-                              // Handle Enter key for lists
-                              if (e.key === "Enter") {
-                                const selection = window.getSelection();
-                                if (selection.rangeCount > 0) {
-                                  const range = selection.getRangeAt(0);
-                                  const container =
-                                    range.commonAncestorContainer;
-                                  const element =
-                                    container.nodeType === Node.TEXT_NODE
-                                      ? container.parentElement
-                                      : container;
-
-                                  if (element.closest("li")) {
-                                    // Already in a list, let browser handle it
-                                    return;
-                                  }
-                                }
-                              }
-                            }}
-                            onSelectionChange={() => {
-                              // Update active formatting based on selection
-                              const selection = window.getSelection();
-                              if (selection.rangeCount > 0) {
-                                const range = selection.getRangeAt(0);
-                                const container = range.commonAncestorContainer;
-                                const element =
-                                  container.nodeType === Node.TEXT_NODE
-                                    ? container.parentElement
-                                    : container;
-
-                                setActiveFormatting({
-                                  bold: element.closest("strong, b") !== null,
-                                  italic: element.closest("em, i") !== null,
-                                  underline: element.closest("u") !== null,
-                                  header:
-                                    element.closest("h1, h2, h3") !== null,
-                                  list: element.closest("ul, ol, li") !== null,
-                                  link: element.closest("a") !== null,
-                                });
-                              }
+                              __html: formData.description,
                             }}
                           />
                         ) : (
-                          <textarea
-                            value={formData.description}
-                            onChange={(e) => {
-                              setFormData({
-                                ...formData,
-                                description: e.target.value,
-                              });
-                              // Check formatting after a short delay to allow cursor position to update
-                              setTimeout(checkActiveFormatting, 10);
-                            }}
-                            onSelect={checkActiveFormatting}
-                            onKeyUp={checkActiveFormatting}
-                            onMouseUp={checkActiveFormatting}
-                            className="w-full p-4 border-none outline-none resize-none text-sm leading-relaxed"
-                            rows={6}
-                            placeholder="Use Markdown shortcuts to format your page as you type, like * for lists, # for headers, and --- for a horizontal rule."
-                            style={{ minHeight: "120px" }}
-                          />
-                        )}
-
-                        {/* Character count indicator */}
-                        <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-                          {formData.description.length} characters
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="bg-gray-50 border-t border-gray-200 px-3 py-2 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Save className="w-4 h-4" />
-                            <span>{loading ? "Saving..." : "Save"}</span>
-                          </button>
-                          <button
-                            onClick={() => setIsEditing(false)}
-                            className="text-gray-600 hover:text-gray-700 font-medium py-2 px-3 rounded-lg transition-colors duration-200 text-sm"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  "Clear all text? This cannot be undone."
-                                )
-                              ) {
-                                setFormData({ ...formData, description: "" });
-                              }
-                            }}
-                            className="text-red-600 hover:text-red-700 font-medium py-2 px-3 rounded-lg transition-colors duration-200 text-sm"
-                            title="Clear all text"
-                          >
-                            Clear All
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowFormattingHelp(!showFormattingHelp)
-                          }
-                          className="text-gray-500 hover:text-gray-600 text-sm"
-                        >
-                          Formatting help
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      className="p-4 bg-gray-50 rounded-lg min-h-[120px] cursor-pointer hover:bg-gray-100 transition-colors duration-200 group"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      {card.description ? (
-                        <div
-                          className="prose prose-sm max-w-none markdown-preview"
-                          style={{
-                            fontSize: "14px",
-                            lineHeight: "1.5",
-                            color: "#374151",
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html: renderMarkdown(card.description),
-                          }}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-20 text-gray-500">
-                          <div className="text-center">
-                            <Edit2 className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">
-                              Click to add a description...
-                            </p>
+                          <div className="flex items-center text-gray-500 text-sm">
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            <span>Click to edit</span>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Edit hint */}
-                      <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <p className="text-xs text-gray-500 flex items-center space-x-1">
-                          <Edit2 className="w-3 h-3" />
-                          <span>Click to edit</span>
-                        </p>
+                        )}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons - Only show when editing */}
+                  {isEditing && (
+                    <div className="mt-3 flex items-center justify-end space-x-2">
+                      <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>Save</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditing(false);
+                          // Reset to original description if user cancels
+                          setFormData({
+                            ...formData,
+                            description: card.description,
+                          });
+                        }}
+                        className="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1905,12 +1368,14 @@ const CardModal = ({
                 )}
 
                 {/* Comments */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Comments ({card.comments.length})
-                  </label>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Comments ({card.comments.length})
+                    </h3>
+                  </div>
 
-                  <div className="space-y-2 mb-3 max-h-64 overflow-y-auto pr-2">
+                  <div className="space-y-3 mb-6 max-h-64 overflow-y-auto pr-2">
                     {card.comments
                       .sort((a, b) => {
                         // Sort by updatedAt if available, otherwise by timestamp
@@ -1924,7 +1389,7 @@ const CardModal = ({
                         return (
                           <div
                             key={comment._id || comment.id}
-                            className="bg-gray-50 rounded-lg p-3 group hover:bg-gray-100 transition-colors duration-200"
+                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-3">
@@ -2001,60 +1466,64 @@ const CardModal = ({
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-sm text-gray-700">
-                                {comment.text}
-                              </p>
+                              <div
+                                className={`text-sm text-gray-700 prose prose-sm max-w-none ${
+                                  (comment.text &&
+                                    comment.text.includes(
+                                      "moved this card from"
+                                    )) ||
+                                  (comment.text &&
+                                    comment.text.includes("assigned")) ||
+                                  (comment.text &&
+                                    comment.text.includes("removed"))
+                                    ? "activity-comment"
+                                    : ""
+                                }`}
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    renderCommentWithMentions(comment.text) ||
+                                    "<p><br></p>",
+                                }}
+                              />
                             )}
                           </div>
                         );
                       })}
                   </div>
 
-                  <div className="flex space-x-2 relative">
-                    <input
-                      ref={commentTextRef}
-                      type="text"
-                      value={commentText}
-                      onChange={(e) => {
-                        setCommentText(e.target.value);
-                        handleCommentTextChange(e);
-                      }}
-                      placeholder="Add a comment... (use @ to mention someone)"
-                      className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white shadow-sm"
-                      onKeyPress={(e) =>
-                        e.key === "Enter" && handleAddComment()
-                      }
-                      onBlur={() => {
-                        // Delay closing mentions to allow for selection
-                        setTimeout(closeCommentMentions, 200);
-                      }}
-                    />
-
-                    {/* Mention Dropdown */}
-                    <MentionDropdown
-                      isOpen={showMentions}
-                      position={mentionPosition}
-                      onClose={closeCommentMentions}
-                      onSelect={handleCommentMentionSelect}
-                      projectMembers={currentProject?.members || []}
-                      currentUser={user}
-                      cardMembers={getAssignees()}
-                      mentionQuery={mentionQuery}
-                    />
-                    <button
-                      onClick={handleAddComment}
-                      disabled={!commentText.trim()}
-                      className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-3 px-4 rounded-md transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Add</span>
-                    </button>
+                  <div className="space-y-4">
+                    <div className="comment-editor">
+                      <SimpleCommentEditor
+                        value={commentText || ""}
+                        onChange={(content) => {
+                          console.log("SimpleCommentEditor onChange:", content);
+                          setCommentText(content);
+                        }}
+                        onMentionSelect={(mention) => {
+                          console.log("Mention selected:", mention);
+                          setMentions((prev) => [...prev, mention]);
+                        }}
+                        onSend={(content) => {
+                          console.log("Sending comment:", content);
+                          setCommentText(content);
+                          handleAddComment();
+                        }}
+                        placeholder="Add a comment... (use @ to mention someone)"
+                        projectMembers={(() => {
+                          const members = currentProject?.members || [];
+                          console.log("Project members for mentions:", members);
+                          return members;
+                        })()}
+                        currentUser={user}
+                        cardMembers={getAssignees()}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Sidebar */}
-              <div className="space-y-6">
+              <div className="lg:col-span-1 space-y-6">
                 {/* Status */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">

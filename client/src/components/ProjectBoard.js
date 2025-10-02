@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, MoreVertical, ChevronRight } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
@@ -7,9 +7,11 @@ import { cardAPI, columnAPI } from "../utils/api";
 import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
+import CardModal from "./CardModal";
 
 const ProjectBoard = () => {
-  const { id } = useParams();
+  const { id, projectId, cardId } = useParams();
+  const navigate = useNavigate();
   const { currentProject, fetchProject, loading } = useProject();
   const { showToast } = useNotification();
   const [cards, setCards] = useState([]);
@@ -26,13 +28,49 @@ const ProjectBoard = () => {
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnColor, setNewColumnColor] = useState("gray");
 
+  // Card modal state
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [showCardModal, setShowCardModal] = useState(false);
+
+  // Determine the actual project ID
+  const actualProjectId = projectId || id;
+
   useEffect(() => {
-    if (id) {
-      fetchProject(id);
+    if (actualProjectId) {
+      fetchProject(actualProjectId);
       fetchCards();
       fetchColumns();
     }
-  }, [id]);
+  }, [actualProjectId]);
+
+  // Handle card modal opening from URL
+  useEffect(() => {
+    if (cardId && cards.length > 0) {
+      const card = cards.find((c) => c._id === cardId);
+      if (card) {
+        setSelectedCard(card);
+        setShowCardModal(true);
+      }
+    } else if (!cardId && showCardModal) {
+      // If cardId is removed from URL, close the modal
+      setShowCardModal(false);
+      setSelectedCard(null);
+    }
+  }, [cardId, cards, showCardModal]);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      // When user navigates back/forward, check if we should close the modal
+      if (!cardId && showCardModal) {
+        setShowCardModal(false);
+        setSelectedCard(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [cardId, showCardModal]);
 
   // Check scroll state when columns change
   useEffect(() => {
@@ -44,8 +82,8 @@ const ProjectBoard = () => {
 
   const fetchCards = async () => {
     try {
-      console.log("Fetching cards for project:", id);
-      const response = await cardAPI.getCards(id);
+      console.log("Fetching cards for project:", actualProjectId);
+      const response = await cardAPI.getCards(actualProjectId);
       console.log("Cards response:", response);
       setCards(response.data.cards || []);
     } catch (error) {
@@ -59,8 +97,8 @@ const ProjectBoard = () => {
 
   const fetchColumns = async () => {
     try {
-      console.log("Fetching columns for project:", id);
-      const response = await columnAPI.getColumns(id);
+      console.log("Fetching columns for project:", actualProjectId);
+      const response = await columnAPI.getColumns(actualProjectId);
       console.log("Columns response:", response);
       setColumns(response.data.columns || []);
     } catch (error) {
@@ -81,11 +119,22 @@ const ProjectBoard = () => {
     setCards((prev) =>
       prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
     );
+    // Update selected card if it's the one being updated
+    if (selectedCard && selectedCard._id === updatedCard._id) {
+      setSelectedCard(updatedCard);
+    }
   };
 
   const handleCardDeleted = (cardId) => {
     setCards((prev) => prev.filter((card) => card._id !== cardId));
     showToast("Card deleted successfully!", "success");
+    // Close modal if the deleted card was selected
+    if (selectedCard && selectedCard._id === cardId) {
+      setShowCardModal(false);
+      setSelectedCard(null);
+      // Navigate back to project view
+      navigate(`/project/${actualProjectId}`);
+    }
   };
 
   const handleStatusChange = async (cardId, newStatus) => {
@@ -96,10 +145,29 @@ const ProjectBoard = () => {
           card._id === cardId ? { ...card, status: newStatus } : card
         )
       );
+      // Update selected card if it's the one being updated
+      if (selectedCard && selectedCard._id === cardId) {
+        setSelectedCard((prev) => ({ ...prev, status: newStatus }));
+      }
     } catch (error) {
       console.error("Error updating card status:", error);
       showToast("Failed to update card status", "error");
     }
+  };
+
+  // Card modal handlers
+  const handleCardClick = (card) => {
+    setSelectedCard(card);
+    setShowCardModal(true);
+    // Update URL to include card ID
+    navigate(`/project/${actualProjectId}/card/${card._id}`);
+  };
+
+  const handleCardModalClose = () => {
+    setShowCardModal(false);
+    setSelectedCard(null);
+    // Navigate back to project view
+    navigate(`/project/${actualProjectId}`);
   };
 
   const getCardsByStatus = (status) => {
@@ -341,6 +409,8 @@ const ProjectBoard = () => {
                     onCardUpdated={handleCardUpdated}
                     onCardDeleted={handleCardDeleted}
                     onStatusChange={handleStatusChange}
+                    onCardClick={handleCardClick}
+                    projectId={actualProjectId}
                     onColumnRename={handleColumnRename}
                     onColumnDelete={handleColumnDelete}
                     onAddCard={handleAddCardToColumn}
@@ -488,6 +558,17 @@ const ProjectBoard = () => {
         type="danger"
         isLoading={false}
       />
+
+      {/* Card Modal */}
+      {showCardModal && selectedCard && (
+        <CardModal
+          card={selectedCard}
+          onClose={handleCardModalClose}
+          onCardUpdated={handleCardUpdated}
+          onCardDeleted={handleCardDeleted}
+          onStatusChange={handleStatusChange}
+        />
+      )}
     </div>
   );
 };

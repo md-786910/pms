@@ -32,8 +32,8 @@ router.post(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 1000 })
-      .withMessage("Description cannot be more than 1000 characters"),
+      .isLength({ max: 10000 })
+      .withMessage("Description cannot be more than 10000 characters"),
   ],
   createCardItem
 );
@@ -52,8 +52,8 @@ router.put(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 1000 })
-      .withMessage("Description cannot be more than 1000 characters"),
+      .isLength({ max: 10000 })
+      .withMessage("Description cannot be more than 10000 characters"),
     body("completed")
       .optional()
       .isBoolean()

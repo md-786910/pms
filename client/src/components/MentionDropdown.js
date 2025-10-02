@@ -110,12 +110,13 @@ const MentionDropdown = ({
   return (
     <div
       ref={dropdownRef}
-      className="absolute z-50 bg-white border border-gray-300 rounded-md shadow-xl max-h-64 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
+      className="z-50 bg-white border border-gray-300 rounded-md shadow-xl overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200"
       style={{
         top: position.top,
         left: position.left,
         minWidth: "240px",
         maxWidth: "320px",
+        maxHeight: "200px", // Limit height to prevent off-screen issues
         boxShadow:
           "0 8px 16px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)",
       }}
