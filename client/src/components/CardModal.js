@@ -1,23 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   X,
-  Calendar,
-  Users,
-  MessageSquare,
-  Paperclip,
-  Plus,
   Edit2,
   Edit,
   Trash2,
   Save,
   X as XIcon,
-  Tag,
   CheckSquare,
-  Clock,
   Image as ImageIcon,
   Upload,
   Eye,
   Download,
+  Plus,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -26,6 +20,9 @@ import { cardAPI, cardItemAPI } from "../utils/api";
 import Avatar from "./Avatar";
 import AssignUserModal from "./AssignUserModal";
 import ConfirmationModal from "./ConfirmationModal";
+import SimpleQuillEditor from "./SimpleQuillEditor";
+import SimpleCommentEditor from "./SimpleCommentEditor";
+import { API_URL } from "../utils/endpoints";
 
 const CardModal = ({
   card,
@@ -37,6 +34,11 @@ const CardModal = ({
   const { users, user } = useUser();
   const { currentProject } = useProject();
   const { showToast } = useNotification();
+
+  // Mention functionality - now handled by QuillEditor
+  const handleMentionSelect = (mention, newText) => {
+    setMentions((prev) => [...prev, mention]);
+  };
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,8 +64,20 @@ const CardModal = ({
   const [imageFile, setImageFile] = useState(null);
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
+  const [mentions, setMentions] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loadingColumns, setLoadingColumns] = useState(false);
+  const [showFormattingHelp, setShowFormattingHelp] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showRichText, setShowRichText] = useState(true); // Default to rich text
+  const [activeFormatting, setActiveFormatting] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    header: false,
+    list: false,
+    link: false,
+  });
 
   // Dynamic status options based on project columns
   const statusOptions = columns.map((column) => ({
@@ -99,6 +113,52 @@ const CardModal = ({
         );
       })
       .filter(Boolean);
+  };
+
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 59, g: 130, b: 246 }; // Default blue
+  };
+
+  // Render comment text with styled mentions
+  const renderCommentWithMentions = (text) => {
+    if (!text) return "";
+
+    // Split text by mentions (@username)
+    const parts = text.split(/(@\w+)/g);
+
+    return parts
+      .map((part, index) => {
+        if (part.startsWith("@")) {
+          const username = part.substring(1);
+          const user = currentProject?.members?.find(
+            (member) =>
+              member.user.name.toLowerCase().replace(/\s+/g, "") ===
+              username.toLowerCase()
+          );
+
+          if (user) {
+            const userColor = user.user.color || "#3b82f6";
+            // Convert hex to RGB for better opacity control
+            const rgb = hexToRgb(userColor);
+            const backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`;
+
+            return `<span style="background-color: ${backgroundColor}; color: ${userColor}; padding: 2px 8px; border-radius: 6px; font-weight: 600; display: inline-block; margin: 0 2px; font-size: 14px; line-height: 1.2; border: 1px solid ${userColor}20; box-shadow: 0 1px 2px ${userColor}20; vertical-align: baseline; text-decoration: none;">${part}</span>`;
+          } else {
+            // Show unstyled mention if user not found
+            return `<span style="color: #ef4444; font-weight: 500;">${part}</span>`;
+          }
+        }
+        return part;
+      })
+      .join("");
   };
 
   const handleSave = async () => {
@@ -244,6 +304,63 @@ const CardModal = ({
     fetchItems();
   }, [card._id]);
 
+  // Check if comments have incomplete user data and refetch if needed
+  React.useEffect(() => {
+    const hasIncompleteUserData = card.comments?.some(
+      (comment) =>
+        !comment.user || typeof comment.user === "string" || !comment.user.name
+    );
+
+    if (hasIncompleteUserData) {
+      console.log(
+        "Detected incomplete user data in comments, refetching card..."
+      );
+      // Refetch the card to get properly populated user data
+      const refetchCard = async () => {
+        try {
+          const response = await cardAPI.getCard(card._id);
+          if (response.data.success) {
+            onCardUpdated(response.data.card);
+          }
+        } catch (error) {
+          console.error("Error refetching card:", error);
+        }
+      };
+      refetchCard();
+    }
+  }, [card.comments, card._id, onCardUpdated]);
+
+  // Add selection change listener for rich text editor
+  React.useEffect(() => {
+    if (showRichText) {
+      const handleSelectionChange = () => {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const container = range.commonAncestorContainer;
+          const element =
+            container.nodeType === Node.TEXT_NODE
+              ? container.parentElement
+              : container;
+
+          setActiveFormatting({
+            bold: element.closest("strong, b") !== null,
+            italic: element.closest("em, i") !== null,
+            underline: element.closest("u") !== null,
+            header: element.closest("h1, h2, h3") !== null,
+            list: element.closest("ul, ol, li") !== null,
+            link: element.closest("a") !== null,
+          });
+        }
+      };
+
+      document.addEventListener("selectionchange", handleSelectionChange);
+      return () => {
+        document.removeEventListener("selectionchange", handleSelectionChange);
+      };
+    }
+  }, [showRichText]);
+
   // Label Management
   const handleAddLabel = async () => {
     if (!newLabel.trim()) return;
@@ -345,12 +462,20 @@ const CardModal = ({
 
     try {
       console.log("Adding comment:", commentText);
-      const response = await cardAPI.addComment(card._id, commentText);
+      console.log("Mentions:", mentions);
+
+      const response = await cardAPI.addComment(
+        card._id,
+        commentText,
+        mentions
+      );
       console.log("Comment response:", response.data);
+      console.log("Updated card comments:", response.data.card.comments);
 
       if (response.data.success) {
         onCardUpdated(response.data.card);
         setCommentText("");
+        setMentions([]);
         showToast("Comment added successfully!", "success");
       }
     } catch (error) {
@@ -586,6 +711,343 @@ const CardModal = ({
     setShowAssignModal(false);
   };
 
+  // Markdown formatting helpers
+  const insertMarkdown = (before, after = "", placeholder = "text") => {
+    const textarea = document.querySelector(
+      'textarea[placeholder*="Markdown shortcuts"]'
+    );
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = formData.description.substring(start, end);
+
+    // Clean up existing markdown if present
+    let cleanText = selectedText;
+    if (before === "**" && after === "**") {
+      // Remove existing bold formatting
+      cleanText = cleanText.replace(/\*\*(.*?)\*\*/g, "$1");
+    } else if (before === "*" && after === "*") {
+      // Remove existing italic formatting
+      cleanText = cleanText.replace(/\*(.*?)\*/g, "$1");
+    } else if (before === "## ") {
+      // Remove existing headers
+      cleanText = cleanText.replace(/^#+\s*/gm, "");
+    } else if (before === "- ") {
+      // Remove existing list formatting
+      cleanText = cleanText.replace(/^-\s*/gm, "");
+    } else if (before === "[" && after === "](url)") {
+      // Remove existing link formatting
+      cleanText = cleanText.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+    }
+
+    const replacement = cleanText || placeholder;
+
+    const newText =
+      formData.description.substring(0, start) +
+      before +
+      replacement +
+      after +
+      formData.description.substring(end);
+
+    setFormData({ ...formData, description: newText });
+
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        start + before.length + replacement.length
+      );
+    }, 0);
+  };
+
+  const handleBold = () => {
+    if (showRichText) {
+      // Clean up any existing malformed HTML first
+      const editor = document.querySelector(".rich-text-editor");
+      if (editor) {
+        const cleanHtml = editor.innerHTML
+          .replace(/<div[^>]*><\/div>/g, "")
+          .replace(/<div[^>]*>/g, "")
+          .replace(/<\/div>/g, "")
+          .replace(/<span[^>]*>/g, "")
+          .replace(/<\/span>/g, "");
+        editor.innerHTML = cleanHtml;
+      }
+
+      document.execCommand("bold", false, null);
+      // Update the form data after formatting
+      setTimeout(() => {
+        const editor = document.querySelector(".rich-text-editor");
+        if (editor) {
+          const markdown = htmlToMarkdown(editor.innerHTML);
+          setFormData({ ...formData, description: markdown });
+        }
+      }, 10);
+    } else {
+      insertMarkdown("**", "**", "bold text");
+      setActiveFormatting((prev) => ({ ...prev, bold: !prev.bold }));
+    }
+  };
+
+  const handleItalic = () => {
+    if (showRichText) {
+      document.execCommand("italic", false, null);
+      // Update the form data after formatting
+      setTimeout(() => {
+        const editor = document.querySelector(".rich-text-editor");
+        if (editor) {
+          const markdown = htmlToMarkdown(editor.innerHTML);
+          setFormData({ ...formData, description: markdown });
+        }
+      }, 10);
+    } else {
+      insertMarkdown("*", "*", "italic text");
+      setActiveFormatting((prev) => ({ ...prev, italic: !prev.italic }));
+    }
+  };
+
+  const handleHeader = () => {
+    if (showRichText) {
+      document.execCommand("formatBlock", false, "h2");
+      // Update the form data after formatting
+      setTimeout(() => {
+        const editor = document.querySelector(".rich-text-editor");
+        if (editor) {
+          const markdown = htmlToMarkdown(editor.innerHTML);
+          setFormData({ ...formData, description: markdown });
+        }
+      }, 10);
+    } else {
+      insertMarkdown("## ", "", "Header");
+      setActiveFormatting((prev) => ({ ...prev, header: !prev.header }));
+    }
+  };
+
+  const handleList = () => {
+    if (showRichText) {
+      document.execCommand("insertUnorderedList", false, null);
+      // Update the form data after formatting
+      setTimeout(() => {
+        const editor = document.querySelector(".rich-text-editor");
+        if (editor) {
+          const markdown = htmlToMarkdown(editor.innerHTML);
+          setFormData({ ...formData, description: markdown });
+        }
+      }, 10);
+    } else {
+      insertMarkdown("- ", "", "List item");
+      setActiveFormatting((prev) => ({ ...prev, list: !prev.list }));
+    }
+  };
+
+  const handleLink = () => {
+    if (showRichText) {
+      const url = prompt("Enter URL:");
+      if (url) {
+        document.execCommand("createLink", false, url);
+        // Update the form data after formatting
+        setTimeout(() => {
+          const editor = document.querySelector(".rich-text-editor");
+          if (editor) {
+            const markdown = htmlToMarkdown(editor.innerHTML);
+            setFormData({ ...formData, description: markdown });
+          }
+        }, 10);
+      }
+    } else {
+      insertMarkdown("[", "](url)", "link text");
+      setActiveFormatting((prev) => ({ ...prev, link: !prev.link }));
+    }
+  };
+
+  const handleClearFormatting = () => {
+    if (showRichText) {
+      // Clean up malformed HTML first
+      const editor = document.querySelector(".rich-text-editor");
+      if (editor) {
+        const cleanHtml = editor.innerHTML
+          .replace(/<div[^>]*><\/div>/g, "")
+          .replace(/<div[^>]*>/g, "")
+          .replace(/<\/div>/g, "")
+          .replace(/<span[^>]*>/g, "")
+          .replace(/<\/span>/g, "")
+          .replace(/<font[^>]*>/g, "")
+          .replace(/<\/font>/g, "");
+        editor.innerHTML = cleanHtml;
+      }
+
+      document.execCommand("removeFormat", false, null);
+      // Update the form data after clearing formatting
+      setTimeout(() => {
+        const editor = document.querySelector(".rich-text-editor");
+        if (editor) {
+          const markdown = htmlToMarkdown(editor.innerHTML);
+          setFormData({ ...formData, description: markdown });
+        }
+      }, 10);
+    } else {
+      const textarea = document.querySelector(
+        'textarea[placeholder*="Markdown shortcuts"]'
+      );
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = formData.description.substring(start, end);
+
+      // Remove all markdown formatting
+      let cleanText = selectedText
+        .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold
+        .replace(/\*(.*?)\*/g, "$1") // Remove italic
+        .replace(/^#+\s*/gm, "") // Remove headers
+        .replace(/^-\s*/gm, "") // Remove list formatting
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // Remove links
+        .replace(/---+/g, "") // Remove horizontal rules
+        .trim();
+
+      const newText =
+        formData.description.substring(0, start) +
+        cleanText +
+        formData.description.substring(end);
+
+      setFormData({ ...formData, description: newText });
+
+      // Restore cursor position
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start, start + cleanText.length);
+      }, 0);
+    }
+  };
+
+  // Function to check if cursor is in formatted text
+  const checkActiveFormatting = () => {
+    const textarea = document.querySelector(
+      'textarea[placeholder*="Markdown shortcuts"]'
+    );
+    if (!textarea) return;
+
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = formData.description.substring(0, cursorPos);
+    const textAfterCursor = formData.description.substring(cursorPos);
+
+    // Check for bold formatting
+    const boldBefore = (textBeforeCursor.match(/\*\*([^*]*)$/) || [])[1] || "";
+    const boldAfter = (textAfterCursor.match(/^([^*]*)\*\*/) || [])[1] || "";
+    const isInBold = boldBefore && boldAfter;
+
+    // Check for italic formatting
+    const italicBefore = (textBeforeCursor.match(/\*([^*]*)$/) || [])[1] || "";
+    const italicAfter = (textAfterCursor.match(/^([^*]*)\*/) || [])[1] || "";
+    const isInItalic = italicBefore && italicAfter && !isInBold;
+
+    // Check for header formatting
+    const isInHeader = /^#+\s*$/.test(textBeforeCursor.split("\n").pop());
+
+    // Check for list formatting
+    const isInList = /^-\s*$/.test(textBeforeCursor.split("\n").pop());
+
+    // Check for link formatting
+    const linkBefore = (textBeforeCursor.match(/\[([^\]]*)$/) || [])[1] || "";
+    const linkAfter = (textAfterCursor.match(/^([^\]]*)\]\(/) || [])[1] || "";
+    const isInLink = linkBefore && linkAfter;
+
+    setActiveFormatting({
+      bold: isInBold,
+      italic: isInItalic,
+      header: isInHeader,
+      list: isInList,
+      link: isInLink,
+    });
+  };
+
+  // Simple markdown renderer with inline styles
+  const renderMarkdown = (text) => {
+    if (!text) return "";
+
+    return text
+      .replace(
+        /\*\*(.*?)\*\*/g,
+        '<strong style="font-weight: bold;">$1</strong>'
+      ) // Bold
+      .replace(/\*(.*?)\*/g, '<em style="font-style: italic;">$1</em>') // Italic
+      .replace(
+        /^### (.*$)/gm,
+        '<h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h3>'
+      ) // H3
+      .replace(
+        /^## (.*$)/gm,
+        '<h2 style="font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h2>'
+      ) // H2
+      .replace(
+        /^# (.*$)/gm,
+        '<h1 style="font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h1>'
+      ) // H1
+      .replace(
+        /^- (.*$)/gm,
+        '<li style="margin-left: 1rem; list-style-type: disc;">$1</li>'
+      ) // List items
+      .replace(
+        /\[([^\]]*)\]\(([^)]*)\)/g,
+        '<a href="$2" style="color: #2563eb; text-decoration: underline;" target="_blank" rel="noopener noreferrer">$1</a>'
+      ) // Links
+      .replace(
+        /---+/g,
+        '<hr style="margin: 1rem 0; border: 1px solid #d1d5db;">'
+      ) // Horizontal rules
+      .replace(/\n/g, "<br>"); // Line breaks
+  };
+
+  // Convert HTML back to markdown with better handling
+  const htmlToMarkdown = (html) => {
+    if (!html) return "";
+
+    // Clean up malformed HTML first
+    let cleanHtml = html
+      .replace(/<div[^>]*><\/div>/g, "") // Remove empty divs
+      .replace(/<div[^>]*>/g, "") // Remove div opening tags
+      .replace(/<\/div>/g, "") // Remove div closing tags
+      .replace(/<span[^>]*>/g, "") // Remove span opening tags
+      .replace(/<\/span>/g, "") // Remove span closing tags
+      .replace(/<font[^>]*>/g, "") // Remove font opening tags
+      .replace(/<\/font>/g, "") // Remove font closing tags
+      .replace(/<br\s*\/?>/g, "\n") // Convert br to newlines
+      .replace(/&nbsp;/g, " "); // Convert non-breaking spaces
+
+    return cleanHtml
+      .replace(/<strong[^>]*>(.*?)<\/strong>/g, "**$1**") // Bold
+      .replace(/<b[^>]*>(.*?)<\/b>/g, "**$1**") // Bold (alternative)
+      .replace(/<em[^>]*>(.*?)<\/em>/g, "*$1*") // Italic
+      .replace(/<i[^>]*>(.*?)<\/i>/g, "*$1*") // Italic (alternative)
+      .replace(/<u[^>]*>(.*?)<\/u>/g, "$1") // Underline (markdown doesn't support underline)
+      .replace(/<h1[^>]*>(.*?)<\/h1>/g, "# $1") // H1
+      .replace(/<h2[^>]*>(.*?)<\/h2>/g, "## $1") // H2
+      .replace(/<h3[^>]*>(.*?)<\/h3>/g, "### $1") // H3
+      .replace(/<h4[^>]*>(.*?)<\/h4>/g, "#### $1") // H4
+      .replace(/<h5[^>]*>(.*?)<\/h5>/g, "##### $1") // H5
+      .replace(/<h6[^>]*>(.*?)<\/h6>/g, "###### $1") // H6
+      .replace(/<ul[^>]*>(.*?)<\/ul>/g, "$1") // Unordered list wrapper
+      .replace(/<ol[^>]*>(.*?)<\/ol>/g, "$1") // Ordered list wrapper
+      .replace(/<li[^>]*>(.*?)<\/li>/g, "- $1") // List items
+      .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g, "[$2]($1)") // Links
+      .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/g, "![$2]($1)") // Images with alt
+      .replace(/<img[^>]*src="([^"]*)"[^>]*>/g, "![]($1)") // Images without alt
+      .replace(/<hr[^>]*>/g, "---") // Horizontal rules
+      .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/g, "> $1") // Blockquotes
+      .replace(/<code[^>]*>(.*?)<\/code>/g, "`$1`") // Inline code
+      .replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/g, "```\n$1\n```") // Code blocks
+      .replace(/<p[^>]*>(.*?)<\/p>/g, "$1\n") // Paragraphs
+      .replace(/&lt;/g, "<") // Less than
+      .replace(/&gt;/g, ">") // Greater than
+      .replace(/&amp;/g, "&") // Ampersand
+      .replace(/&quot;/g, '"') // Quote
+      .replace(/\n\s*\n/g, "\n\n") // Clean up multiple newlines
+      .replace(/^\s+|\s+$/g, "") // Trim whitespace
+      .trim();
+  };
+
   const assignees = getAssignees();
   const projectMembers =
     currentProject?.members
@@ -605,6 +1067,83 @@ const CardModal = ({
 
   return (
     <>
+      {/* Rich Text Editor Styles */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          .rich-text-editor {
+            outline: none !important;
+            border: none !important;
+            resize: none !important;
+          }
+          .rich-text-editor:focus {
+            outline: none !important;
+            border: none !important;
+          }
+          .rich-text-editor strong {
+            font-weight: bold !important;
+          }
+          .rich-text-editor em {
+            font-style: italic !important;
+          }
+          .rich-text-editor h1, .rich-text-editor h2, .rich-text-editor h3 {
+            font-weight: bold !important;
+            margin: 0.5rem 0 !important;
+          }
+          .rich-text-editor h1 {
+            font-size: 1.5rem !important;
+          }
+          .rich-text-editor h2 {
+            font-size: 1.25rem !important;
+          }
+          .rich-text-editor h3 {
+            font-size: 1.125rem !important;
+          }
+          .rich-text-editor ul, .rich-text-editor ol {
+            margin: 0.5rem 0 !important;
+            padding-left: 1.5rem !important;
+          }
+          .rich-text-editor li {
+            list-style-type: disc !important;
+            margin: 0.25rem 0 !important;
+          }
+          .rich-text-editor a {
+            color: #2563eb !important;
+            text-decoration: underline !important;
+          }
+          .rich-text-editor hr {
+            border: 1px solid #d1d5db !important;
+            margin: 1rem 0 !important;
+          }
+          .rich-text-editor p {
+            margin: 0.5rem 0 !important;
+          }
+          .markdown-preview strong {
+            font-weight: bold !important;
+          }
+          .markdown-preview em {
+            font-style: italic !important;
+          }
+          .markdown-preview h1, .markdown-preview h2, .markdown-preview h3 {
+            font-weight: bold !important;
+            margin: 0.5rem 0 !important;
+          }
+          .markdown-preview li {
+            list-style-type: disc !important;
+            margin-left: 1rem !important;
+          }
+          .markdown-preview a {
+            color: #2563eb !important;
+            text-decoration: underline !important;
+          }
+          .markdown-preview hr {
+            border: 1px solid #d1d5db !important;
+            margin: 1rem 0 !important;
+          }
+        `,
+        }}
+      />
+
       <div className="modal-overlay">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
           {/* Modal Header */}
@@ -691,27 +1230,87 @@ const CardModal = ({
               <div className="lg:col-span-2 space-y-6">
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    Description
-                  </label>
-                  {isEditing ? (
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={4}
-                      placeholder="Add a description..."
-                    />
-                  ) : (
-                    <div className="p-3 bg-gray-50 rounded-lg min-h-[100px]">
-                      <p className="text-gray-700 whitespace-pre-wrap">
-                        {card.description || "No description provided"}
-                      </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Description
+                    </label>
+                    {!isEditing && (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Description Content */}
+                  <div className="relative">
+                    {isEditing ? (
+                      <div className="simple-quill-editor description-editor">
+                        <SimpleQuillEditor
+                          value={formData.description || ""}
+                          onChange={(content) => {
+                            setFormData({
+                              ...formData,
+                              description: content,
+                            });
+                          }}
+                          placeholder="Add a description..."
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-full p-4 min-h-[80px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        {formData.description && formData.description.trim() ? (
+                          <div
+                            className="prose prose-sm max-w-none"
+                            style={{
+                              fontSize: "14px",
+                              lineHeight: "1.5",
+                              color: "#374151",
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: formData.description,
+                            }}
+                          />
+                        ) : (
+                          <div className="flex items-center text-gray-500 text-sm">
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            <span>Click to edit</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons - Only show when editing */}
+                  {isEditing && (
+                    <div className="mt-3 flex items-center justify-end space-x-2">
+                      <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>Save</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditing(false);
+                          // Reset to original description if user cancels
+                          setFormData({
+                            ...formData,
+                            description: card.description,
+                          });
+                        }}
+                        className="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                 </div>
@@ -736,7 +1335,7 @@ const CardModal = ({
                             src={
                               attachment.url.startsWith("http")
                                 ? attachment.url
-                                : `http://localhost:5000${attachment.url}`
+                                : `${API_URL}${attachment.url}`
                             }
                             alt={
                               attachment.originalName ||
@@ -770,12 +1369,14 @@ const CardModal = ({
                 )}
 
                 {/* Comments */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Comments ({card.comments.length})
-                  </label>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Comments ({card.comments.length})
+                    </h3>
+                  </div>
 
-                  <div className="space-y-2 mb-3 max-h-64 overflow-y-auto pr-2">
+                  <div className="space-y-3 mb-6 max-h-64 overflow-y-auto pr-2">
                     {card.comments
                       .sort((a, b) => {
                         // Sort by updatedAt if available, otherwise by timestamp
@@ -783,102 +1384,147 @@ const CardModal = ({
                         const bTime = b.updatedAt || b.timestamp || b.createdAt;
                         return new Date(bTime) - new Date(aTime);
                       })
-                      .map((comment) => (
-                        <div
-                          key={comment._id || comment.id}
-                          className="bg-gray-50 rounded-lg p-3 group hover:bg-gray-100 transition-colors duration-200"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-3">
-                              <Avatar user={comment.user} size="sm" />
-                              <div>
-                                <span className="font-medium text-gray-900">
-                                  {comment.user?.name || "Unknown User"}
-                                </span>
-                                <span className="text-xs text-gray-500 ml-2">
-                                  {new Date(
-                                    comment.timestamp || comment.createdAt
-                                  ).toLocaleString()}
-                                  {comment.updatedAt &&
-                                    comment.updatedAt !== comment.timestamp && (
-                                      <span className="text-gray-400 ml-1">
-                                        (edited)
-                                      </span>
-                                    )}
-                                </span>
+                      .map((comment) => {
+                        console.log("Rendering comment:", comment);
+                        console.log("Comment user:", comment.user);
+                        return (
+                          <div
+                            key={comment._id || comment.id}
+                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-3">
+                                <Avatar
+                                  user={comment.user}
+                                  size="sm"
+                                  fallback={
+                                    comment.user?.name
+                                      ? comment.user.name
+                                          .charAt(0)
+                                          .toUpperCase()
+                                      : "U"
+                                  }
+                                />
+                                <div>
+                                  <span className="font-medium text-gray-900">
+                                    {comment.user?.name ||
+                                      (comment.user &&
+                                      typeof comment.user === "string"
+                                        ? "Loading..."
+                                        : "Unknown User")}
+                                  </span>
+                                  <span className="text-xs text-gray-500 ml-2">
+                                    {new Date(
+                                      comment.timestamp || comment.createdAt
+                                    ).toLocaleString()}
+                                    {comment.updatedAt &&
+                                      comment.updatedAt !==
+                                        comment.timestamp && (
+                                        <span className="text-gray-400 ml-1">
+                                          (edited)
+                                        </span>
+                                      )}
+                                  </span>
+                                </div>
                               </div>
+                              {(comment.user?._id === user?._id ||
+                                comment.user?._id === user?.id) && (
+                                <button
+                                  onClick={() =>
+                                    handleStartEditComment(comment)
+                                  }
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
+                                  title="Edit comment"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
-                            {(comment.user?._id === user?._id ||
-                              comment.user?._id === user?.id) && (
-                              <button
-                                onClick={() => handleStartEditComment(comment)}
-                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
-                                title="Edit comment"
-                              >
-                                <Edit className="w-3 h-3" />
-                              </button>
+                            {editingComment === (comment._id || comment.id) ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={editCommentText}
+                                  onChange={(e) =>
+                                    setEditCommentText(e.target.value)
+                                  }
+                                  className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  rows="3"
+                                  placeholder="Edit your comment..."
+                                />
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={handleSaveEditComment}
+                                    className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEditComment}
+                                    className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                className={`text-sm text-gray-700 prose prose-sm max-w-none ${
+                                  (comment.text &&
+                                    comment.text.includes(
+                                      "moved this card from"
+                                    )) ||
+                                  (comment.text &&
+                                    comment.text.includes("assigned")) ||
+                                  (comment.text &&
+                                    comment.text.includes("removed"))
+                                    ? "activity-comment"
+                                    : ""
+                                }`}
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    renderCommentWithMentions(comment.text) ||
+                                    "<p><br></p>",
+                                }}
+                              />
                             )}
                           </div>
-                          {editingComment === (comment._id || comment.id) ? (
-                            <div className="space-y-2">
-                              <textarea
-                                value={editCommentText}
-                                onChange={(e) =>
-                                  setEditCommentText(e.target.value)
-                                }
-                                className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                rows="3"
-                                placeholder="Edit your comment..."
-                              />
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={handleSaveEditComment}
-                                  className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={handleCancelEditComment}
-                                  className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-700">
-                              {comment.text}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
 
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Add a comment..."
-                      className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      onKeyPress={(e) =>
-                        e.key === "Enter" && handleAddComment()
-                      }
-                    />
-                    <button
-                      onClick={handleAddComment}
-                      disabled={!commentText.trim()}
-                      className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Add</span>
-                    </button>
+                  <div className="space-y-4">
+                    <div className="comment-editor">
+                      <SimpleCommentEditor
+                        value={commentText || ""}
+                        onChange={(content) => {
+                          console.log("SimpleCommentEditor onChange:", content);
+                          setCommentText(content);
+                        }}
+                        onMentionSelect={(mention) => {
+                          console.log("Mention selected:", mention);
+                          setMentions((prev) => [...prev, mention]);
+                        }}
+                        onSend={(content) => {
+                          console.log("Sending comment:", content);
+                          setCommentText(content);
+                          handleAddComment();
+                        }}
+                        placeholder="Add a comment... (use @ to mention someone)"
+                        projectMembers={(() => {
+                          const members = currentProject?.members || [];
+                          console.log("Project members for mentions:", members);
+                          return members;
+                        })()}
+                        currentUser={user}
+                        cardMembers={getAssignees()}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Sidebar */}
-              <div className="space-y-6">
+              <div className="lg:col-span-1 space-y-6">
                 {/* Status */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1077,7 +1723,7 @@ const CardModal = ({
                               href={
                                 attachment.url.startsWith("http")
                                   ? attachment.url
-                                  : `http://localhost:5000${attachment.url}`
+                                  : `${API_URL}${attachment.url}`
                               }
                               target="_blank"
                               rel="noopener noreferrer"
@@ -1301,7 +1947,7 @@ const CardModal = ({
                   href={
                     selectedImage.url.startsWith("http")
                       ? selectedImage.url
-                      : `http://localhost:5000${selectedImage.url}`
+                      : `${API_URL}${selectedImage.url}`
                   }
                   download={
                     selectedImage.originalName ||
@@ -1329,7 +1975,7 @@ const CardModal = ({
                   src={
                     selectedImage.url.startsWith("http")
                       ? selectedImage.url
-                      : `http://localhost:5000${selectedImage.url}`
+                      : `${API_URL}${selectedImage.url}`
                   }
                   alt={
                     selectedImage.originalName ||
@@ -1359,6 +2005,94 @@ const CardModal = ({
         type="danger"
         isLoading={loading}
       />
+
+      {/* Formatting Help Modal */}
+      {showFormattingHelp && (
+        <div className="modal-overlay">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Markdown Formatting Help
+                </h3>
+                <button
+                  onClick={() => setShowFormattingHelp(false)}
+                  className="p-1 rounded hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                    **bold**
+                  </code>
+                  <span className="ml-2 text-gray-600">
+                    → <strong>bold</strong>
+                  </span>
+                </div>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                    *italic*
+                  </code>
+                  <span className="ml-2 text-gray-600">
+                    → <em>italic</em>
+                  </span>
+                </div>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                    ## Header
+                  </code>
+                  <span className="ml-2 text-gray-600">→ Header (larger)</span>
+                </div>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                    - List item
+                  </code>
+                  <span className="ml-2 text-gray-600">→ • List item</span>
+                </div>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                    [link](url)
+                  </code>
+                  <span className="ml-2 text-gray-600">
+                    →{" "}
+                    <a href="#" className="text-blue-600">
+                      link
+                    </a>
+                  </span>
+                </div>
+                <div>
+                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                    ---
+                  </code>
+                  <span className="ml-2 text-gray-600">→ Horizontal rule</span>
+                </div>
+                <div className="pt-2 border-t border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-medium text-gray-700">
+                      🧹 Clear Formatting:
+                    </span>
+                    <span className="text-xs text-gray-600">
+                      Removes all markdown from selected text
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setShowFormattingHelp(false)}
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  Got it!
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

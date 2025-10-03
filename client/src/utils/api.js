@@ -1,8 +1,9 @@
 import axios from "axios";
+import { API_URL } from "./endpoints";
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: "http://localhost:5000/api", // Force backend URL
+  baseURL: `${API_URL}/api`, // Force backend URL
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -117,7 +118,8 @@ export const cardAPI = {
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),
-  addComment: (id, comment) => api.post(`/cards/${id}/comments`, { comment }),
+  addComment: (id, comment, mentions = []) =>
+    api.post(`/cards/${id}/comments`, { comment, mentions }),
   updateComment: (id, commentId, text) =>
     api.put(`/cards/${id}/comments/${commentId}`, { text }),
   addLabel: (id, labelData) => api.post(`/cards/${id}/labels`, labelData),
@@ -128,7 +130,7 @@ export const cardAPI = {
     api.delete(`/cards/${id}/attachments/${attachmentId}`),
   uploadFiles: (id, formData) => {
     const uploadApi = axios.create({
-      baseURL: "http://localhost:5000/api",
+      baseURL: `${API_URL}/api`,
       timeout: 30000, // 30 seconds for file uploads
       withCredentials: true,
     });

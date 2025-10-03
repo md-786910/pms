@@ -14,9 +14,14 @@ const EditProjectModal = ({ project, onClose }) => {
 
   useEffect(() => {
     if (project) {
+      // Strip HTML tags from description for textarea display
+      const cleanDescription = project.description
+        ? project.description.replace(/<[^>]*>/g, "").trim()
+        : "";
+
       setFormData({
         name: project.name || "",
-        description: project.description || "",
+        description: cleanDescription,
       });
     }
   }, [project]);
@@ -103,9 +108,9 @@ const EditProjectModal = ({ project, onClose }) => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
+                placeholder="Enter project description..."
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={3}
-                placeholder="Enter project description"
+                rows={4}
               />
             </div>
           </div>

@@ -18,8 +18,16 @@ import { cardItemAPI } from "../utils/api";
 import CardModal from "./CardModal";
 import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
+import { API_URL } from "../utils/endpoints";
 
-const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
+const CardItem = ({
+  card,
+  onCardUpdated,
+  onCardDeleted,
+  onStatusChange,
+  onCardClick,
+  projectId,
+}) => {
   const { users } = useUser();
   const { showToast } = useNotification();
   const [showModal, setShowModal] = useState(false);
@@ -172,7 +180,11 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
 
   const handleQuickEdit = (e) => {
     e.stopPropagation();
-    setShowModal(true);
+    if (onCardClick) {
+      onCardClick(card);
+    } else {
+      setShowModal(true);
+    }
   };
 
   const handleQuickDelete = (e) => {
@@ -207,7 +219,11 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
 
   const handleQuickAssign = (e) => {
     e.stopPropagation();
-    setShowModal(true);
+    if (onCardClick) {
+      onCardClick(card);
+    } else {
+      setShowModal(true);
+    }
   };
 
   const handleTitleEdit = (e) => {
@@ -377,12 +393,141 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
             </div>
           </div>
 
-          {/* Card Description */}
-          {card.description && (
-            <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-              {card.description}
-            </p>
-          )}
+          {/* Card Image or Description */}
+          {(() => {
+            // Debug: Log card attachments
+            console.log("Card attachments:", card.attachments);
+            console.log(
+              "Card:",
+              card.title,
+              "has",
+              card.attachments?.length || 0,
+              "attachments"
+            );
+
+            // Get the first image attachment
+            const firstImage = card.attachments?.find((attachment) => {
+              console.log("Checking attachment:", attachment);
+              // Check by MIME type first
+              if (attachment.mimeType?.startsWith("image/")) {
+                console.log("Found image by MIME type:", attachment.mimeType);
+                return true;
+              }
+              // Check by file extension
+              if (
+                attachment.url?.match(
+                  /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
+                )
+              ) {
+                console.log("Found image by URL extension:", attachment.url);
+                return true;
+              }
+              // Check by filename
+              if (
+                attachment.originalName?.match(
+                  /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
+                )
+              ) {
+                console.log(
+                  "Found image by filename:",
+                  attachment.originalName
+                );
+                return true;
+              }
+              return false;
+            });
+
+            console.log("First image found:", firstImage);
+
+            if (firstImage) {
+              // Construct proper image URL
+              const imageUrl = firstImage.url.startsWith("http")
+                ? firstImage.url
+                : `${API_URL}${firstImage.url}`;
+
+              console.log("Image URL:", imageUrl);
+
+              return (
+                <div className="mb-3 relative group cursor-pointer">
+                  <img
+                    src={imageUrl}
+                    alt={firstImage.originalName || "Card attachment"}
+                    className="w-full h-24 object-cover rounded-lg border border-gray-200 bg-gray-100 group-hover:opacity-90 transition-opacity duration-200"
+                    loading="lazy"
+                    onLoad={(e) => {
+                      e.target.style.opacity = "1";
+                      // Hide loading spinner
+                      const spinner =
+                        e.target.parentNode.querySelector(".loading-spinner");
+                      if (spinner) spinner.style.display = "none";
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      // Hide loading spinner
+                      const spinner =
+                        e.target.parentNode.querySelector(".loading-spinner");
+                      if (spinner) spinner.style.display = "none";
+                      // Show description as fallback if image fails to load
+                      const fallbackDiv = document.createElement("div");
+                      fallbackDiv.className =
+                        "text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed";
+                      fallbackDiv.textContent = card.description || "";
+                      e.target.parentNode.appendChild(fallbackDiv);
+                    }}
+                    style={{ opacity: 0, transition: "opacity 0.3s ease" }}
+                  />
+                  {/* Loading placeholder */}
+                  <div className="loading-spinner absolute inset-0 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              );
+            } else if (
+              card.description &&
+              card.description.trim() &&
+              card.description !== "<p><br></p>" &&
+              card.description !== "<p></p>"
+            ) {
+              console.log("No images found, showing description");
+              return (
+                <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+                  {card.description.replace(/<[^>]*>/g, "")}
+                </p>
+              );
+            } else if (card.attachments && card.attachments.length > 0) {
+              console.log(
+                "Has attachments but no images, showing attachment count"
+              );
+              return (
+                <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center space-x-2 text-xs text-gray-600">
+                    <Paperclip className="w-3 h-3" />
+                    <span>{card.attachments.length} attachment(s)</span>
+                  </div>
+                </div>
+              );
+            }
+            console.log("No attachments or description found");
+            return null;
+          })()}
         </div>
 
         {/* Card Footer */}
@@ -568,7 +713,13 @@ const CardItem = ({ card, onCardUpdated, onCardDeleted, onStatusChange }) => {
         {/* Click overlay for opening modal */}
         <div
           className="absolute inset-0 cursor-pointer"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            if (onCardClick) {
+              onCardClick(card);
+            } else {
+              setShowModal(true);
+            }
+          }}
         />
       </div>
 

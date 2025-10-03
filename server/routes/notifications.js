@@ -55,6 +55,7 @@ router.post(
         "card_unassigned",
         "card_updated",
         "comment_added",
+        "comment_mention",
         "due_date_reminder",
         "system",
       ])

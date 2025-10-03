@@ -200,12 +200,12 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                     id="message"
                     name="message"
                     value={formData.message}
-                    onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
-                    className="input-field resize-none"
-                    rows={3}
+                    onChange={(e) => {
+                      setFormData({ ...formData, message: e.target.value });
+                    }}
                     placeholder="Add a personal message to the invitation..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    rows={3}
                   />
                 </div>
               </>

@@ -67,6 +67,10 @@ function AppContent() {
                       />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/project/:id" element={<ProjectBoard />} />
+                      <Route
+                        path="/project/:projectId/card/:cardId"
+                        element={<ProjectBoard />}
+                      />
                     </Routes>
                   </main>
                 </div>

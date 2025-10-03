@@ -1,6 +1,7 @@
 const Card = require("../models/Card");
 const Project = require("../models/Project");
 const User = require("../models/User");
+const Column = require("../models/Column");
 const Notification = require("../models/Notification");
 const { validationResult } = require("express-validator");
 const {
@@ -8,6 +9,21 @@ const {
   sendCardUnassignedEmail,
 } = require("../config/email");
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
+
+// Helper function to get status label from column
+const getStatusLabel = async (projectId, statusValue) => {
+  try {
+    const column = await Column.findOne({
+      project: projectId,
+      status: statusValue,
+    }).select("name");
+
+    return column ? column.name : statusValue;
+  } catch (error) {
+    console.error("Error fetching column:", error);
+    return statusValue;
+  }
+};
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
@@ -269,6 +285,10 @@ const updateCard = async (req, res) => {
     const { title, description, status, priority, assignees, labels, dueDate } =
       req.body;
 
+    // Store previous values for comparison
+    const previousStatus = card.status;
+    const previousAssignees = [...card.assignees];
+
     if (title) card.title = title;
     if (description !== undefined) card.description = description;
     if (status) card.status = status;
@@ -277,6 +297,69 @@ const updateCard = async (req, res) => {
     if (labels) card.labels = labels;
     if (dueDate !== undefined) {
       card.dueDate = dueDate ? new Date(dueDate) : null;
+    }
+
+    // Get user information for activity comments
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comments for status changes
+    if (
+      status &&
+      status !== previousStatus &&
+      status.trim() !== previousStatus.trim()
+    ) {
+      const previousStatusLabel = await getStatusLabel(
+        card.project,
+        previousStatus
+      );
+      const newStatusLabel = await getStatusLabel(card.project, status);
+
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
+        timestamp: new Date(),
+      });
+    }
+
+    // Add automatic comments for assignee changes
+    if (assignees) {
+      const newAssignees = assignees.map((id) => id.toString());
+      const previousAssigneeIds = previousAssignees.map((id) => id.toString());
+
+      // Find added assignees
+      const addedAssignees = newAssignees.filter(
+        (id) => !previousAssigneeIds.includes(id)
+      );
+      // Find removed assignees
+      const removedAssignees = previousAssigneeIds.filter(
+        (id) => !newAssignees.includes(id)
+      );
+
+      // Add comment for new assignees
+      if (addedAssignees.length > 0) {
+        const addedUsers = await User.find({
+          _id: { $in: addedAssignees },
+        }).select("name");
+        const userNames = addedUsers.map((u) => u.name).join(", ");
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> assigned <strong>${userNames}</strong> to this card</p>`,
+          timestamp: new Date(),
+        });
+      }
+
+      // Add comment for removed assignees
+      if (removedAssignees.length > 0) {
+        const removedUsers = await User.find({
+          _id: { $in: removedAssignees },
+        }).select("name");
+        const userNames = removedUsers.map((u) => u.name).join(", ");
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> removed <strong>${userNames}</strong> from this card</p>`,
+          timestamp: new Date(),
+        });
+      }
     }
 
     // Add activity log entry
@@ -396,6 +479,21 @@ const updateStatus = async (req, res) => {
     const oldStatus = card.status;
     card.status = actualStatus;
 
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for status change (only if status actually changed)
+    if (oldStatus !== actualStatus) {
+      const previousStatusLabel = await getStatusLabel(card.project, oldStatus);
+      const newStatusLabel = await getStatusLabel(card.project, actualStatus);
+
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
+        timestamp: new Date(),
+      });
+    }
+
     // Add activity log entry
     card.activityLog.push({
       action: "status_changed",
@@ -466,6 +564,17 @@ const assignUser = async (req, res) => {
     }
 
     card.assignees.push(assigneeId);
+
+    // Get user information for activity comment
+    const currentUser = await User.findById(userId).select("name");
+    const assignedUser = await User.findById(assigneeId).select("name");
+
+    // Add automatic comment for assignment
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${currentUser.name}</strong> assigned <strong>${assignedUser.name}</strong> to this card</p>`,
+      timestamp: new Date(),
+    });
 
     // Add activity log entry
     card.activityLog.push({
@@ -567,6 +676,17 @@ const unassignUser = async (req, res) => {
       (id) => id.toString() !== assigneeId
     );
 
+    // Get user information for activity comment
+    const currentUser = await User.findById(userId).select("name");
+    const unassignedUser = await User.findById(assigneeId).select("name");
+
+    // Add automatic comment for unassignment
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${currentUser.name}</strong> removed <strong>${unassignedUser.name}</strong> from this card</p>`,
+      timestamp: new Date(),
+    });
+
     // Add activity log entry
     card.activityLog.push({
       action: "unassigned",
@@ -640,7 +760,7 @@ const unassignUser = async (req, res) => {
 const addComment = async (req, res) => {
   try {
     const cardId = req.params.id;
-    const { comment } = req.body;
+    const { comment, mentions = [] } = req.body;
     const userId = req.user._id;
     const userRole = req.user.role;
 
@@ -684,6 +804,118 @@ const addComment = async (req, res) => {
     });
 
     await card.save();
+
+    // Process mentions from both the mentions array and the comment text
+    const extractedMentions = [];
+
+    // Extract mentions from comment text (format: @username)
+    const mentionRegex = /@(\w+)/g;
+    let match;
+    while ((match = mentionRegex.exec(comment)) !== null) {
+      const username = match[1];
+
+      // Find user by name (case insensitive)
+      const mentionedUser = await User.findOne({
+        name: { $regex: new RegExp(`^${username}$`, "i") },
+      });
+
+      if (mentionedUser) {
+        extractedMentions.push({
+          type: "user",
+          id: mentionedUser._id.toString(),
+          name: mentionedUser.name,
+        });
+      }
+    }
+
+    // Combine mentions from array and extracted mentions
+    const allMentions = [...(mentions || []), ...extractedMentions];
+
+    // Remove duplicates based on user ID
+    const uniqueMentions = allMentions.filter(
+      (mention, index, self) =>
+        index === self.findIndex((m) => m.id === mention.id)
+    );
+
+    if (uniqueMentions.length > 0) {
+      console.log("Processing mentions:", uniqueMentions);
+
+      // Get mentioned users
+      const mentionedUserIds = uniqueMentions
+        .filter((mention) => mention.type === "user")
+        .map((mention) => mention.id);
+
+      // Get card assignees for @card mentions
+      const cardAssignees = card.assignees.map((assignee) =>
+        assignee.toString()
+      );
+
+      // Get project members for @board mentions
+      const projectMembers = project.members.map((member) =>
+        member.user.toString()
+      );
+
+      // Determine who to notify
+      let usersToNotify = [];
+
+      uniqueMentions.forEach((mention) => {
+        if (mention.type === "user" && mention.id !== userId.toString()) {
+          usersToNotify.push(mention.id);
+        } else if (mention.type === "group" && mention.id === "card") {
+          usersToNotify.push(
+            ...cardAssignees.filter((id) => id !== userId.toString())
+          );
+        } else if (mention.type === "group" && mention.id === "board") {
+          usersToNotify.push(
+            ...projectMembers.filter((id) => id !== userId.toString())
+          );
+        }
+      });
+
+      // Remove duplicates
+      usersToNotify = [...new Set(usersToNotify)];
+
+      console.log("Users to notify:", usersToNotify);
+
+      // Create notifications for mentioned users
+      if (usersToNotify.length > 0) {
+        const notifications = usersToNotify.map((userId) => ({
+          user: userId,
+          type: "comment_mention",
+          title: "You were mentioned in a comment",
+          message: `${req.user.name} mentioned you in a comment on "${card.title}"`,
+          relatedCard: card._id,
+          relatedProject: card.project,
+          isRead: false,
+        }));
+
+        await Notification.insertMany(notifications);
+        console.log(`Created ${notifications.length} mention notifications`);
+
+        // Send email notifications (async)
+        setImmediate(async () => {
+          try {
+            const { sendMentionEmail } = require("../config/email");
+            const mentionedUsers = await User.find({
+              _id: { $in: usersToNotify },
+            });
+
+            for (const mentionedUser of mentionedUsers) {
+              await sendMentionEmail(
+                mentionedUser,
+                req.user,
+                card,
+                comment,
+                project
+              );
+              console.log(`Mention email sent to ${mentionedUser.email}`);
+            }
+          } catch (emailError) {
+            console.error("Error sending mention emails:", emailError);
+          }
+        });
+      }
+    }
 
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
