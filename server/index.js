@@ -24,7 +24,7 @@ connectDB();
 // Middleware
 app.use(
   cors({
-    origin: config.CLIENT_URL,
+    origin: true,
     credentials: true,
   })
 );

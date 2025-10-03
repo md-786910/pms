@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Clock, User, Mail } from "lucide-react";
 import { authAPI } from "../utils/api";
+import { API_URL } from "../utils/endpoints";
 
 const InvitationPage = () => {
   const { token } = useParams();
@@ -53,14 +54,11 @@ const InvitationPage = () => {
     if (storedUser && authToken) {
       try {
         // Verify the token is still valid by fetching user profile
-        const response = await fetch(
-          "http://localhost:5000/api/users/profile",
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -83,9 +81,7 @@ const InvitationPage = () => {
   const fetchInvitation = async () => {
     try {
       console.log("Fetching invitation with token:", token);
-      const response = await fetch(
-        `http://localhost:5000/api/invitations/${token}`
-      );
+      const response = await fetch(`${API_URL}/api/invitations/${token}`);
       const data = await response.json();
       console.log("Invitation response:", data);
 
@@ -130,7 +126,7 @@ const InvitationPage = () => {
 
       console.log("Accepting invitation with request body:", requestBody);
       const response = await fetch(
-        `http://localhost:5000/api/invitations/${token}/accept`,
+        `${API_URL}/api/invitations/${token}/accept`,
         {
           method: "POST",
           headers: {

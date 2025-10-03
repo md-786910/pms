@@ -18,6 +18,7 @@ import { cardItemAPI } from "../utils/api";
 import CardModal from "./CardModal";
 import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
+import { API_URL } from "../utils/endpoints";
 
 const CardItem = ({
   card,
@@ -442,7 +443,7 @@ const CardItem = ({
               // Construct proper image URL
               const imageUrl = firstImage.url.startsWith("http")
                 ? firstImage.url
-                : `http://localhost:5000${firstImage.url}`;
+                : `${API_URL}${firstImage.url}`;
 
               console.log("Image URL:", imageUrl);
 

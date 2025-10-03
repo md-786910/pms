@@ -1,8 +1,9 @@
 import axios from "axios";
+import { API_URL } from "./endpoints";
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: "http://localhost:5000/api", // Force backend URL
+  baseURL: `${API_URL}/api`, // Force backend URL
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -129,7 +130,7 @@ export const cardAPI = {
     api.delete(`/cards/${id}/attachments/${attachmentId}`),
   uploadFiles: (id, formData) => {
     const uploadApi = axios.create({
-      baseURL: "http://localhost:5000/api",
+      baseURL: `${API_URL}/api`,
       timeout: 30000, // 30 seconds for file uploads
       withCredentials: true,
     });

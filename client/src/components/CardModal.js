@@ -22,6 +22,7 @@ import AssignUserModal from "./AssignUserModal";
 import ConfirmationModal from "./ConfirmationModal";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 import SimpleCommentEditor from "./SimpleCommentEditor";
+import { API_URL } from "../utils/endpoints";
 
 const CardModal = ({
   card,
@@ -1334,7 +1335,7 @@ const CardModal = ({
                             src={
                               attachment.url.startsWith("http")
                                 ? attachment.url
-                                : `http://localhost:5000${attachment.url}`
+                                : `${API_URL}${attachment.url}`
                             }
                             alt={
                               attachment.originalName ||
@@ -1722,7 +1723,7 @@ const CardModal = ({
                               href={
                                 attachment.url.startsWith("http")
                                   ? attachment.url
-                                  : `http://localhost:5000${attachment.url}`
+                                  : `${API_URL}${attachment.url}`
                               }
                               target="_blank"
                               rel="noopener noreferrer"
@@ -1946,7 +1947,7 @@ const CardModal = ({
                   href={
                     selectedImage.url.startsWith("http")
                       ? selectedImage.url
-                      : `http://localhost:5000${selectedImage.url}`
+                      : `${API_URL}${selectedImage.url}`
                   }
                   download={
                     selectedImage.originalName ||
@@ -1974,7 +1975,7 @@ const CardModal = ({
                   src={
                     selectedImage.url.startsWith("http")
                       ? selectedImage.url
-                      : `http://localhost:5000${selectedImage.url}`
+                      : `${API_URL}${selectedImage.url}`
                   }
                   alt={
                     selectedImage.originalName ||
