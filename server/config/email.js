@@ -275,7 +275,7 @@ const emailTemplates = {
 const sendEmail = async (to, subject, html) => {
   try {
     const mailOptions = {
-      from: "mdashifreza7869101@gmail.com",
+      from: `Leanport PMS <mdashifreza7869101@gmail.com>`,
       to,
       subject,
       html,
