@@ -282,8 +282,9 @@ const updateCard = async (req, res) => {
     }
 
     // Update card fields
-    const { title, description, status, priority, assignees, labels, dueDate } =
+    const { title, description, status, priority, assignees, labels } =
       req.body;
+    let dueDate = req.body?.dueDate || new Date();
 
     // Store previous values for comparison
     const previousStatus = card.status;
@@ -295,9 +296,10 @@ const updateCard = async (req, res) => {
     if (priority) card.priority = priority;
     if (assignees) card.assignees = assignees;
     if (labels) card.labels = labels;
-    const previousDueDate = card.dueDate;
+    const previousDueDate = card.dueDate || new Date();
 
     // Update due date
+
     if (dueDate !== undefined) {
       card.dueDate = dueDate ? new Date(dueDate) : null;
     }
