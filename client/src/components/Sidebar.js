@@ -18,7 +18,6 @@ import Avatar from "./Avatar";
 
 const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
   const location = useLocation();
-  console.log("location", location);
   const { user } = useUser();
   const { notifications } = useNotification();
 
@@ -91,7 +90,10 @@ const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
             if (!item.show) return null;
 
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
+            const isActive =
+              location.pathname === item.href ||
+              (location.pathname.includes("project") &&
+                item.name === "Dashboard");
 
             return (
               <Link
