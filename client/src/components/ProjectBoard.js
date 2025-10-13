@@ -363,14 +363,14 @@ const ProjectBoard = () => {
             </Link>
 
             <div>
-              <h1 className="text-3xl font-bold mb-2">{currentProject.name}</h1>
-              <p className="text-blue-100 text-lg">
+              <h1 className="text-2xl font-bold mb-2">{currentProject.name}</h1>
+              <p className="text-primary-100 text-lg">
                 {currentProject.description}
               </p>
             </div>
           </div>
 
-          <button
+          {/* <button
             onClick={() => {
               setSelectedStatus("todo");
               setShowCreateModal(true);
@@ -379,7 +379,7 @@ const ProjectBoard = () => {
           >
             <Plus className="w-5 h-5" />
             <span>Add Card</span>
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -493,16 +493,7 @@ const ProjectBoard = () => {
                   Color
                 </label>
                 <div className="flex space-x-2">
-                  {[
-                    "blue",
-                    "green",
-                    "yellow",
-                    "red",
-                    "purple",
-                    "pink",
-                    "indigo",
-                    "gray",
-                  ].map((color) => (
+                  {["blue", "green", "red", "gray", "yellow"].map((color) => (
                     <button
                       key={color}
                       onClick={() => setNewColumnColor(color)}

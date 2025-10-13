@@ -295,12 +295,46 @@ const updateCard = async (req, res) => {
     if (priority) card.priority = priority;
     if (assignees) card.assignees = assignees;
     if (labels) card.labels = labels;
+    const previousDueDate = card.dueDate;
+
+    // Update due date
     if (dueDate !== undefined) {
       card.dueDate = dueDate ? new Date(dueDate) : null;
     }
 
+    // Fetch user
+    // const user = await User.findById(userId).select("name");
     // Get user information for activity comments
     const user = await User.findById(userId).select("name");
+
+    // Add comment if due date changed
+    if (
+      dueDate !== undefined &&
+      new Date(dueDate).toISOString().slice(0, 10) !==
+        (previousDueDate
+          ? new Date(previousDueDate).toISOString().slice(0, 10)
+          : null)
+    ) {
+      const formattedNewDate = new Date(dueDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+
+      const formattedOldDate = previousDueDate
+        ? new Date(previousDueDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "No due date";
+
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> changed the due date from <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedOldDate}</span> to <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedNewDate}</span></p>`,
+        timestamp: new Date(),
+      });
+    }
 
     // Add automatic comments for status changes
     if (
@@ -1252,9 +1286,34 @@ const uploadFiles = async (req, res) => {
       details: `Uploaded ${uploadedFiles.length} file(s)`,
     });
 
+    // Add comments per uploaded file
+    const user = await User.findById(userId).select("name");
+
+    uploadedFiles.forEach((file) => {
+      const isImage = file.mimeType && file.mimeType.startsWith("image/");
+      const commentText = isImage
+        ? `
+          <p><strong>${user.name}</strong> uploaded an image:</p>
+          <img src="${file.url}" alt="${file.originalName}" style="max-width: 300px; margin-top: 8px; border-radius: 6px;" />
+        `
+        : `
+          <p><strong>${user.name}</strong> uploaded an attachment: 
+            <a href="${file.url}" target="_blank" style="background-color: #e0f2fe; padding: 2px 6px; border-radius: 4px; font-weight: 500; text-decoration: none;">
+              ${file.originalName}
+            </a>
+          </p>
+        `;
+
+      card.comments.push({
+        user: userId,
+        text: commentText,
+        timestamp: new Date(),
+      });
+    });
+
     await card.save();
 
-    // Populate the card with user details
+    // Populate user info for frontend
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
 
@@ -1330,9 +1389,34 @@ const removeAttachment = async (req, res) => {
       details: `Removed attachment: ${attachmentToRemove.originalName}`,
     });
 
+    // Add comment with file or image preview
+    const user = await User.findById(userId).select("name");
+
+    const isImage =
+      attachmentToRemove.mimeType &&
+      attachmentToRemove.mimeType.startsWith("image/");
+    const commentText = isImage
+      ? `
+        <p><strong>${user.name}</strong> removed an image:</p>
+        <img src="${attachmentToRemove.url}" alt="${attachmentToRemove.originalName}" style="max-width: 300px; margin-top: 8px; border-radius: 6px;" />
+      `
+      : `
+        <p><strong>${user.name}</strong> removed an attachment: 
+          <a href="${attachmentToRemove.url}" target="_blank" style="background-color: #fee2e2; padding: 2px 6px; border-radius: 4px; font-weight: 500; text-decoration: none;">
+            ${attachmentToRemove.originalName}
+          </a>
+        </p>
+      `;
+
+    card.comments.push({
+      user: userId,
+      text: commentText,
+      timestamp: new Date(),
+    });
+
     await card.save();
 
-    // Delete the physical file
+    // Delete the physical file (optional if handled externally)
     const filePath = getFilePathFromUrl(attachmentToRemove.url);
     const fileDeleted = deleteFile(filePath);
 

@@ -22,10 +22,10 @@ const ProjectList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-8 text-white mb-8">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
+            <h1 className="text-2xl font-bold mb-2">Your Projects</h1>
             <p className="text-primary-100 text-lg">
               Manage your projects and collaborate with your team
             </p>
@@ -105,7 +105,11 @@ const ProjectCard = ({ project }) => {
               project.description !== "<p><br></p>" &&
               project.description !== "<p></p>" && (
                 <p className="text-primary-100 text-sm mt-1 line-clamp-2">
-                  {project.description.replace(/<[^>]*>/g, "")}
+                  {project.description
+                    .replace(/<[^>]*>/g, "")
+                    .trim()
+                    .slice(0, 60)}
+                  ...
                 </p>
               )}
           </div>

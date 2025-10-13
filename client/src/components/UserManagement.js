@@ -238,8 +238,8 @@ const UserManagement = () => {
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">User Management</h1>
-            <p className="text-blue-100 mt-1">
+            <h1 className="text-2xl font-bold mb-2">User Management</h1>
+            <p className="text-primary-100 text-lg">
               Manage users and their access to the system
             </p>
           </div>
@@ -541,7 +541,10 @@ const UserManagement = () => {
               Reset Password
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Reset password for <strong>{selectedUser.name}</strong>
+              Reset password for{" "}
+              <strong className="font-semibold text-blue-600">
+                {selectedUser.name}
+              </strong>
             </p>
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
@@ -550,6 +553,7 @@ const UserManagement = () => {
                 </label>
                 <input
                   type="password"
+                  placeholder="New Password"
                   value={resetPasswordForm.newPassword}
                   onChange={(e) =>
                     setResetPasswordForm({
@@ -567,6 +571,7 @@ const UserManagement = () => {
                 </label>
                 <input
                   type="password"
+                  placeholder="Confirm Password"
                   value={resetPasswordForm.confirmPassword}
                   onChange={(e) =>
                     setResetPasswordForm({
@@ -589,7 +594,7 @@ const UserManagement = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                   {loading ? "Resetting..." : "Reset Password"}
                 </button>

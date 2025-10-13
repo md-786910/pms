@@ -481,7 +481,7 @@ const CardItem = ({
                     <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
                   </div>
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  {/* <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <div className="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
                       <svg
                         className="w-4 h-4 text-gray-600"
@@ -497,7 +497,7 @@ const CardItem = ({
                         />
                       </svg>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               );
             } else if (
@@ -607,7 +607,7 @@ const CardItem = ({
             </div>
 
             {/* Items List */}
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               {items.slice(0, 3).map((item) => (
                 <div
                   key={item._id}
@@ -649,7 +649,7 @@ const CardItem = ({
                   +{items.length - 3} more items
                 </p>
               )}
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -704,8 +704,8 @@ const CardItem = ({
               }}
               className="w-full flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 py-1 rounded hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
             >
-              <Plus className="w-3 h-3" />
-              <span>Add an item</span>
+              {/* <Plus className="w-3 h-3" /> */}
+              {/* <span>Add an item</span> */}
             </button>
           )}
         </div>

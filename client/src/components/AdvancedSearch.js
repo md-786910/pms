@@ -226,7 +226,7 @@ const AdvancedSearch = () => {
           </div>
 
           {/* Filter Toggle */}
-          <button
+          {/* <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-2 rounded-lg transition-colors duration-200 ${
               showFilters
@@ -236,7 +236,7 @@ const AdvancedSearch = () => {
             title="Filter results"
           >
             <Filter className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
 
         {/* Filter Options */}

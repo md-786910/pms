@@ -45,7 +45,7 @@ const CardModal = ({
     title: card.title,
     description: card.description,
     dueDate: card.dueDate
-      ? new Date(card.dueDate).toISOString().slice(0, 16)
+      ? new Date(card.dueDate).toISOString().slice(0, 10)
       : "",
   });
   const [commentText, setCommentText] = useState("");
@@ -1145,7 +1145,7 @@ const CardModal = ({
       />
 
       <div className="modal-overlay">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden">
           {/* Modal Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
             <div className="flex items-center justify-between">
@@ -1154,7 +1154,10 @@ const CardModal = ({
                   <span className="text-2xl">📋</span>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2
+                    className="text-2xl font-bold cursor-pointer"
+                    onClick={() => setIsEditing(true)}
+                  >
                     {isEditing ? (
                       <input
                         type="text"
@@ -1198,18 +1201,11 @@ const CardModal = ({
                 ) : (
                   <>
                     <button
-                      onClick={() => setIsEditing(true)}
-                      className="bg-white bg-opacity-20 text-white hover:bg-opacity-30 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      <span>Edit</span>
-                    </button>
-                    <button
                       onClick={handleDelete}
                       className="bg-red-500 text-white hover:bg-red-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
                     >
                       <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
+                      {/* <span>Delete</span> */}
                     </button>
                   </>
                 )}
@@ -1224,10 +1220,10 @@ const CardModal = ({
           </div>
 
           {/* Modal Content */}
-          <div className="p-8 max-h-[calc(95vh-200px)] overflow-y-auto">
+          <div className="p-8 max-h-[calc(95vh-200px)] ">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
                 {/* Description */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -1239,8 +1235,8 @@ const CardModal = ({
                         onClick={() => setIsEditing(true)}
                         className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
                       >
-                        <Edit2 className="w-4 h-4" />
-                        <span>Edit</span>
+                        {/* <Edit2 className="w-4 h-4" />
+                        <span>Edit</span> */}
                       </button>
                     )}
                   </div>
@@ -1367,16 +1363,44 @@ const CardModal = ({
                     </div>
                   </div>
                 )}
+                <div className="space-y-4">
+                  <div className="comment-editor">
+                    <SimpleCommentEditor
+                      value={commentText || ""}
+                      onChange={(content) => {
+                        console.log("SimpleCommentEditor onChange:", content);
+                        setCommentText(content);
+                      }}
+                      onMentionSelect={(mention) => {
+                        console.log("Mention selected:", mention);
+                        setMentions((prev) => [...prev, mention]);
+                      }}
+                      onSend={(content) => {
+                        console.log("Sending comment:", content);
+                        setCommentText(content);
+                        handleAddComment();
+                      }}
+                      placeholder="Add a comment... (use @ to mention someone)"
+                      projectMembers={(() => {
+                        const members = currentProject?.members || [];
+                        console.log("Project members for mentions:", members);
+                        return members;
+                      })()}
+                      currentUser={user}
+                      cardMembers={getAssignees()}
+                    />
+                  </div>
+                </div>
 
                 {/* Comments */}
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="bg-white p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Comments ({card.comments.length})
                     </h3>
                   </div>
 
-                  <div className="space-y-3 mb-6 max-h-64 overflow-y-auto pr-2">
+                  <div className="space-y-3 mb-6 pr-2">
                     {card.comments
                       .sort((a, b) => {
                         // Sort by updatedAt if available, otherwise by timestamp
@@ -1491,40 +1515,11 @@ const CardModal = ({
                         );
                       })}
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="comment-editor">
-                      <SimpleCommentEditor
-                        value={commentText || ""}
-                        onChange={(content) => {
-                          console.log("SimpleCommentEditor onChange:", content);
-                          setCommentText(content);
-                        }}
-                        onMentionSelect={(mention) => {
-                          console.log("Mention selected:", mention);
-                          setMentions((prev) => [...prev, mention]);
-                        }}
-                        onSend={(content) => {
-                          console.log("Sending comment:", content);
-                          setCommentText(content);
-                          handleAddComment();
-                        }}
-                        placeholder="Add a comment... (use @ to mention someone)"
-                        projectMembers={(() => {
-                          const members = currentProject?.members || [];
-                          console.log("Project members for mentions:", members);
-                          return members;
-                        })()}
-                        currentUser={user}
-                        cardMembers={getAssignees()}
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6">
+              <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto">
                 {/* Status */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1555,24 +1550,21 @@ const CardModal = ({
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Due Date
                   </label>
-                  {isEditing ? (
-                    <input
-                      type="datetime-local"
-                      value={formData.dueDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dueDate: e.target.value })
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="p-2 bg-gray-50 rounded-lg">
-                      <p className="text-gray-700 text-sm">
-                        {card.dueDate
-                          ? new Date(card.dueDate).toLocaleString()
-                          : "No due date set"}
-                      </p>
-                    </div>
-                  )}
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dueDate: e.target.value })
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                  {/* <div className="p-2 bg-gray-50 rounded-lg">
+                    <p className="text-gray-700 text-sm">
+                      {card.dueDate
+                        ? new Date(card.dueDate).toLocaleString()
+                        : "No due date set"}
+                    </p>
+                  </div> */}
                 </div>
 
                 {/* Priority */}
@@ -1813,7 +1805,7 @@ const CardModal = ({
                   </div>
 
                   {/* Items List */}
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                  <div className="space-y-2">
                     {loadingItems ? (
                       <div className="text-center py-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>

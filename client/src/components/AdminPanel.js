@@ -85,7 +85,7 @@ const AdminPanel = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
@@ -96,8 +96,8 @@ const AdminPanel = () => {
             </Link>
 
             <div>
-              <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
-              <p className="text-blue-100 text-lg">
+              <h1 className="text-2xl font-bold mb-2">Admin Panel</h1>
+              <p className="text-primary-100 text-lg">
                 Manage projects and team members
               </p>
             </div>
@@ -107,9 +107,9 @@ const AdminPanel = () => {
             <div className="bg-white bg-opacity-20 rounded-xl p-3">
               <Settings className="w-6 h-6" />
             </div>
-            <div className="text-right">
+            <div className="text-center">
               <div className="text-2xl font-bold">{projects?.length || 0}</div>
-              <div className="text-blue-100 text-sm">Projects</div>
+              <div className="text-primary-100 text-sm">Projects</div>
             </div>
           </div>
         </div>

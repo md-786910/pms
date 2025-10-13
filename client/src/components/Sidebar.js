@@ -18,6 +18,7 @@ import Avatar from "./Avatar";
 
 const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
   const location = useLocation();
+  console.log("location", location);
   const { user } = useUser();
   const { notifications } = useNotification();
 
