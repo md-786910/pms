@@ -182,4 +182,41 @@ export const notificationAPI = {
     api.post("/notifications", notificationData),
 };
 
+export const storyAPI = {
+  getStories: (projectId) => api.get(`/projects/${projectId}/stories`),
+  getStory: (id) => api.get(`/stories/${id}`),
+  getSubStories: (parentStoryId) =>
+    api.get(`/stories/${parentStoryId}/substories`),
+  createStory: (storyData) => api.post("/stories", storyData),
+  updateStory: (id, storyData) => api.put(`/stories/${id}`, storyData),
+  deleteStory: (id) => api.delete(`/stories/${id}`),
+  assignUser: (id, userId) => api.post(`/stories/${id}/assign`, { userId }),
+  unassignUser: (id, userId) => api.delete(`/stories/${id}/assign/${userId}`),
+  addComment: (id, comment, mentions = []) =>
+    api.post(`/stories/${id}/comments`, { comment, mentions }),
+  updateComment: (id, commentId, text) =>
+    api.put(`/stories/${id}/comments/${commentId}`, { text }),
+  uploadFiles: (id, formData) => {
+    const uploadApi = axios.create({
+      baseURL: `${API_URL}/api`,
+      timeout: 30000, // 30 seconds for file uploads
+      withCredentials: true,
+    });
+
+    // Add auth token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      uploadApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return uploadApi.post(`/stories/${id}/upload-files`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+  deleteAttachment: (id, attachmentId) =>
+    api.delete(`/stories/${id}/attachments/${attachmentId}`),
+};
+
 export default api;

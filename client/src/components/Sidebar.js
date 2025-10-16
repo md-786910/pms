@@ -1,17 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Home,
-  Settings,
-  Users,
-  FolderOpen,
-  X,
-  UserPlus,
-  Bell,
-  Shield,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Home, Settings, Users, X, Bell, Shield } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import Avatar from "./Avatar";

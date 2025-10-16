@@ -174,4 +174,22 @@ router.get("/:id/cards", projectMemberAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/projects/:id/stories
+// @desc    Get all stories for a project
+// @access  Private
+router.get("/:id/stories", projectMemberAuth, async (req, res) => {
+  try {
+    const { getStories } = require("../controllers/storyController");
+    // Map the :id param to :projectId for the controller
+    req.params.projectId = req.params.id;
+    await getStories(req, res);
+  } catch (error) {
+    console.error("Get project stories route error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching stories",
+    });
+  }
+});
+
 module.exports = router;
