@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, MoreVertical, ChevronRight } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
-import { cardAPI, columnAPI } from "../utils/api";
+import { cardAPI, columnAPI, projectAPI } from "../utils/api";
 import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
@@ -31,6 +31,26 @@ const ProjectBoard = () => {
   // Card modal state
   const [selectedCard, setSelectedCard] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [projectData, setProjectData] = useState([]);
+
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      try {
+        const response = await projectAPI.getProject(id);
+        setProjectData(response.data);
+      } catch (error) {
+        console.error("Error fetching project data:", error);
+      }
+    };
+
+    fetchProjectData();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
 
   // Determine the actual project ID
   const actualProjectId = projectId || id;
@@ -361,12 +381,39 @@ const ProjectBoard = () => {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
+            <div className="grid grid-cols-12 items-center gap-4 w-full">
+              {/* Left Column (Project Name & Description) */}
+              <div className="col-span-8">
+                <h1 className="text-2xl font-bold mb-2">
+                  {currentProject.name}
+                </h1>
+                <p className="text-primary-100 text-lg">
+                  {currentProject.description}
+                </p>
+              </div>
 
-            <div>
-              <h1 className="text-2xl font-bold mb-2">{currentProject.name}</h1>
-              <p className="text-primary-100 text-lg">
-                {currentProject.description}
-              </p>
+              {/* Right Column (Client Name) */}
+              <div className="col-span-4 flex justify-end">
+                <div className="bg-white bg-opacity-20 rounded-xl p-3 text-white text-sm">
+                  <span className="font-semibold text-white">
+                    {projectData.project?.clientName || "John Doe"}
+                  </span>
+                  <div>
+                    <div>
+                      <span>
+                        Start Date: {formatDate(projectData.project?.startDate)}
+                      </span>
+                    </div>
+                    <div>
+                      {projectData.project?.endDate && (
+                        <span>
+                          End Date: {formatDate(projectData.project?.endDate)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

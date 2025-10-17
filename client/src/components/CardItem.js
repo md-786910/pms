@@ -322,20 +322,20 @@ const CardItem = ({
                 isHovered ? "opacity-100" : "opacity-0"
               }`}
             >
-              <button
+              {/* <button
                 onClick={handleQuickEdit}
                 className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                 title="Edit card"
               >
                 <Edit2 className="w-3.5 h-3.5" />
-              </button>
-              <button
+              </button> */}
+              {/* <button
                 onClick={handleQuickDelete}
                 className="p-1.5 rounded hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors duration-200"
                 title="Delete card"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              </button> */}
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={(e) => {
@@ -345,7 +345,7 @@ const CardItem = ({
                   className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                   title="More actions"
                 >
-                  <MoreVertical className="w-3.5 h-3.5" />
+                  {/* <MoreVertical className="w-3.5 h-3.5" /> */}
                 </button>
 
                 {/* Quick Actions Dropdown */}

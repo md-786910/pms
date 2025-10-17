@@ -13,6 +13,24 @@ const projectSchema = new mongoose.Schema(
       trim: true,
       maxlength: [500, "Description cannot be more than 500 characters"],
     },
+    clientName: {
+      type: String,
+      trim: true,
+      maxlength: [100, "Client name cannot be more than 100 characters"],
+    },
+    projectType: {
+      type: String,
+      enum: ["Maintenance", "One Time", "On Going"],
+      default: "Maintenance",
+    },
+    startDate: {
+      type: Date,
+      required: [true, "Start date is required"],
+    },
+    endDate: {
+      type: Date,
+      default: null,
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

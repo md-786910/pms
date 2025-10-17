@@ -7,10 +7,18 @@ const CreateProjectModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    clientName: "",
+    projectType: "",
+    startDate: new Date(),
+    endDate: new Date(),
   });
   const [loading, setLoading] = useState(false);
   const { createProject } = useProject();
   const { showToast } = useNotification();
+  const columnCount =
+    formData.projectType === "On Going" ? "md:grid-cols-3" : "md:grid-cols-2";
+
+  // No need to set formData.endDate here; it's managed by React state.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,15 +42,25 @@ const CreateProjectModal = ({ onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      // If projectType changes and is not "On Going", clear endDate
+      if (name === "projectType" && value !== "On Going") {
+        return {
+          ...prev,
+          [name]: value,
+          endDate: "",
+        };
+      }
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
   };
 
   return (
     <div className="modal-overlay">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-[40vw] w-full mx-4">
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
@@ -64,20 +82,89 @@ const CreateProjectModal = ({ onClose }) => {
         {/* Modal Content */}
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
-            {/* Project Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Project Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter project name"
-                required
-              />
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Project Name */}
+              <div className="md:w-1/2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Project Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter project name"
+                  required
+                />
+              </div>
+              {/* Client Name */}
+              <div className="md:w-1/2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Client Name *
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter client name"
+                  required
+                />
+              </div>
+            </div>
+            <div className={`grid grid-cols-1 ${columnCount} gap-4`}>
+              {/* Project Type Dropdown */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Project Type *
+                </label>
+                <select
+                  name="projectType"
+                  value={formData.projectType}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option>Project Type</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="One Time">One Time</option>
+                  <option value="On Going">On Going</option>
+                </select>
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              {/* End Date — Only show when projectType is "On Going" */}
+              {formData.projectType === "On Going" && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    End Date *
+                  </label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             {/* Project Description */}

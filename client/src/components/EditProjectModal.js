@@ -10,7 +10,24 @@ const EditProjectModal = ({ project, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    clientName: "",
+    projectType: "",
+    startDate: "",
+    endDate: "",
   });
+  const columnCount =
+    formData.projectType === "On Going" ? "md:grid-cols-3" : "md:grid-cols-2";
+
+  // Helper to format date as YYYY-MM-DD for input[type="date"]
+  function formatDate(date) {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d)) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
 
   useEffect(() => {
     if (project) {
@@ -22,6 +39,10 @@ const EditProjectModal = ({ project, onClose }) => {
       setFormData({
         name: project.name || "",
         description: cleanDescription,
+        clientName: project.clientName || "",
+        projectType: project.projectType || "Maintenance",
+        startDate: formatDate(project.startDate),
+        endDate: formatDate(project.endDate),
       });
     }
   }, [project]);
@@ -39,6 +60,10 @@ const EditProjectModal = ({ project, onClose }) => {
       await updateProject(project._id, {
         name: formData.name.trim(),
         description: formData.description.trim(),
+        clientName: formData.clientName.trim(),
+        projectType: formData.projectType.trim(),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
       });
       showToast("Project updated successfully!", "success");
       onClose();
@@ -61,7 +86,7 @@ const EditProjectModal = ({ project, onClose }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-[40vw] w-full mx-4">
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
@@ -83,22 +108,90 @@ const EditProjectModal = ({ project, onClose }) => {
         {/* Modal Content */}
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
-            {/* Project Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Project Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter project name"
-                required
-              />
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Project Name */}
+              <div className="md:w-1/2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Project Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter project name"
+                  required
+                />
+              </div>
+              {/* Project Name */}
+              <div className="md:w-1/2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Client Name *
+                </label>
+                <input
+                  type="text"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter project name"
+                  required
+                />
+              </div>
             </div>
+            <div className={`grid grid-cols-1 ${columnCount} gap-4`}>
+              {/* Project Type Dropdown */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Project Type *
+                </label>
+                <select
+                  name="projectType"
+                  value={formData.projectType}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option>Project Type</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="One Time">One Time</option>
+                  <option value="On Going">On Going</option>
+                </select>
+              </div>
 
+              {/* Start Date */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={formData.startDate}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              {/* End Date — Only show when projectType is "On Going" */}
+              {formData.projectType === "On Going" && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    End Date *
+                  </label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              )}
+            </div>
             {/* Project Description */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">

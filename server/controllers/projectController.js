@@ -109,12 +109,24 @@ const getProject = async (req, res) => {
 // @access  Private
 const createProject = async (req, res) => {
   try {
-    const { name, description, color = "blue" } = req.body;
+    const {
+      name,
+      description,
+      clientName,
+      projectType,
+      startDate,
+      endDate,
+      color = "blue",
+    } = req.body;
     const userId = req.user._id;
 
     const project = new Project({
       name,
       description,
+      clientName,
+      projectType,
+      startDate: startDate || new Date(),
+      endDate: endDate || null,
       owner: userId,
       members: [
         {
@@ -152,7 +164,15 @@ const updateProject = async (req, res) => {
   try {
     const projectId = req.params.id;
     const userId = req.user._id;
-    const { name, description, color } = req.body;
+    const {
+      name,
+      description,
+      clientName,
+      projectType,
+      startDate,
+      endDate,
+      color,
+    } = req.body;
 
     const project = await Project.findById(projectId);
 
@@ -177,6 +197,10 @@ const updateProject = async (req, res) => {
     // Update project fields
     if (name) project.name = name;
     if (description) project.description = description;
+    if (clientName) project.clientName = clientName;
+    if (projectType) project.projectType = projectType;
+    if (startDate) project.startDate = startDate;
+    if (endDate) project.endDate = endDate;
     if (color) project.color = color;
 
     await project.save();

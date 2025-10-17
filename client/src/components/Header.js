@@ -28,29 +28,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <button
-            onClick={onMenuClick}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
-          >
-            <Menu className="w-5 h-5 text-gray-600" />
-          </button>
-
           {/* Mobile Search */}
           <div className="md:hidden">
             <AdvancedSearch />
           </div>
-
-          <button
-            onClick={onToggleSidebar}
-            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-600" />
-            ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
 
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">

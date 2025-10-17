@@ -169,9 +169,9 @@ const ProjectCard = ({ project }) => {
       {/* Card Footer */}
       <div className="px-6 py-3 bg-secondary-50 border-t border-secondary-100">
         <div className="flex items-center justify-between text-xs text-secondary-500">
-          <span>Click to open project</span>
+          <span className="font-medium">{project.projectType}</span>
           <span className="text-primary-600 font-medium group-hover:text-primary-700">
-            View Details →
+            {project.clientName}
           </span>
         </div>
       </div>
