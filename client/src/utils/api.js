@@ -101,7 +101,39 @@ export const userAPI = {
 export const projectAPI = {
   getProjects: () => api.get("/projects"),
   getProject: (id) => api.get(`/projects/${id}`),
-  createProject: (projectData) => api.post("/projects", projectData),
+  createProject: (projectData, files = []) => {
+    if (files.length > 0) {
+      // Create FormData for file upload
+      const formData = new FormData();
+
+      // Add project data
+      Object.keys(projectData).forEach((key) => {
+        if (projectData[key] !== null && projectData[key] !== undefined) {
+          formData.append(key, projectData[key]);
+        }
+      });
+
+      // Add files
+      files.forEach((file, index) => {
+        formData.append(`files`, file);
+      });
+
+      // Use the main api instance but override headers for multipart/form-data
+      const token = localStorage.getItem("authToken");
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        timeout: 30000, // 30 seconds for file uploads
+      };
+
+      return api.post("/projects", formData, config);
+    } else {
+      // Regular JSON request without files
+      return api.post("/projects", projectData);
+    }
+  },
   updateProject: (id, projectData) => api.put(`/projects/${id}`, projectData),
   deleteProject: (id) => api.delete(`/projects/${id}`),
   addMember: (id, memberData) =>
@@ -129,23 +161,17 @@ export const cardAPI = {
   deleteAttachment: (id, attachmentId) =>
     api.delete(`/cards/${id}/attachments/${attachmentId}`),
   uploadFiles: (id, formData) => {
-    const uploadApi = axios.create({
-      baseURL: `${API_URL}/api`,
-      timeout: 30000, // 30 seconds for file uploads
-      withCredentials: true,
-    });
-
-    // Add auth token
+    // Use the main api instance but override headers for multipart/form-data
     const token = localStorage.getItem("authToken");
-    if (token) {
-      uploadApi.defaults.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return uploadApi.post(`/cards/${id}/upload-files`, formData, {
+    const config = {
       headers: {
         "Content-Type": "multipart/form-data",
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
-    });
+      timeout: 30000, // 30 seconds for file uploads
+    };
+
+    return api.post(`/cards/${id}/upload-files`, formData, config);
   },
 };
 

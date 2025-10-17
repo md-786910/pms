@@ -17,7 +17,10 @@ const getProjects = async (req, res) => {
 
     if (userRole === "admin") {
       // Admin can see all projects
-      projects = await Project.find({ status: "active" })
+      // in operator status[]
+      projects = await Project.find({
+        status: { $in: ["active", "planning", "on-hold", "completed"] },
+      })
         .populate("owner", "name email avatar color")
         .populate("members.user", "name email avatar color")
         .sort({ createdAt: -1 });
@@ -109,24 +112,154 @@ const getProject = async (req, res) => {
 // @access  Private
 const createProject = async (req, res) => {
   try {
-    const {
+    let {
+      name,
+      description,
+      clientName,
+      projectType,
+      startDate,
+      endDate = null,
+      projectStatus = "active",
+      color = "blue",
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+    } = req.body;
+
+    // Handle FormData arrays - extract first element if it's an array
+    const extractFirstValue = (value) =>
+      Array.isArray(value) ? value[0] : value;
+
+    name = extractFirstValue(name);
+    description = extractFirstValue(description);
+    clientName = extractFirstValue(clientName);
+    projectType = extractFirstValue(projectType);
+    startDate = extractFirstValue(startDate);
+    endDate = extractFirstValue(endDate);
+    projectStatus = extractFirstValue(projectStatus);
+    color = extractFirstValue(color);
+    liveSiteUrl = extractFirstValue(liveSiteUrl);
+    demoSiteUrl = extractFirstValue(demoSiteUrl);
+    markupUrl = extractFirstValue(markupUrl);
+
+    // Convert date strings to Date objects with validation
+    if (startDate) {
+      startDate = new Date(startDate);
+      if (isNaN(startDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid start date format",
+        });
+      }
+    }
+    if (endDate && endDate !== "") {
+      endDate = new Date(endDate);
+      if (isNaN(endDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid end date format",
+        });
+      }
+    }
+
+    // Debug logging to see the processed values
+    console.log("Processed form data:", {
+      name: typeof name,
+      description: typeof description,
+      clientName: typeof clientName,
+      projectType: typeof projectType,
+      projectStatus: typeof projectStatus,
+      color: typeof color,
+      liveSiteUrl: typeof liveSiteUrl,
+      demoSiteUrl: typeof demoSiteUrl,
+      markupUrl: typeof markupUrl,
+    });
+
+    console.log("Actual values:", {
+      name,
+      description,
+      clientName,
+      projectType,
+      projectStatus,
+      color,
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+    });
+    const userId = req.user._id;
+
+    // Handle file attachments if any
+    const attachments = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        attachments.push({
+          filename: file.filename,
+          originalName: file.originalName,
+          mimeType: file.mimeType,
+          size: file.size,
+          url: file.url,
+          uploadedBy: userId,
+        });
+      }
+    }
+
+    // Validate required fields
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Project name is required",
+      });
+    }
+
+    if (
+      !projectType ||
+      !["Maintenance", "One Time", "On Going"].includes(projectType)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Valid project type is required (Maintenance, One Time, or On Going)",
+      });
+    }
+
+    if (!startDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date is required",
+      });
+    }
+
+    // Validate date logic
+    if (endDate && startDate && endDate < startDate) {
+      return res.status(400).json({
+        success: false,
+        message: "End date cannot be before start date",
+      });
+    }
+
+    console.log("Creating project with data:", {
       name,
       description,
       clientName,
       projectType,
       startDate,
       endDate,
-      color = "blue",
-    } = req.body;
-    const userId = req.user._id;
+      status: projectStatus,
+      owner: userId,
+      color,
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+    });
 
     const project = new Project({
-      name,
-      description,
-      clientName,
+      name: name.trim(),
+      description: description ? description.trim() : "",
+      clientName: clientName ? clientName.trim() : "",
       projectType,
       startDate: startDate || new Date(),
-      endDate: endDate || null,
+      endDate: endDate ? endDate : null,
+      status: projectStatus || "active",
       owner: userId,
       members: [
         {
@@ -134,14 +267,26 @@ const createProject = async (req, res) => {
           role: "admin",
         },
       ],
-      color,
+      color: color || "blue",
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+      attachments,
     });
 
-    await project.save();
+    console.log("About to save project...");
+    try {
+      await project.save();
+      console.log("Project saved successfully!");
+    } catch (saveError) {
+      console.error("Error saving project:", saveError);
+      throw saveError;
+    }
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color");
     await project.populate("members.user", "name email avatar color");
+    await project.populate("attachments.uploadedBy", "name email avatar color");
 
     res.status(201).json({
       success: true,
@@ -150,10 +295,7 @@ const createProject = async (req, res) => {
     });
   } catch (error) {
     console.error("Create project error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while creating project",
-    });
+    throw error;
   }
 };
 
@@ -164,7 +306,7 @@ const updateProject = async (req, res) => {
   try {
     const projectId = req.params.id;
     const userId = req.user._id;
-    const {
+    let {
       name,
       description,
       clientName,
@@ -172,7 +314,20 @@ const updateProject = async (req, res) => {
       startDate,
       endDate,
       color,
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
     } = req.body;
+
+    // Handle FormData arrays - extract first element if it's an array
+    if (Array.isArray(name)) name = name[0];
+    if (Array.isArray(description)) description = description[0];
+    if (Array.isArray(clientName)) clientName = clientName[0];
+    if (Array.isArray(projectType)) projectType = projectType[0];
+    if (Array.isArray(color)) color = color[0];
+    if (Array.isArray(liveSiteUrl)) liveSiteUrl = liveSiteUrl[0];
+    if (Array.isArray(demoSiteUrl)) demoSiteUrl = demoSiteUrl[0];
+    if (Array.isArray(markupUrl)) markupUrl = markupUrl[0];
 
     const project = await Project.findById(projectId);
 
@@ -202,6 +357,9 @@ const updateProject = async (req, res) => {
     if (startDate) project.startDate = startDate;
     if (endDate) project.endDate = endDate;
     if (color) project.color = color;
+    if (liveSiteUrl !== undefined) project.liveSiteUrl = liveSiteUrl;
+    if (demoSiteUrl !== undefined) project.demoSiteUrl = demoSiteUrl;
+    if (markupUrl !== undefined) project.markupUrl = markupUrl;
 
     await project.save();
 

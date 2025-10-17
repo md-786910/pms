@@ -53,7 +53,7 @@ const invitationSchema = new mongoose.Schema(
 
 // Indexes
 invitationSchema.index({ email: 1, project: 1 }, { unique: true });
-invitationSchema.index({ token: 1 });
+// Note: token index is already created by unique: true in the schema
 invitationSchema.index({ status: 1 });
 
 // Generate invitation token

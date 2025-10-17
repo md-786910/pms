@@ -225,7 +225,22 @@ const AdminPanel = () => {
                             {project.name || "Unnamed Project"}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {project.description || "No description"}
+                            {(() => {
+                              if (
+                                !project.description ||
+                                project.description.trim() === "" ||
+                                project.description === "<p><br></p>" ||
+                                project.description === "<p></p>"
+                              ) {
+                                return "No description";
+                              }
+                              const cleanText = project.description
+                                .replace(/<[^>]*>/g, "")
+                                .trim();
+                              return cleanText.length > 100
+                                ? cleanText.slice(0, 100) + "..."
+                                : cleanText;
+                            })()}
                           </p>
                           <div className="flex items-center space-x-4 mt-1">
                             <div className="flex items-center space-x-2">

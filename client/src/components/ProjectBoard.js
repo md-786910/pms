@@ -387,9 +387,17 @@ const ProjectBoard = () => {
                 <h1 className="text-2xl font-bold mb-2">
                   {currentProject.name}
                 </h1>
-                <p className="text-primary-100 text-lg">
-                  {currentProject.description}
-                </p>
+                <div
+                  className="text-primary-100 text-lg prose prose-sm max-w-none"
+                  style={{
+                    fontSize: "18px",
+                    lineHeight: "1.5",
+                    color: "rgba(255, 255, 255, 0.9)",
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: currentProject.description,
+                  }}
+                />
               </div>
 
               {/* Right Column (Client Name) */}

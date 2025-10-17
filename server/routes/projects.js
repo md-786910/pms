@@ -10,6 +10,7 @@ const {
   removeMember,
 } = require("../controllers/projectController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
+const { projectUploadMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -31,22 +32,71 @@ router.get("/:id", projectMemberAuth, getProject);
 // @access  Private
 router.post(
   "/",
+  projectUploadMiddleware,
   [
     body("name")
+      .notEmpty()
       .trim()
       .isLength({ min: 1, max: 100 })
-      .withMessage("Project name must be between 1 and 100 characters"),
+      .withMessage(
+        "Project name is required and must be between 1 and 100 characters"
+      ),
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 500 })
-      .withMessage("Description cannot be more than 500 characters"),
-    body("color")
+      .isLength({ max: 10000 })
+      .withMessage("Description cannot be more than 10000 characters"),
+    body("clientName")
       .optional()
-      .isIn(["blue", "green", "purple", "orange", "pink", "red", "yellow"])
-      .withMessage("Invalid color"),
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage("Client name cannot be more than 100 characters"),
+    body("projectType")
+      .notEmpty()
+      .isIn(["Maintenance", "One Time", "On Going"])
+      .withMessage(
+        "Project type is required and must be one of: Maintenance, One Time, On Going"
+      ),
+    body("startDate")
+      .notEmpty()
+      .isDate()
+      .withMessage("Start date is required and must be a valid date"),
+    body("endDate").optional(),
+    body("projectStatus")
+      .notEmpty()
+      .isIn(["active", "planning", "on-hold", "completed"])
+      .withMessage(
+        "Project status is required and must be one of: active, planning, on-hold, completed"
+      ),
+    body("liveSiteUrl")
+      .optional()
+      .custom((value) => {
+        if (!value || value.trim() === "") return true;
+        return /^https?:\/\/.+/.test(value);
+      })
+      .withMessage(
+        "Live site URL must be a valid URL starting with http:// or https://"
+      ),
+    body("demoSiteUrl")
+      .optional()
+      .custom((value) => {
+        if (!value || value.trim() === "") return true;
+        return /^https?:\/\/.+/.test(value);
+      })
+      .withMessage(
+        "Demo site URL must be a valid URL starting with http:// or https://"
+      ),
+    body("markupUrl")
+      .optional()
+      .custom((value) => {
+        if (!value || value.trim() === "") return true;
+        return /^https?:\/\/.+/.test(value);
+      })
+      .withMessage(
+        "Markup URL must be a valid URL starting with http:// or https://"
+      ),
   ],
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -56,14 +106,36 @@ router.post(
           errors: errors.array(),
         });
       }
-
-      await createProject(req, res);
-    } catch (error) {
-      console.error("Create project route error:", error);
-      res.status(500).json({
-        success: false,
-        message: "Server error",
+      console.log("Creating project:", req.body);
+      const projectCreated = await createProject(req, res);
+      if (!projectCreated) {
+        return res.status(400).json({
+          success: false,
+          message: "Project creation failed",
+        });
+      }
+      return res.status(201).json({
+        success: true,
+        message: "Project created successfully",
+        project: projectCreated,
       });
+    } catch (error) {
+      // Handle specific MongoDB errors
+      if (error.name === "ValidationError") {
+        const errors = Object.values(error.errors).map((e) => e.message);
+        return res.status(400).json({
+          success: false,
+          message: "Validation Error",
+          errors,
+        });
+      }
+
+      if (error.code === 11000) {
+        return res.status(400).json({
+          success: false,
+          message: "A project with this name already exists",
+        });
+      }
     }
   }
 );
@@ -82,8 +154,8 @@ router.put(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 500 })
-      .withMessage("Description cannot be more than 500 characters"),
+      .isLength({ max: 10000 })
+      .withMessage("Description cannot be more than 10000 characters"),
     body("color")
       .optional()
       .isIn(["blue", "green", "purple", "orange", "pink", "red", "yellow"])

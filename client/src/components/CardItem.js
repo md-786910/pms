@@ -508,9 +508,17 @@ const CardItem = ({
             ) {
               console.log("No images found, showing description");
               return (
-                <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                  {card.description.replace(/<[^>]*>/g, "")}
-                </p>
+                <div
+                  className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed prose prose-sm max-w-none"
+                  style={{
+                    fontSize: "12px",
+                    lineHeight: "1.4",
+                    color: "#6b7280",
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: card.description,
+                  }}
+                />
               );
             } else if (card.attachments && card.attachments.length > 0) {
               console.log(

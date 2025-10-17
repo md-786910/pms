@@ -11,7 +11,7 @@ const projectSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot be more than 500 characters"],
+      default: "",
     },
     clientName: {
       type: String,
@@ -56,12 +56,45 @@ const projectSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["active", "archived", "completed"],
+      enum: ["active", "planning", "on-hold", "completed", "inactive"],
       default: "active",
     },
     color: {
       type: String,
       default: "blue",
+    },
+    liveSiteUrl: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return !v || /^https?:\/\/.+/.test(v);
+        },
+        message:
+          "Live site URL must be a valid URL starting with http:// or https://",
+      },
+    },
+    demoSiteUrl: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return !v || /^https?:\/\/.+/.test(v);
+        },
+        message:
+          "Demo site URL must be a valid URL starting with http:// or https://",
+      },
+    },
+    markupUrl: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return !v || /^https?:\/\/.+/.test(v);
+        },
+        message:
+          "Markup URL must be a valid URL starting with http:// or https://",
+      },
     },
     settings: {
       allowMemberInvites: {
@@ -73,6 +106,39 @@ const projectSchema = new mongoose.Schema(
         default: "todo",
       },
     },
+    attachments: [
+      {
+        filename: {
+          type: String,
+          required: true,
+        },
+        originalName: {
+          type: String,
+          required: true,
+        },
+        mimeType: {
+          type: String,
+          required: true,
+        },
+        size: {
+          type: Number,
+          required: true,
+        },
+        url: {
+          type: String,
+          required: true,
+        },
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
