@@ -128,6 +128,21 @@ const cardSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    archivedAt: {
+      type: Date,
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    originalStatus: {
+      type: String,
+      default: "todo",
+    },
   },
   {
     timestamps: true,
@@ -138,5 +153,6 @@ const cardSchema = new mongoose.Schema(
 cardSchema.index({ project: 1, status: 1 });
 cardSchema.index({ assignees: 1 });
 cardSchema.index({ dueDate: 1 });
+cardSchema.index({ project: 1, isArchived: 1 });
 
 module.exports = mongoose.model("Card", cardSchema);

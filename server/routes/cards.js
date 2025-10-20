@@ -5,7 +5,8 @@ const {
   getCard,
   createCard,
   updateCard,
-  deleteCard,
+  archiveCard,
+  restoreCard,
   updateStatus,
   assignUser,
   unassignUser,
@@ -128,10 +129,15 @@ router.put(
   updateCard
 );
 
-// @route   DELETE /api/cards/:id
-// @desc    Delete card
+// @route   PUT /api/cards/:id/archive
+// @desc    Archive card (soft delete)
 // @access  Private
-router.delete("/:id", deleteCard);
+router.put("/:id/archive", archiveCard);
+
+// @route   PUT /api/cards/:id/restore
+// @desc    Restore archived card
+// @access  Private
+router.put("/:id/restore", restoreCard);
 
 // @route   PUT /api/cards/:id/status
 // @desc    Update card status

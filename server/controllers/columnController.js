@@ -3,6 +3,54 @@ const Project = require("../models/Project");
 const Card = require("../models/Card");
 const { validationResult } = require("express-validator");
 
+// Helper function to ensure archive column exists for a project
+const ensureArchiveColumn = async (projectId, userId) => {
+  try {
+    console.log(`Ensuring archive column for project ${projectId}`);
+
+    // Check if archive column already exists
+    const existingArchiveColumn = await Column.findOne({
+      project: projectId,
+      status: "archive",
+    });
+
+    if (!existingArchiveColumn) {
+      console.log(`Creating archive column for project ${projectId}`);
+
+      // Get the highest position to place archive column at the end
+      const lastColumn = await Column.findOne({ project: projectId }).sort({
+        position: -1,
+      });
+      const archivePosition = lastColumn ? lastColumn.position + 1 : 999;
+
+      // Create archive column
+      const archiveColumn = new Column({
+        name: "Archive",
+        project: projectId,
+        status: "archive",
+        color: "gray",
+        position: archivePosition,
+        isDefault: true,
+        createdBy: userId,
+      });
+
+      await archiveColumn.save();
+      console.log(
+        `Archive column created for project ${projectId} with position ${archivePosition}`
+      );
+      return archiveColumn;
+    } else {
+      console.log(`Archive column already exists for project ${projectId}`);
+    }
+
+    return existingArchiveColumn;
+  } catch (error) {
+    console.error("Error ensuring archive column:", error);
+    console.error("Error details:", error.message);
+    return null;
+  }
+};
+
 // @route   GET /api/projects/:projectId/columns
 // @desc    Get all columns for a project
 // @access  Private
@@ -32,14 +80,27 @@ const getColumns = async (req, res) => {
       });
     }
 
-    // Get only custom columns (no default columns)
-    const customColumns = await Column.find({ project: projectId })
-      .populate("createdBy", "name email avatar color")
-      .sort({ position: 1 });
+    // Ensure archive column exists
+    await ensureArchiveColumn(projectId, userId);
+
+    // Get all columns including archive column
+    const columns = await Column.find({ project: projectId }).populate(
+      "createdBy",
+      "name email avatar color"
+    );
+
+    // Ensure archive column is always last on the right in the response
+    const sortedColumns = [...columns].sort((a, b) => {
+      const aIsArchive = a.status === "archive";
+      const bIsArchive = b.status === "archive";
+      if (aIsArchive && !bIsArchive) return 1;
+      if (!aIsArchive && bIsArchive) return -1;
+      return (a.position || 0) - (b.position || 0);
+    });
 
     res.json({
       success: true,
-      columns: customColumns,
+      columns: sortedColumns,
     });
   } catch (error) {
     console.error("Get columns error:", error);
@@ -191,6 +252,14 @@ const updateColumn = async (req, res) => {
       });
     }
 
+    // Prevent modifying the Archive column
+    if (column.status === "archive") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot modify the Archive column",
+      });
+    }
+
     // Update column
     if (name) column.name = name;
     if (color) column.color = color;
@@ -318,16 +387,33 @@ const reorderColumns = async (req, res) => {
       });
     }
 
-    // Update positions of all columns
+    // Update positions of all columns, keeping Archive column always last
+    let writeIndex = 0;
     for (let i = 0; i < columns.length; i++) {
       const columnId = columns[i];
-      if (columnId.startsWith("custom_")) {
-        // This is a custom column
-        await Column.findOneAndUpdate(
-          { _id: columnId, project: projectId },
-          { position: i }
-        );
+      const col = await Column.findOne({ _id: columnId, project: projectId });
+      if (!col) continue;
+      if (col.status === "archive") {
+        // Skip archive for now
+        continue;
       }
+      await Column.findOneAndUpdate(
+        { _id: columnId, project: projectId },
+        { position: writeIndex }
+      );
+      writeIndex += 1;
+    }
+
+    // Place the archive column at the end
+    const archiveColumn = await Column.findOne({
+      project: projectId,
+      status: "archive",
+    });
+    if (archiveColumn) {
+      await Column.findOneAndUpdate(
+        { _id: archiveColumn._id, project: projectId },
+        { position: writeIndex }
+      );
     }
 
     res.json({
@@ -349,4 +435,5 @@ module.exports = {
   updateColumn,
   deleteColumn,
   reorderColumns,
+  ensureArchiveColumn,
 };

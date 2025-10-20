@@ -13,6 +13,7 @@ const ListColumn = ({
   textColor,
   onCardUpdated,
   onCardDeleted,
+  onCardRestored,
   onStatusChange,
   onCardClick,
   projectId,
@@ -96,9 +97,19 @@ const ListColumn = ({
               />
             ) : (
               <h3
-                className={`text-sm font-semibold ${textColor} uppercase tracking-wide flex-1 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded`}
-                onClick={() => setIsEditing(true)}
-                title="Click to rename column"
+                className={`text-sm font-semibold ${textColor} uppercase tracking-wide flex-1 ${
+                  status !== "archive"
+                    ? "cursor-pointer hover:bg-gray-100"
+                    : "cursor-not-allowed"
+                } px-2 py-1 rounded`}
+                onClick={() => {
+                  if (status !== "archive") setIsEditing(true);
+                }}
+                title={
+                  status !== "archive"
+                    ? "Click to rename column"
+                    : "Archive column cannot be renamed"
+                }
               >
                 {title}
               </h3>
@@ -112,13 +123,22 @@ const ListColumn = ({
 
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              onClick={() => status !== "archive" && setShowMenu(!showMenu)}
+              className={`p-1.5 rounded ${
+                status !== "archive"
+                  ? "hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                  : "text-gray-300 cursor-not-allowed"
+              } transition-colors duration-200`}
+              title={
+                status !== "archive"
+                  ? "Column actions"
+                  : "Archive column actions are disabled"
+              }
             >
               <MoreVertical className="w-4 h-4" />
             </button>
 
-            {showMenu && (
+            {showMenu && status !== "archive" && (
               <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
                 <button
                   onClick={() => {
@@ -138,16 +158,18 @@ const ListColumn = ({
                   <Trash2 className="w-4 h-4" />
                   <span>Delete Column</span>
                 </button>
-                <button
-                  onClick={() => {
-                    onAddCard(status);
-                    setShowMenu(false);
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Card</span>
-                </button>
+                {status !== "archive" && (
+                  <button
+                    onClick={() => {
+                      onAddCard(status);
+                      setShowMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Card</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -162,6 +184,7 @@ const ListColumn = ({
             card={card}
             onCardUpdated={onCardUpdated}
             onCardDeleted={onCardDeleted}
+            onCardRestored={onCardRestored}
             onStatusChange={onStatusChange}
             onCardClick={onCardClick}
             projectId={projectId}
@@ -179,16 +202,18 @@ const ListColumn = ({
         )}
       </div>
 
-      {/* Add Card Button - Always Visible */}
-      <div className="p-3 border-t border-gray-100">
-        <button
-          onClick={() => onAddCard(status)}
-          className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add a card</span>
-        </button>
-      </div>
+      {/* Add Card Button - Always Visible (except for Archive column) */}
+      {status !== "archive" && (
+        <div className="p-3 border-t border-gray-100">
+          <button
+            onClick={() => onAddCard(status)}
+            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add a card</span>
+          </button>
+        </div>
+      )}
 
       {/* Delete Column Confirmation Modal */}
       <ConfirmationModal

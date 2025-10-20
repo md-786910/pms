@@ -9,6 +9,7 @@ const {
   sendCardUnassignedEmail,
 } = require("../config/email");
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
+const { ensureArchiveColumn } = require("./columnController");
 
 // Helper function to get status label from column
 const getStatusLabel = async (projectId, statusValue) => {
@@ -33,6 +34,7 @@ const getCards = async (req, res) => {
     const projectId = req.params.id || req.params.projectId;
     const userId = req.user._id;
     const userRole = req.user.role;
+    const includeArchived = req.query.includeArchived === "true";
 
     // Check if user has access to this project
     const project = await Project.findById(projectId);
@@ -55,11 +57,18 @@ const getCards = async (req, res) => {
       });
     }
 
-    const cards = await Card.find({ project: projectId })
+    // Build query based on whether to include archived cards
+    const query = { project: projectId };
+    if (!includeArchived) {
+      query.isArchived = false;
+    }
+
+    const cards = await Card.find(query)
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
-      .sort({ createdAt: -1 });
+      .populate("archivedBy", "name email avatar color")
+      .sort({ updatedAt: -1 });
 
     // Sort comments in each card with latest at top
     cards.forEach((card) => {
@@ -426,10 +435,10 @@ const updateCard = async (req, res) => {
   }
 };
 
-// @route   DELETE /api/cards/:id
-// @desc    Delete card
+// @route   PUT /api/cards/:id/archive
+// @desc    Archive card (soft delete)
 // @access  Private
-const deleteCard = async (req, res) => {
+const archiveCard = async (req, res) => {
   try {
     const cardId = req.params.id;
     const userId = req.user._id;
@@ -458,17 +467,139 @@ const deleteCard = async (req, res) => {
       });
     }
 
-    await Card.findByIdAndDelete(cardId);
+    // Ensure archive column exists
+    await ensureArchiveColumn(card.project, userId);
+
+    // Store original status before archiving
+    card.originalStatus = card.status;
+
+    // Archive the card
+    card.isArchived = true;
+    card.archivedAt = new Date();
+    card.archivedBy = userId;
+    card.status = "archive"; // Move to archive column
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for archiving
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${user.name}</strong> archived this card</p>`,
+      timestamp: new Date(),
+    });
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "archived",
+      user: userId,
+      timestamp: new Date(),
+      details: "Card was archived",
+    });
+
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
 
     res.json({
       success: true,
-      message: "Card deleted successfully",
+      message: "Card archived successfully",
+      card,
     });
   } catch (error) {
-    console.error("Delete card error:", error);
+    console.error("Archive card error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while deleting card",
+      message: "Server error while archiving card",
+    });
+  }
+};
+
+// @route   PUT /api/cards/:id/restore
+// @desc    Restore archived card
+// @access  Private
+const restoreCard = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    if (!card.isArchived) {
+      return res.status(400).json({
+        success: false,
+        message: "Card is not archived",
+      });
+    }
+
+    // Restore the card to original status
+    card.isArchived = false;
+    card.archivedAt = null;
+    card.archivedBy = null;
+    card.status = card.originalStatus || "todo"; // Restore to original column
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for restoration
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${user.name}</strong> restored this card from archive</p>`,
+      timestamp: new Date(),
+    });
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "restored",
+      user: userId,
+      timestamp: new Date(),
+      details: "Card was restored from archive",
+    });
+
+    await card.save();
+
+    // Update card's updatedAt to place it at the top of the column
+    card.updatedAt = new Date();
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+
+    res.json({
+      success: true,
+      message: "Card restored successfully",
+      card,
+    });
+  } catch (error) {
+    console.error("Restore card error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while restoring card",
     });
   }
 };
@@ -1449,7 +1580,8 @@ module.exports = {
   getCard,
   createCard,
   updateCard,
-  deleteCard,
+  archiveCard,
+  restoreCard,
   updateStatus,
   assignUser,
   unassignUser,

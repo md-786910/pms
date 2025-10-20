@@ -11,6 +11,8 @@ import {
   CheckSquare,
   Plus,
   X,
+  Archive,
+  RotateCcw,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
@@ -20,12 +22,17 @@ import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
 import { API_URL } from "../utils/endpoints";
 import { stripHtmlTags } from "../utils/htmlUtils";
-import { getCardStatusColors, getPriorityColors, getStatusBadgeClasses } from "../utils/statusColors";
+import {
+  getCardStatusColors,
+  getPriorityColors,
+  getStatusBadgeClasses,
+} from "../utils/statusColors";
 
 const CardItem = ({
   card,
   onCardUpdated,
   onCardDeleted,
+  onCardRestored,
   onStatusChange,
   onCardClick,
   projectId,
@@ -197,13 +204,24 @@ const CardItem = ({
   const confirmQuickDelete = async () => {
     try {
       const { cardAPI } = await import("../utils/api");
-      await cardAPI.deleteCard(card._id);
+      await cardAPI.archiveCard(card._id);
       onCardDeleted(card._id);
-      showToast("Card deleted successfully!", "success");
+      showToast("Card archived successfully!", "success");
     } catch (error) {
-      showToast("Failed to delete card", "error");
+      showToast("Failed to archive card", "error");
     } finally {
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      // const { cardAPI } = await import("../utils/api");
+      // await cardAPI.restoreCard(card._id);
+      onCardRestored(card._id);
+      // showToast("Card restored successfully!", "success");
+    } catch (error) {
+      showToast("Failed to restore card", "error");
     }
   };
 
@@ -301,7 +319,12 @@ const CardItem = ({
                       #{card._id?.slice(-4) || "0000"}
                     </span>
                     {card.priority && (
-                      <span className={getStatusBadgeClasses('priority', card.priority)}>
+                      <span
+                        className={getStatusBadgeClasses(
+                          "priority",
+                          card.priority
+                        )}
+                      >
                         {getPriorityColors(card.priority).label}
                       </span>
                     )}
@@ -380,6 +403,19 @@ const CardItem = ({
                         <UserPlus className="w-4 h-4" />
                         <span>Assign members</span>
                       </button>
+                      {card.isArchived && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRestore();
+                            setShowActions(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center space-x-2"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span>Restore card</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -724,6 +760,7 @@ const CardItem = ({
           onClose={() => setShowModal(false)}
           onCardUpdated={onCardUpdated}
           onCardDeleted={onCardDeleted}
+          onCardRestored={onCardRestored}
           onStatusChange={onStatusChange}
         />
       )}

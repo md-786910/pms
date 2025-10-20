@@ -149,11 +149,15 @@ export const projectAPI = {
 };
 
 export const cardAPI = {
-  getCards: (projectId) => api.get(`/projects/${projectId}/cards`),
+  getCards: (projectId, includeArchived = false) => {
+    const params = includeArchived ? "?includeArchived=true" : "";
+    return api.get(`/projects/${projectId}/cards${params}`);
+  },
   getCard: (id) => api.get(`/cards/${id}`),
   createCard: (cardData) => api.post("/cards", cardData),
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
-  deleteCard: (id) => api.delete(`/cards/${id}`),
+  archiveCard: (id) => api.put(`/cards/${id}/archive`),
+  restoreCard: (id) => api.put(`/cards/${id}/restore`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),

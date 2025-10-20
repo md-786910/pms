@@ -117,7 +117,7 @@ const ProjectBoard = () => {
   const fetchCards = async () => {
     try {
       console.log("Fetching cards for project:", actualProjectId);
-      const response = await cardAPI.getCards(actualProjectId);
+      const response = await cardAPI.getCards(actualProjectId, true); // Include archived cards
       console.log("Cards response:", response);
       setCards(response.data.cards || []);
     } catch (error) {
@@ -160,14 +160,46 @@ const ProjectBoard = () => {
   };
 
   const handleCardDeleted = (cardId) => {
-    setCards((prev) => prev.filter((card) => card._id !== cardId));
-    showToast("Card deleted successfully!", "success");
-    // Close modal if the deleted card was selected
+    // Update the card to be archived instead of removing it
+    setCards((prev) =>
+      prev.map((card) =>
+        card._id === cardId
+          ? { ...card, isArchived: true, status: "archive" }
+          : card
+      )
+    );
+    showToast("Card archived successfully!", "success");
+    // Close modal if the archived card was selected
     if (selectedCard && selectedCard._id === cardId) {
       setShowCardModal(false);
       setSelectedCard(null);
       // Navigate back to project view
       navigate(`/project/${actualProjectId}`);
+    }
+  };
+
+  const handleCardRestored = async (cardId) => {
+    try {
+      const response = await cardAPI.restoreCard(cardId);
+      if (response.data.success) {
+        // Refresh cards to get updated data
+        await fetchCards();
+        showToast("Card restored successfully!", "success");
+
+        // Update selected card if it's the one being restored
+        if (selectedCard && selectedCard._id === cardId) {
+          setSelectedCard((prev) => ({
+            ...prev,
+            isArchived: false,
+            archivedAt: null,
+            archivedBy: null,
+            status: response.data.card.status,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error restoring card:", error);
+      showToast("Failed to restore card", "error");
     }
   };
 
@@ -205,7 +237,15 @@ const ProjectBoard = () => {
   };
 
   const getCardsByStatus = (status) => {
-    return cards.filter((card) => card.status === status);
+    if (status === "archive") {
+      // For archive column, show only archived cards
+      return cards.filter((card) => card.isArchived === true);
+    } else {
+      // For other columns, show only non-archived cards with matching status
+      return cards.filter(
+        (card) => card.status === status && card.isArchived !== true
+      );
+    }
   };
 
   const getColumnConfig = (column) => {
@@ -483,6 +523,7 @@ const ProjectBoard = () => {
                     textColor={config.textColor}
                     onCardUpdated={handleCardUpdated}
                     onCardDeleted={handleCardDeleted}
+                    onCardRestored={handleCardRestored}
                     onStatusChange={handleStatusChange}
                     onCardClick={handleCardClick}
                     projectId={actualProjectId}
@@ -632,6 +673,7 @@ const ProjectBoard = () => {
           onClose={handleCardModalClose}
           onCardUpdated={handleCardUpdated}
           onCardDeleted={handleCardDeleted}
+          onCardRestored={handleCardRestored}
           onStatusChange={handleStatusChange}
         />
       )}

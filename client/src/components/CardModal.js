@@ -12,6 +12,8 @@ import {
   Eye,
   Download,
   Plus,
+  Archive,
+  RotateCcw,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -29,6 +31,7 @@ const CardModal = ({
   onClose,
   onCardUpdated,
   onCardDeleted,
+  onCardRestored,
   onStatusChange,
 }) => {
   const { users, user } = useUser();
@@ -79,12 +82,14 @@ const CardModal = ({
     link: false,
   });
 
-  // Dynamic status options based on project columns
-  const statusOptions = columns.map((column) => ({
-    value: column.status,
-    label: column.name,
-    color: column.color || "blue",
-  }));
+  // Dynamic status options based on project columns (excluding Archive)
+  const statusOptions = columns
+    .filter((column) => column.status !== "archive")
+    .map((column) => ({
+      value: column.status,
+      label: column.name,
+      color: column.color || "blue",
+    }));
 
   // Add current card status if it's not in the columns (fallback)
   const allStatusOptions = [...statusOptions];
@@ -434,26 +439,44 @@ const CardModal = ({
     }
   };
 
-  const handleDelete = () => {
+  const handleArchive = () => {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmArchive = async () => {
     try {
       setLoading(true);
-      const response = await cardAPI.deleteCard(card._id);
+      const response = await cardAPI.archiveCard(card._id);
 
       if (response.data.success) {
         onCardDeleted(card._id);
         onClose();
-        showToast("Card deleted successfully!", "success");
+        showToast("Card archived successfully!", "success");
       }
     } catch (error) {
-      console.error("Error deleting card:", error);
-      showToast("Failed to delete card", "error");
+      console.error("Error archiving card:", error);
+      showToast("Failed to archive card", "error");
     } finally {
       setLoading(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      setLoading(true);
+      // const response = await cardAPI.restoreCard(card._id);
+      onCardRestored(card._id);
+      // onClose();
+
+      // if (response.data.success) {
+      //   showToast("Card restored successfully!", "success");
+      // }
+    } catch (error) {
+      console.error("Error restoring card:", error);
+      showToast("Failed to restore card", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1200,13 +1223,25 @@ const CardModal = ({
                   </>
                 ) : (
                   <>
-                    <button
-                      onClick={handleDelete}
-                      className="bg-red-500 text-white hover:bg-red-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      {/* <span>Delete</span> */}
-                    </button>
+                    {card.isArchived ? (
+                      <button
+                        onClick={handleRestore}
+                        disabled={loading}
+                        className="bg-green-500 text-white hover:bg-green-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50"
+                        title="Restore card"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Restore</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleArchive}
+                        className="bg-orange-500 text-white hover:bg-orange-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
+                        title="Archive card"
+                      >
+                        <Archive className="w-4 h-4" />
+                      </button>
+                    )}
                   </>
                 )}
                 <button
@@ -1985,16 +2020,16 @@ const CardModal = ({
         </div>
       )}
 
-      {/* Delete Card Confirmation Modal */}
+      {/* Archive Card Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDelete}
-        title="Delete Card"
-        message={`Are you sure you want to delete "${card.title}"? This action cannot be undone.`}
-        confirmText="Delete Card"
+        onConfirm={confirmArchive}
+        title="Archive Card"
+        message={`Are you sure you want to archive "${card.title}"? The card will be moved to the Archive column and can be restored later.`}
+        confirmText="Archive Card"
         cancelText="Cancel"
-        type="danger"
+        type="warning"
         isLoading={loading}
       />
 
