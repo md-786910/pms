@@ -20,6 +20,11 @@ import InviteUserModal from "./InviteUserModal";
 import Avatar from "./Avatar";
 import { stripHtmlTags } from "../utils/htmlUtils";
 import ConfirmationModal from "./ConfirmationModal";
+import {
+  getProjectStatusColors,
+  getProjectTypeColors,
+  getStatusBadgeClasses,
+} from "../utils/statusColors";
 
 const AdminPanel = () => {
   const { projects, loading, deleteProject, fetchProjects } = useProject();
@@ -222,12 +227,44 @@ const AdminPanel = () => {
                           <Settings className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">
-                            {project.name || "Unnamed Project"}
-                          </h3>
+                          <div className="flex items-center space-x-3 mb-1">
+                            <h3 className="font-medium text-gray-900">
+                              {project.name || "Unnamed Project"}
+                            </h3>
+                            {/* Status Badges */}
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={getStatusBadgeClasses(
+                                  "projectStatus",
+                                  project.projectStatus
+                                )}
+                              >
+                                {
+                                  getProjectStatusColors(project.projectStatus)
+                                    .label
+                                }
+                              </span>
+                              <span
+                                className={getStatusBadgeClasses(
+                                  "projectType",
+                                  project.projectType
+                                )}
+                              >
+                                {
+                                  getProjectTypeColors(project.projectType)
+                                    .label
+                                }
+                              </span>
+                            </div>
+                          </div>
                           <p className="text-sm text-gray-600">
-                            {stripHtmlTags(project.description) ||
-                              "No description"}
+                            {stripHtmlTags(project.description)?.length > 150
+                              ? stripHtmlTags(project.description).substring(
+                                  0,
+                                  150
+                                ) + "..."
+                              : stripHtmlTags(project.description) ||
+                                "No description"}
                           </p>
                           <div className="flex items-center space-x-4 mt-1">
                             <div className="flex items-center space-x-2">

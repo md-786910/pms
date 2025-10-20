@@ -20,6 +20,7 @@ import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
 import { API_URL } from "../utils/endpoints";
 import { stripHtmlTags } from "../utils/htmlUtils";
+import { getCardStatusColors, getPriorityColors, getStatusBadgeClasses } from "../utils/statusColors";
 
 const CardItem = ({
   card,
@@ -300,16 +301,8 @@ const CardItem = ({
                       #{card._id?.slice(-4) || "0000"}
                     </span>
                     {card.priority && (
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs ${
-                          card.priority === "high"
-                            ? "bg-red-100 text-red-700"
-                            : card.priority === "medium"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {card.priority}
+                      <span className={getStatusBadgeClasses('priority', card.priority)}>
+                        {getPriorityColors(card.priority).label}
                       </span>
                     )}
                   </div>

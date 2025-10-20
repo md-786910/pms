@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, MoreVertical, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  MoreVertical,
+  ChevronRight,
+  Settings,
+  Calendar,
+} from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { cardAPI, columnAPI, projectAPI } from "../utils/api";
@@ -9,6 +16,12 @@ import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
 import { stripHtmlTags } from "../utils/htmlUtils";
+import {
+  getProjectStatusColors,
+  getProjectTypeColors,
+  getStatusBadgeClasses,
+  getCardStatusColors,
+} from "../utils/statusColors";
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
@@ -196,24 +209,15 @@ const ProjectBoard = () => {
   };
 
   const getColumnConfig = (column) => {
-    const colorMap = {
-      blue: { textColor: "text-blue-600", bgColor: "bg-blue-50" },
-      green: { textColor: "text-green-600", bgColor: "bg-green-50" },
-      yellow: { textColor: "text-yellow-600", bgColor: "bg-yellow-50" },
-      red: { textColor: "text-red-600", bgColor: "bg-red-50" },
-      purple: { textColor: "text-purple-600", bgColor: "bg-purple-50" },
-      pink: { textColor: "text-pink-600", bgColor: "bg-pink-50" },
-      indigo: { textColor: "text-indigo-600", bgColor: "bg-indigo-50" },
-      gray: { textColor: "text-gray-600", bgColor: "bg-gray-50" },
-    };
+    // Use card status colors for better design consistency
+    const cardStatusColors = getCardStatusColors(column.status);
 
-    const config = colorMap[column.color] || colorMap.gray;
     return {
       title: column.name,
       color: column.color,
-      bgColor: config.bgColor,
-      borderColor: "border-gray-200",
-      textColor: config.textColor,
+      bgColor: cardStatusColors.bgColor,
+      borderColor: cardStatusColors.borderColor,
+      textColor: cardStatusColors.textColor,
     };
   };
 
@@ -373,61 +377,84 @@ const ProjectBoard = () => {
   return (
     <div className="h-full flex flex-col max-h-full">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white mb-8 flex-shrink-0">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white mb-8 flex-shrink-0">
         <div className="flex items-center justify-between">
+          {/* Left Section - Navigation & Project Info */}
           <div className="flex items-center space-x-4">
+            {/* Back Button */}
             <Link
               to="/"
               className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="grid grid-cols-12 items-center gap-4 w-full">
-              {/* Left Column (Project Name & Description) */}
-              <div className="col-span-8">
-                <h1 className="text-2xl font-bold mb-2">
-                  {currentProject.name}
-                </h1>
-                <p className="text-primary-100 text-lg">
-                  {stripHtmlTags(currentProject.description)}
-                </p>
-              </div>
 
-              {/* Right Column (Client Name) */}
-              <div className="col-span-4 flex justify-end">
-                <div className="bg-white bg-opacity-20 rounded-xl p-3 text-white text-sm">
-                  <span className="font-semibold text-white">
-                    {projectData.project?.clientName || "John Doe"}
-                  </span>
-                  <div>
-                    <div>
-                      <span>
-                        Start Date: {formatDate(projectData.project?.startDate)}
-                      </span>
-                    </div>
-                    <div>
-                      {projectData.project?.endDate && (
-                        <span>
-                          End Date: {formatDate(projectData.project?.endDate)}
-                        </span>
-                      )}
-                    </div>
+            {/* Project Information */}
+            <div>
+              <h1 className="text-2xl font-bold mb-2">{currentProject.name}</h1>
+              <p className="text-blue-100 text-lg">
+                {stripHtmlTags(currentProject.description)?.length > 150
+                  ? stripHtmlTags(currentProject.description).substring(
+                      0,
+                      150
+                    ) + "..."
+                  : stripHtmlTags(currentProject.description)}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Section - Project Dates Card */}
+          <div className="flex items-center space-x-3">
+            {/* Status Badges */}
+            <div className="flex items-center space-x-2">
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                  getProjectStatusColors(currentProject.projectStatus).bgColor
+                } ${
+                  getProjectStatusColors(currentProject.projectStatus).textColor
+                } ${
+                  getProjectStatusColors(currentProject.projectStatus)
+                    .borderColor
+                }`}
+              >
+                {getProjectStatusColors(currentProject.projectStatus).label}
+              </span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                  getProjectTypeColors(currentProject.projectType).bgColor
+                } ${
+                  getProjectTypeColors(currentProject.projectType).textColor
+                } ${
+                  getProjectTypeColors(currentProject.projectType).borderColor
+                }`}
+              >
+                {getProjectTypeColors(currentProject.projectType).label}
+              </span>
+            </div>
+
+            {/* Project Dates Card */}
+            <div className="bg-white bg-opacity-20 rounded-xl p-3 text-white">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-semibold">
+                    {formatDate(projectData.project?.startDate)}
                   </div>
+                  <div className="text-blue-100 text-xs">Start Date</div>
+                  {projectData.project?.endDate && (
+                    <>
+                      <div className="text-sm font-semibold mt-1">
+                        {formatDate(projectData.project?.endDate)}
+                      </div>
+                      <div className="text-blue-100 text-xs">End Date</div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-
-          {/* <button
-            onClick={() => {
-              setSelectedStatus("todo");
-              setShowCreateModal(true);
-            }}
-            className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Card</span>
-          </button> */}
         </div>
       </div>
 

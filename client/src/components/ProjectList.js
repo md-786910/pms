@@ -6,6 +6,11 @@ import { useUser } from "../contexts/UserContext";
 import CreateProjectModal from "./CreateProjectModal";
 import Avatar from "./Avatar";
 import { isEmptyHtml, getCleanTextPreview } from "../utils/htmlUtils";
+import {
+  getProjectStatusColors,
+  getProjectTypeColors,
+  getStatusBadgeClasses,
+} from "../utils/statusColors";
 
 const ProjectList = () => {
   const { projects, loading } = useProject();
@@ -103,7 +108,7 @@ const ProjectCard = ({ project }) => {
             </h3>
             {project.description && !isEmptyHtml(project.description) && (
               <p className="text-primary-100 text-sm mt-1 line-clamp-2">
-                {getCleanTextPreview(project.description, 60)}
+                {getCleanTextPreview(project.description, 150)}
               </p>
             )}
           </div>
@@ -118,6 +123,26 @@ const ProjectCard = ({ project }) => {
 
       {/* Card Body */}
       <div className="p-6">
+        {/* Status Badges */}
+        <div className="flex items-center space-x-2 mb-4">
+          <span
+            className={getStatusBadgeClasses(
+              "projectStatus",
+              project.projectStatus
+            )}
+          >
+            {getProjectStatusColors(project.projectStatus).label}
+          </span>
+          <span
+            className={getStatusBadgeClasses(
+              "projectType",
+              project.projectType
+            )}
+          >
+            {getProjectTypeColors(project.projectType).label}
+          </span>
+        </div>
+
         <div className="flex items-center justify-between text-sm text-secondary-500 mb-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
@@ -163,9 +188,11 @@ const ProjectCard = ({ project }) => {
       {/* Card Footer */}
       <div className="px-6 py-3 bg-secondary-50 border-t border-secondary-100">
         <div className="flex items-center justify-between text-xs text-secondary-500">
-          <span className="font-medium">{project.projectType}</span>
+          <span className="font-medium">
+            {project.clientName || "No client"}
+          </span>
           <span className="text-primary-600 font-medium group-hover:text-primary-700">
-            {project.clientName}
+            View Project
           </span>
         </div>
       </div>
