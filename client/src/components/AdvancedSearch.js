@@ -29,7 +29,6 @@ const AdvancedSearch = () => {
   const { projects } = useProject();
   const { user } = useUser();
 
-
   // Close search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -271,102 +270,100 @@ const AdvancedSearch = () => {
               </button>
             )}
           </div>
-
         </div>
-
       </div>
 
       {/* Search Results */}
       {isOpen && (searchQuery || searchResults.length > 0) && (
-          <div className="absolute top-full left-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
-            {loading ? (
-              <div className="p-4 text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-sm text-gray-500 mt-2">Searching...</p>
+        <div className="absolute top-full left-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+          {loading ? (
+            <div className="p-4 text-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-2">Searching...</p>
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div className="py-2">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  {searchResults.length} result
+                  {searchResults.length !== 1 ? "s" : ""} found
+                </p>
               </div>
-            ) : searchResults.length > 0 ? (
-              <div className="py-2">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    {searchResults.length} result
-                    {searchResults.length !== 1 ? "s" : ""} found
-                  </p>
-                </div>
-                {searchResults.map((result) => {
-                  const Icon = result.icon;
-                  return (
-                    <button
-                      key={`${result.type}-${result.id}`}
-                      onClick={() => handleResultClick(result)}
-                      className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 text-left"
-                    >
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-blue-600" />
-                        </div>
+              {searchResults.map((result) => {
+                const Icon = result.icon;
+                return (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => handleResultClick(result)}
+                    className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 text-left"
+                  >
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-blue-600" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {result.title}
-                          </p>
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                              result.status,
-                              result.type
-                            )}`}
-                          >
-                            {result.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500 truncate">
-                          {result.subtitle}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {result.title}
                         </p>
-                        {result.metadata && (
-                          <div className="flex items-center space-x-4 mt-1">
-                            {result.metadata.project && (
-                              <span className="text-xs text-gray-400">
-                                Project: {result.metadata.project}
-                              </span>
-                            )}
-                            {result.metadata.members !== undefined && (
-                              <span className="text-xs text-gray-400">
-                                {result.metadata.members} members
-                              </span>
-                            )}
-                            {result.metadata.assignees !== undefined && (
-                              <span className="text-xs text-gray-400">
-                                {result.metadata.assignees} assignees
-                              </span>
-                            )}
-                            {result.metadata.dueDate && (
-                              <span className="text-xs text-gray-400">
-                                Due: {formatDate(result.metadata.dueDate)}
-                              </span>
-                            )}
-                            {result.metadata.projectType && (
-                              <span className="text-xs text-gray-400">
-                                Type: {result.metadata.projectType}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            result.status,
+                            result.type
+                          )}`}
+                        >
+                          {result.status}
+                        </span>
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-             ) : searchQuery ? (
-               <div className="p-4 text-center">
-                 <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                 <p className="text-sm text-gray-500">No results found</p>
-                 <p className="text-xs text-gray-400 mt-1">
-                   Try different keywords or check your spelling
-                 </p>
-               </div>
-             ) : null}
-          </div>
-        )}
+                      <p className="text-sm text-gray-500 truncate">
+                        {result.subtitle}
+                      </p>
+                      {result.metadata && (
+                        <div className="flex items-center space-x-4 mt-1">
+                          {result.metadata.project && (
+                            <span className="text-xs text-gray-400">
+                              Project: {result.metadata.project}
+                            </span>
+                          )}
+                          {result.metadata.members !== undefined && (
+                            <span className="text-xs text-gray-400">
+                              {result.metadata.members} members
+                            </span>
+                          )}
+                          {result.metadata.assignees !== undefined && (
+                            <span className="text-xs text-gray-400">
+                              {result.metadata.assignees} assignees
+                            </span>
+                          )}
+                          {result.metadata.dueDate && (
+                            <span className="text-xs text-gray-400">
+                              Due: {formatDate(result.metadata.dueDate)}
+                            </span>
+                          )}
+                          {result.metadata.projectType && (
+                            <span className="text-xs text-gray-400">
+                              Type: {result.metadata.projectType}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : searchQuery ? (
+            <div className="p-4 text-center">
+              <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No results found</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Try different keywords or check your spelling
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 };

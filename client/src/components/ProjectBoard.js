@@ -393,10 +393,10 @@ const ProjectBoard = () => {
             <div>
               <h1 className="text-2xl font-bold mb-2">{currentProject.name}</h1>
               <p className="text-blue-100 text-lg">
-                {stripHtmlTags(currentProject.description)?.length > 150
+                {stripHtmlTags(currentProject.description)?.length > 120
                   ? stripHtmlTags(currentProject.description).substring(
                       0,
-                      150
+                      120
                     ) + "..."
                   : stripHtmlTags(currentProject.description)}
               </p>
