@@ -46,6 +46,17 @@ router.post(
   createColumn
 );
 
+// IMPORTANT: Define the reorder route BEFORE any route with :columnId
+// so that 'reorder' is not captured as a :columnId value
+// @route   PUT /api/projects/:projectId/columns/reorder
+// @desc    Reorder columns
+// @access  Private
+router.put(
+  "/projects/:projectId/columns/reorder",
+  [body("columns").isArray().withMessage("Columns must be an array")],
+  reorderColumns
+);
+
 // @route   PUT /api/projects/:projectId/columns/:columnId
 // @desc    Update a column
 // @access  Private
@@ -82,14 +93,5 @@ router.put(
 // @desc    Delete a column
 // @access  Private
 router.delete("/projects/:projectId/columns/:columnId", deleteColumn);
-
-// @route   PUT /api/projects/:projectId/columns/reorder
-// @desc    Reorder columns
-// @access  Private
-router.put(
-  "/projects/:projectId/columns/reorder",
-  [body("columns").isArray().withMessage("Columns must be an array")],
-  reorderColumns
-);
 
 module.exports = router;

@@ -46,6 +46,8 @@ const ProjectBoard = () => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
   const [projectData, setProjectData] = useState([]);
+  const [draggingColumnId, setDraggingColumnId] = useState(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState(null);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -261,6 +263,70 @@ const ProjectBoard = () => {
     };
   };
 
+  // Drag and Drop for columns
+  const handleColumnDragStart = (columnId) => {
+    setDraggingColumnId(columnId);
+    // Improve UX cursor on drag
+    try {
+      if (window?.event?.dataTransfer) {
+        window.event.dataTransfer.effectAllowed = "move";
+      }
+    } catch (_) {}
+  };
+
+  const handleColumnDragOver = (e) => {
+    // Allow dropping by preventing default
+    e.preventDefault();
+  };
+
+  const handleColumnDrop = async (targetColumnId) => {
+    if (!draggingColumnId || draggingColumnId === targetColumnId) return;
+
+    // Compute new order locally for instant UI feedback
+    const nonArchiveColumns = columns.filter((c) => c.status !== "archive");
+    const archiveColumn = columns.find((c) => c.status === "archive");
+
+    const currentIndex = nonArchiveColumns.findIndex(
+      (c) => (c._id || c.status) === draggingColumnId
+    );
+    const targetIndex = nonArchiveColumns.findIndex(
+      (c) => (c._id || c.status) === targetColumnId
+    );
+
+    if (currentIndex === -1 || targetIndex === -1) {
+      setDraggingColumnId(null);
+      return;
+    }
+
+    const reordered = [...nonArchiveColumns];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const nextColumns = archiveColumn
+      ? [...reordered, archiveColumn]
+      : reordered;
+    setColumns(nextColumns);
+
+    // Persist order (send only non-archive column ids)
+    try {
+      const orderedIds = reordered.map((c) => c._id);
+      await columnAPI.reorderColumns(actualProjectId, orderedIds);
+    } catch (error) {
+      console.error("Failed to persist column order:", error);
+      showToast("Failed to save column order", "error");
+      // Refetch to resync with server state
+      fetchColumns();
+    } finally {
+      setDraggingColumnId(null);
+      setDragOverColumnId(null);
+    }
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggingColumnId(null);
+    setDragOverColumnId(null);
+  };
+
   const handleColumnRename = async (status, newTitle) => {
     try {
       // Find the column
@@ -416,39 +482,34 @@ const ProjectBoard = () => {
 
   return (
     <div className="h-full flex flex-col max-h-full">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white mb-8 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          {/* Left Section - Navigation & Project Info */}
-          <div className="flex items-center space-x-4">
-            {/* Back Button */}
+      {/* Compact Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-[26px] text-white mb-4 flex-shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: Back + title + description */}
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               to="/"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
+              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+              title="Back"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-
-            {/* Project Information */}
-            <div>
-              <h1 className="text-2xl font-bold mb-2">{currentProject.name}</h1>
-              <p className="text-blue-100 text-lg">
-                {stripHtmlTags(currentProject.description)?.length > 120
-                  ? stripHtmlTags(currentProject.description).substring(
-                      0,
-                      120
-                    ) + "..."
-                  : stripHtmlTags(currentProject.description)}
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold truncate max-w-[40vw]">
+                {currentProject.name}
+              </h1>
+              <p className="text-blue-100 text-sm truncate max-w-[50vw]">
+                {stripHtmlTags(currentProject.description)}
               </p>
             </div>
           </div>
 
-          {/* Right Section - Project Dates Card */}
-          <div className="flex items-center space-x-3">
-            {/* Status Badges */}
-            <div className="flex items-center space-x-2">
+          {/* Right: Status pills + Date pill */}
+          <div className="flex items-center gap-3">
+            {/* Status pills */}
+            <div className="flex items-center gap-2">
               <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
                   getProjectStatusColors(currentProject.projectStatus).bgColor
                 } ${
                   getProjectStatusColors(currentProject.projectStatus).textColor
@@ -456,42 +517,40 @@ const ProjectBoard = () => {
                   getProjectStatusColors(currentProject.projectStatus)
                     .borderColor
                 }`}
+                title="Project status"
               >
                 {getProjectStatusColors(currentProject.projectStatus).label}
               </span>
               <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
                   getProjectTypeColors(currentProject.projectType).bgColor
                 } ${
                   getProjectTypeColors(currentProject.projectType).textColor
                 } ${
                   getProjectTypeColors(currentProject.projectType).borderColor
                 }`}
+                title="Project type"
               >
                 {getProjectTypeColors(currentProject.projectType).label}
               </span>
             </div>
-
-            {/* Project Dates Card */}
-            <div className="bg-white bg-opacity-20 rounded-xl p-3 text-white">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6" />
-                </div>
-                <div className="text-center">
-                  <div className="text-sm font-semibold">
-                    {formatDate(projectData.project?.startDate)}
-                  </div>
-                  <div className="text-blue-100 text-xs">Start Date</div>
-                  {projectData.project?.endDate && (
-                    <>
-                      <div className="text-sm font-semibold mt-1">
-                        {formatDate(projectData.project?.endDate)}
-                      </div>
-                      <div className="text-blue-100 text-xs">End Date</div>
-                    </>
-                  )}
-                </div>
+            {/* Date pill */}
+            <div className="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5">
+              <div className="w-7 h-7 bg-white/25 rounded-full flex items-center justify-center">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">
+                  {formatDate(projectData.project?.startDate)}
+                </span>
+                {projectData.project?.endDate && (
+                  <>
+                    <span className="opacity-70 mx-1">→</span>
+                    <span className="font-medium">
+                      {formatDate(projectData.project?.endDate)}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -508,10 +567,26 @@ const ProjectBoard = () => {
           <div className="flex gap-4 lg:gap-6 min-w-max h-full">
             {columns.map((column) => {
               const config = getColumnConfig(column);
+              const colKey = column._id || column.status;
               return (
                 <div
-                  key={column._id || column.status}
-                  className="w-80 flex-shrink-0"
+                  key={colKey}
+                  className={`w-80 flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                    draggingColumnId === colKey
+                      ? "opacity-40 scale-[0.98]"
+                      : "opacity-100"
+                  } ${
+                    dragOverColumnId === colKey
+                      ? "ring-4 ring-blue-500 rounded-lg bg-blue-50 shadow-xl border-2 border-blue-300"
+                      : ""
+                  }`}
+                  draggable={column.status !== "archive"}
+                  onDragStart={() => handleColumnDragStart(colKey)}
+                  onDragEnter={() => setDragOverColumnId(colKey)}
+                  onDragOver={handleColumnDragOver}
+                  onDragLeave={() => setDragOverColumnId(null)}
+                  onDrop={() => handleColumnDrop(colKey)}
+                  onDragEnd={handleColumnDragEnd}
                 >
                   <ListColumn
                     title={config.title}

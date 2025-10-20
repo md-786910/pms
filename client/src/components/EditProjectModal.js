@@ -290,7 +290,7 @@ const EditProjectModal = ({ project, onClose }) => {
         </button>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 text-white p-8 flex-shrink-0">
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6 flex-shrink-0">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-white/20 rounded-xl">
               <Save className="w-8 h-8" />
@@ -306,183 +306,213 @@ const EditProjectModal = ({ project, onClose }) => {
 
         {/* Modal Content - Scrollable */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-8">
+          <div className="p-4">
             <form
               id="edit-project-form"
               onSubmit={handleSubmit}
               className="space-y-8"
             >
-              {/* First Row: Project Name, Client Name, Project Status */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Project Name */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Project Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Enter project name"
-                    required
-                  />
+              {/* Section 1: Project Information */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mr-3">
+                    <Save className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Project Information
+                  </h3>
                 </div>
-                {/* Client Name */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Client Name
-                  </label>
-                  <input
-                    type="text"
-                    name="clientName"
-                    value={formData.clientName}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Enter client name"
-                  />
-                </div>
-                {/* Project Status */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Project Status <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="projectStatus"
-                    value={formData.projectStatus}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  >
-                    <option value="new">New</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+
+                <div className="space-y-4">
+                  {/* First Row: Project Name, Client Name, Project Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Project Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Project Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Enter project name"
+                        required
+                      />
+                    </div>
+                    {/* Client Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Client Name
+                      </label>
+                      <input
+                        type="text"
+                        name="clientName"
+                        value={formData.clientName}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Enter client name"
+                      />
+                    </div>
+                    {/* Project Status */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Project Status <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="projectStatus"
+                        value={formData.projectStatus}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        required
+                      >
+                        <option value="new">New</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Second Row: Project Type, Start Date, End Date */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Project Type */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Project Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="projectType"
+                        value={formData.projectType}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        required
+                      >
+                        <option value="">Select Project Type</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="one-time">One Time</option>
+                      </select>
+                    </div>
+                    {/* Start Date */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Start Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        required
+                      />
+                    </div>
+                    {/* End Date */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={formData.endDate}
+                        onChange={handleChange}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <SimpleQuillEditor
+                        value={formData.description}
+                        onChange={(content) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            description: content,
+                          }))
+                        }
+                        placeholder="Enter project description"
+                        height="200px"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Second Row: Project Type, Start Date, End Date */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Project Type */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Project Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="projectType"
-                    value={formData.projectType}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  >
-                    <option value="">Select Project Type</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="one-time">One Time</option>
-                  </select>
+              {/* Section 2: Site URLs */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                    <Link className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Site URLs
+                  </h3>
                 </div>
-                {/* Start Date */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Start Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
-                </div>
-                {/* End Date */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Live Site URL */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Live Site URL
+                    </label>
+                    <input
+                      type="url"
+                      name="liveSiteUrl"
+                      value={formData.liveSiteUrl}
+                      onChange={handleChange}
+                      className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  {/* Demo Site URL */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Demo Site URL
+                    </label>
+                    <input
+                      type="url"
+                      name="demoSiteUrl"
+                      value={formData.demoSiteUrl}
+                      onChange={handleChange}
+                      className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="https://demo.example.com"
+                    />
+                  </div>
+                  {/* Markup URL */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Markup URL
+                    </label>
+                    <input
+                      type="url"
+                      name="markupUrl"
+                      value={formData.markupUrl}
+                      onChange={handleChange}
+                      className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="https://markup.example.com"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Description with Rich Text Editor */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description
-                </label>
-                <div className="border border-gray-300 rounded-lg overflow-hidden">
-                  <SimpleQuillEditor
-                    value={formData.description}
-                    onChange={(content) =>
-                      setFormData((prev) => ({ ...prev, description: content }))
-                    }
-                    placeholder="Enter project description"
-                  />
+              {/* Section 3: Files and Documents */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                    <Upload className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Files and Documents
+                  </h3>
                 </div>
-              </div>
-
-              {/* URL Fields Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Live Site URL */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Link className="inline w-4 h-4 mr-1" />
-                    Live Site URL
-                  </label>
-                  <input
-                    type="url"
-                    name="liveSiteUrl"
-                    value={formData.liveSiteUrl}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="https://example.com"
-                  />
-                </div>
-                {/* Demo Site URL */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Link className="inline w-4 h-4 mr-1" />
-                    Demo Site URL
-                  </label>
-                  <input
-                    type="url"
-                    name="demoSiteUrl"
-                    value={formData.demoSiteUrl}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="https://demo.example.com"
-                  />
-                </div>
-                {/* Markup URL */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Link className="inline w-4 h-4 mr-1" />
-                    Markup URL
-                  </label>
-                  <input
-                    type="url"
-                    name="markupUrl"
-                    value={formData.markupUrl}
-                    onChange={handleChange}
-                    className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="https://markup.example.com"
-                  />
-                </div>
-              </div>
-
-              {/* File Upload Section */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Upload className="inline w-4 h-4 mr-1" />
-                  Attachments
-                </label>
 
                 {/* Drag and Drop Area */}
                 <div
