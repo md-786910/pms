@@ -107,6 +107,45 @@ export const projectAPI = {
   addMember: (id, memberData) =>
     api.post(`/projects/${id}/members`, memberData),
   removeMember: (id, userId) => api.delete(`/projects/${id}/members/${userId}`),
+
+  // Project file upload and attachment management
+  uploadFiles: (projectId, formData) => {
+    const uploadApi = axios.create({
+      baseURL: `${API_URL}/api`,
+      timeout: 30000, // 30 seconds for file uploads
+      withCredentials: true,
+    });
+
+    // Add auth token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      uploadApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return uploadApi.post(`/projects/${projectId}/upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  deleteAttachment: (projectId, attachmentId) => {
+    const deleteApi = axios.create({
+      baseURL: `${API_URL}/api`,
+      timeout: 10000,
+      withCredentials: true,
+    });
+
+    // Add auth token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      deleteApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return deleteApi.delete(
+      `/projects/${projectId}/attachments/${attachmentId}`
+    );
+  },
 };
 
 export const cardAPI = {

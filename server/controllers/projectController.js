@@ -114,8 +114,13 @@ const createProject = async (req, res) => {
       description,
       clientName,
       projectType,
+      projectStatus,
       startDate,
       endDate,
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+      attachments = [],
       color = "blue",
     } = req.body;
     const userId = req.user._id;
@@ -125,8 +130,13 @@ const createProject = async (req, res) => {
       description,
       clientName,
       projectType,
+      projectStatus,
       startDate: startDate || new Date(),
       endDate: endDate || null,
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+      attachments,
       owner: userId,
       members: [
         {
@@ -169,8 +179,13 @@ const updateProject = async (req, res) => {
       description,
       clientName,
       projectType,
+      projectStatus,
       startDate,
       endDate,
+      liveSiteUrl,
+      demoSiteUrl,
+      markupUrl,
+      attachments,
       color,
     } = req.body;
 
@@ -195,13 +210,18 @@ const updateProject = async (req, res) => {
     }
 
     // Update project fields
-    if (name) project.name = name;
-    if (description) project.description = description;
-    if (clientName) project.clientName = clientName;
-    if (projectType) project.projectType = projectType;
-    if (startDate) project.startDate = startDate;
-    if (endDate) project.endDate = endDate;
-    if (color) project.color = color;
+    if (name !== undefined) project.name = name;
+    if (description !== undefined) project.description = description;
+    if (clientName !== undefined) project.clientName = clientName;
+    if (projectType !== undefined) project.projectType = projectType;
+    if (projectStatus !== undefined) project.projectStatus = projectStatus;
+    if (startDate !== undefined) project.startDate = startDate;
+    if (endDate !== undefined) project.endDate = endDate;
+    if (liveSiteUrl !== undefined) project.liveSiteUrl = liveSiteUrl;
+    if (demoSiteUrl !== undefined) project.demoSiteUrl = demoSiteUrl;
+    if (markupUrl !== undefined) project.markupUrl = markupUrl;
+    if (attachments !== undefined) project.attachments = attachments;
+    if (color !== undefined) project.color = color;
 
     await project.save();
 

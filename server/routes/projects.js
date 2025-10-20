@@ -10,6 +10,7 @@ const {
   removeMember,
 } = require("../controllers/projectController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
+const { uploadMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -20,11 +21,6 @@ router.use(auth);
 // @desc    Get all projects for a user
 // @access  Private
 router.get("/", getProjects);
-
-// @route   GET /api/projects/:id
-// @desc    Get single project
-// @access  Private
-router.get("/:id", projectMemberAuth, getProject);
 
 // @route   POST /api/projects
 // @desc    Create new project
@@ -67,6 +63,129 @@ router.post(
     }
   }
 );
+
+// @route   POST /api/projects/:id/upload
+// @desc    Upload files for a project
+// @access  Private
+router.post(
+  "/:id/upload",
+  projectMemberAuth,
+  uploadMiddleware,
+  async (req, res) => {
+    try {
+      console.log("Upload route hit - Project ID:", req.params.id);
+      console.log("User:", req.user ? req.user._id : "No user");
+      console.log("Files:", req.files);
+
+      const projectId = req.params.id;
+      const uploadedFiles = req.files || [];
+
+      if (uploadedFiles.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No files uploaded",
+        });
+      }
+
+      // Get the project (already validated by projectMemberAuth)
+      const Project = require("../models/Project");
+      const project = await Project.findById(projectId);
+
+      // Add uploaded files to project attachments
+      const newAttachments = uploadedFiles.map((file) => ({
+        filename: file.filename,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        size: file.size,
+        url: file.url,
+        uploadedAt: new Date(),
+      }));
+
+      project.attachments = [...(project.attachments || []), ...newAttachments];
+      await project.save();
+
+      res.json({
+        success: true,
+        message: `${uploadedFiles.length} file(s) uploaded successfully`,
+        attachments: newAttachments,
+      });
+    } catch (error) {
+      console.error("Upload files route error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while uploading files",
+        error: error.message,
+      });
+    }
+  }
+);
+
+// @route   DELETE /api/projects/:id/attachments/:attachmentId
+// @desc    Delete an attachment from a project
+// @access  Private
+router.delete(
+  "/:id/attachments/:attachmentId",
+  projectMemberAuth,
+  async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const attachmentId = req.params.attachmentId;
+      const userId = req.user._id;
+
+      // Get the project
+      const Project = require("../models/Project");
+      const project = await Project.findById(projectId);
+
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Find the attachment to delete
+      const attachment = project.attachments.find(
+        (att) => att._id.toString() === attachmentId
+      );
+      if (!attachment) {
+        return res.status(404).json({
+          success: false,
+          message: "Attachment not found",
+        });
+      }
+
+      // Remove attachment from project
+      project.attachments = project.attachments.filter(
+        (att) => att._id.toString() !== attachmentId
+      );
+      await project.save();
+
+      // Delete the actual file from filesystem
+      const {
+        deleteFile,
+        getFilePathFromUrl,
+      } = require("../middleware/upload");
+      const filePath = getFilePathFromUrl(attachment.url);
+      deleteFile(filePath);
+
+      res.json({
+        success: true,
+        message: "Attachment deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete attachment route error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while deleting attachment",
+      });
+    }
+  }
+);
+
+// @route   GET /api/projects/:id
+// @desc    Get single project
+// @access  Private
+router.get("/:id", projectMemberAuth, getProject);
 
 // @route   PUT /api/projects/:id
 // @desc    Update project

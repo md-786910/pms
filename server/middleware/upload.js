@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, "../uploads/cards");
+const uploadDir = path.join(__dirname, "../uploads/projects");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -110,7 +110,7 @@ const uploadMiddleware = (req, res, next) => {
             mimeType: singleFile.mimetype,
             size: singleFile.size,
             filepath: singleFile.filepath,
-            url: `/uploads/cards/${path.basename(singleFile.filepath)}`,
+            url: `/uploads/projects/${path.basename(singleFile.filepath)}`,
           };
           uploadedFiles.push(fileInfo);
         }
@@ -153,7 +153,7 @@ const uploadSingleMiddleware = (req, res, next) => {
           mimeType: singleFile.mimetype,
           size: singleFile.size,
           filepath: singleFile.filepath,
-          url: `/uploads/cards/${path.basename(singleFile.filepath)}`,
+          url: `/uploads/projects/${path.basename(singleFile.filepath)}`,
         };
       }
     }
