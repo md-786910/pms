@@ -83,16 +83,39 @@ const projectMemberAuth = async (req, res, next) => {
       const Project = require("../models/Project");
       const projectId = req.params.projectId || req.params.id;
 
-      if (!projectId) {
+      console.log("ProjectMemberAuth - Raw projectId:", projectId);
+      console.log("ProjectMemberAuth - Type:", typeof projectId);
+      console.log("ProjectMemberAuth - Params:", req.params);
+
+      // Check if projectId is valid
+      if (
+        !projectId ||
+        projectId === "undefined" ||
+        projectId === "null" ||
+        projectId.trim() === ""
+      ) {
+        console.log("ProjectMemberAuth - Invalid projectId:", projectId);
         return res.status(400).json({
           success: false,
           message: "Project ID is required.",
         });
       }
 
+      // Validate ObjectId format
+      const mongoose = require("mongoose");
+      if (!mongoose.Types.ObjectId.isValid(projectId)) {
+        console.log("ProjectMemberAuth - Invalid ObjectId format:", projectId);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Project ID format.",
+        });
+      }
+
+      console.log("ProjectMemberAuth - Looking for project:", projectId);
       const project = await Project.findById(projectId);
 
       if (!project) {
+        console.log("ProjectMemberAuth - Project not found:", projectId);
         return res.status(404).json({
           success: false,
           message: "Project not found.",

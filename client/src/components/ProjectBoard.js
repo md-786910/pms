@@ -8,6 +8,7 @@ import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
+import { stripHtmlTags } from "../utils/htmlUtils";
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
@@ -388,7 +389,7 @@ const ProjectBoard = () => {
                   {currentProject.name}
                 </h1>
                 <p className="text-primary-100 text-lg">
-                  {currentProject.description}
+                  {stripHtmlTags(currentProject.description)}
                 </p>
               </div>
 

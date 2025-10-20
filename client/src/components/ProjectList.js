@@ -5,6 +5,7 @@ import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
 import CreateProjectModal from "./CreateProjectModal";
 import Avatar from "./Avatar";
+import { isEmptyHtml, getCleanTextPreview } from "../utils/htmlUtils";
 
 const ProjectList = () => {
   const { projects, loading } = useProject();
@@ -100,18 +101,11 @@ const ProjectCard = ({ project }) => {
             <h3 className="text-lg font-semibold group-hover:text-primary-100 transition-colors duration-200">
               {project.name}
             </h3>
-            {project.description &&
-              project.description.trim() &&
-              project.description !== "<p><br></p>" &&
-              project.description !== "<p></p>" && (
-                <p className="text-primary-100 text-sm mt-1 line-clamp-2">
-                  {project.description
-                    .replace(/<[^>]*>/g, "")
-                    .trim()
-                    .slice(0, 60)}
-                  ...
-                </p>
-              )}
+            {project.description && !isEmptyHtml(project.description) && (
+              <p className="text-primary-100 text-sm mt-1 line-clamp-2">
+                {getCleanTextPreview(project.description, 60)}
+              </p>
+            )}
           </div>
           <button
             onClick={(e) => e.preventDefault()}

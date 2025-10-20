@@ -11,7 +11,7 @@ const projectSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot be more than 500 characters"],
+      maxlength: [10000, "Description cannot be more than 10,000 characters"],
     },
     clientName: {
       type: String,

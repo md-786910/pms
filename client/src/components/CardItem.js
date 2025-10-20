@@ -19,6 +19,7 @@ import CardModal from "./CardModal";
 import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
 import { API_URL } from "../utils/endpoints";
+import { stripHtmlTags } from "../utils/htmlUtils";
 
 const CardItem = ({
   card,
@@ -509,7 +510,7 @@ const CardItem = ({
               console.log("No images found, showing description");
               return (
                 <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                  {card.description.replace(/<[^>]*>/g, "")}
+                  {stripHtmlTags(card.description)}
                 </p>
               );
             } else if (card.attachments && card.attachments.length > 0) {

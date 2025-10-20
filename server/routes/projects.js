@@ -35,8 +35,8 @@ router.post(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 500 })
-      .withMessage("Description cannot be more than 500 characters"),
+      .isLength({ max: 20000 })
+      .withMessage("Description cannot be more than 20000 characters"),
     body("color")
       .optional()
       .isIn(["blue", "green", "purple", "orange", "pink", "red", "yellow"])
@@ -74,8 +74,9 @@ router.post(
   async (req, res) => {
     try {
       console.log("Upload route hit - Project ID:", req.params.id);
-      console.log("User:", req.user ? req.user._id : "No user");
-      console.log("Files:", req.files);
+      console.log("Upload route - Params:", req.params);
+      console.log("Upload route - User:", req.user ? req.user._id : "No user");
+      console.log("Upload route - Files:", req.files);
 
       const projectId = req.params.id;
       const uploadedFiles = req.files || [];

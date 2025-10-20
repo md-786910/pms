@@ -18,6 +18,7 @@ import EditProjectModal from "./EditProjectModal";
 import AssignUserModal from "./AssignUserModal";
 import InviteUserModal from "./InviteUserModal";
 import Avatar from "./Avatar";
+import { stripHtmlTags } from "../utils/htmlUtils";
 import ConfirmationModal from "./ConfirmationModal";
 
 const AdminPanel = () => {
@@ -225,7 +226,8 @@ const AdminPanel = () => {
                             {project.name || "Unnamed Project"}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {project.description || "No description"}
+                            {stripHtmlTags(project.description) ||
+                              "No description"}
                           </p>
                           <div className="flex items-center space-x-4 mt-1">
                             <div className="flex items-center space-x-2">
