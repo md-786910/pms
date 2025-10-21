@@ -225,4 +225,13 @@ export const notificationAPI = {
     api.post("/notifications", notificationData),
 };
 
+export const activityAPI = {
+  getProjectActivities: (projectId, page = 1, limit = 50) =>
+    api.get(`/activities/project/${projectId}?page=${page}&limit=${limit}`),
+  getUserActivities: (userId, page = 1, limit = 50) =>
+    api.get(`/activities/user/${userId}?page=${page}&limit=${limit}`),
+  getRecentActivities: (limit = 20) =>
+    api.get(`/activities/recent?limit=${limit}`),
+};
+
 export default api;

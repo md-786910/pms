@@ -1,10 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Save, Upload, Eye, Trash2, Link } from "lucide-react";
+import {
+  X,
+  Save,
+  Upload,
+  Eye,
+  Trash2,
+  Link,
+  Clock,
+  User,
+  MessageSquare,
+} from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
-import { projectAPI } from "../utils/api";
+import { projectAPI, activityAPI } from "../utils/api";
 import SimpleQuillEditor from "./SimpleQuillEditor";
+import Avatar from "./Avatar";
 
 const EditProjectModal = ({ project, onClose }) => {
   const { updateProject } = useProject();
@@ -13,6 +24,9 @@ const EditProjectModal = ({ project, onClose }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  const [activities, setActivities] = useState([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [showActivities, setShowActivities] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -36,6 +50,42 @@ const EditProjectModal = ({ project, onClose }) => {
     const day = String(d.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
+
+  // Fetch project activities
+  const fetchActivities = async () => {
+    if (!project?._id) return;
+
+    try {
+      setLoadingActivities(true);
+      const response = await activityAPI.getProjectActivities(
+        project._id,
+        1,
+        50
+      );
+      setActivities(response.data.activities || []);
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+      showToast("Failed to load project activities", "error");
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  // Format activity timestamp
+  const formatActivityTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+      return `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   useEffect(() => {
     if (project) {
@@ -66,6 +116,11 @@ const EditProjectModal = ({ project, onClose }) => {
         );
       }
     }
+  }, [project]);
+
+  // Fetch activities when component mounts
+  useEffect(() => {
+    fetchActivities();
   }, [project]);
 
   const handleSubmit = async (e) => {
@@ -146,6 +201,9 @@ const EditProjectModal = ({ project, onClose }) => {
       }
 
       showToast("Project updated successfully!", "success");
+
+      // Refresh activities after successful update
+      await fetchActivities();
 
       // Don't auto-close the modal - let user close it manually
       // onClose();
@@ -631,6 +689,89 @@ const EditProjectModal = ({ project, onClose }) => {
                 )}
               </div>
             </form>
+
+            {/* Activity Log Section */}
+            <div className="mt-8 bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Project Activity
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowActivities(!showActivities)}
+                  className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center space-x-1"
+                >
+                  <span>{showActivities ? "Hide" : "Show"} Activity</span>
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              </div>
+
+              {showActivities && (
+                <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                  {loadingActivities ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-2 text-gray-600">
+                        Loading activities...
+                      </span>
+                    </div>
+                  ) : activities.length === 0 ? (
+                    <div className="text-center p-8 text-gray-500">
+                      <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p>No activities yet</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200">
+                      {activities.map((activity) => (
+                        <div
+                          key={activity._id}
+                          className="p-4 hover:bg-gray-50"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <Avatar
+                              user={activity.user}
+                              size="sm"
+                              className="flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {activity.user?.name || "Unknown User"}
+                                </p>
+                                <span className="text-xs text-gray-500">
+                                  {formatActivityTime(activity.createdAt)}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {activity.details?.htmlMessage ? (
+                                  <div
+                                    dangerouslySetInnerHTML={{
+                                      __html: activity.details.htmlMessage,
+                                    }}
+                                    className="activity-message"
+                                    style={{
+                                      lineHeight: "1.6",
+                                      fontSize: "14px",
+                                    }}
+                                  />
+                                ) : (
+                                  <p>{activity.message}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

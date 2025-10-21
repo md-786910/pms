@@ -14,6 +14,7 @@ const cardItemRoutes = require("./routes/cardItems");
 const columnRoutes = require("./routes/columns");
 const notificationRoutes = require("./routes/notifications");
 const invitationRoutes = require("./routes/invitations");
+const activityRoutes = require("./routes/activities");
 
 const app = express();
 const PORT = config.PORT;
@@ -43,6 +44,7 @@ app.use("/api/card-items", cardItemRoutes);
 app.use("/api/columns", columnRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/invitations", invitationRoutes);
+app.use("/api/activities", activityRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

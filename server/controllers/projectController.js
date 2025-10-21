@@ -3,7 +3,110 @@ const User = require("../models/User");
 const Card = require("../models/Card");
 const Notification = require("../models/Notification");
 const Invitation = require("../models/Invitation");
-const { sendProjectInvitationEmail } = require("../config/email");
+const Activity = require("../models/Activity");
+const {
+  sendProjectInvitationEmail,
+  sendProjectUpdateEmail,
+} = require("../config/email");
+
+// Helper function to create activity and send notifications
+const createActivityAndNotify = async (
+  projectId,
+  userId,
+  type,
+  message,
+  details = {}
+) => {
+  try {
+    // Create activity
+    const activity = new Activity({
+      project: projectId,
+      user: userId,
+      type,
+      message,
+      details,
+    });
+    await activity.save();
+
+    // Get project with members and user who performed the action
+    const project = await Project.findById(projectId).populate(
+      "members.user",
+      "name email"
+    );
+    const updatedBy = await User.findById(userId).select("name email");
+
+    if (!project || !updatedBy) return activity;
+
+    // Create notifications and send emails for all project members except the user who performed the action
+    const notifications = [];
+    const emailPromises = [];
+
+    for (const member of project.members) {
+      if (member.user._id.toString() !== userId.toString()) {
+        // Create notification
+        notifications.push({
+          user: member.user._id,
+          sender: userId,
+          type: "project_activity",
+          title: "Project Activity",
+          message: message,
+          relatedProject: projectId,
+          data: {
+            activityType: type,
+            activityId: activity._id,
+          },
+        });
+
+        // Send email notification for project updates
+        if (type === "project_updated") {
+          emailPromises.push(
+            sendProjectUpdateEmail(
+              member.user,
+              project,
+              updatedBy,
+              message,
+              details.detailedChanges
+            )
+          );
+        }
+      }
+    }
+
+    // Save notifications
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+    }
+
+    // Send emails asynchronously (don't wait for them)
+    if (emailPromises.length > 0) {
+      console.log(
+        `📧 Attempting to send ${emailPromises.length} project update emails`
+      );
+      Promise.allSettled(emailPromises)
+        .then((results) => {
+          results.forEach((result, index) => {
+            if (result.status === "rejected") {
+              console.error(
+                `❌ Failed to send email to member ${index}:`,
+                result.reason
+              );
+            } else {
+              console.log(`✅ Email sent successfully to member ${index}`);
+            }
+          });
+        })
+        .catch((error) => {
+          console.error("❌ Error in email sending process:", error);
+        });
+    } else {
+      console.log("📧 No emails to send (no members or no project updates)");
+    }
+
+    return activity;
+  } catch (error) {
+    console.error("Error creating activity and notifications:", error);
+  }
+};
 
 // @route   GET /api/projects
 // @desc    Get all projects for a user
@@ -149,6 +252,19 @@ const createProject = async (req, res) => {
 
     await project.save();
 
+    // Create activity and send notifications
+    await createActivityAndNotify(
+      project._id,
+      userId,
+      "project_created",
+      `Created project "${name}"`,
+      {
+        projectName: name,
+        projectType: projectType,
+        membersCount: members.length,
+      }
+    );
+
     // Populate the project with user details
     await project.populate("owner", "name email avatar color");
     await project.populate("members.user", "name email avatar color");
@@ -221,21 +337,219 @@ const updateProject = async (req, res) => {
       });
     }
 
-    // Update project fields
-    if (name !== undefined) project.name = name;
-    if (description !== undefined) project.description = description;
-    if (clientName !== undefined) project.clientName = clientName;
-    if (projectType !== undefined) project.projectType = projectType;
-    if (projectStatus !== undefined) project.projectStatus = projectStatus;
-    if (startDate !== undefined) project.startDate = startDate;
-    if (endDate !== undefined) project.endDate = endDate;
-    if (liveSiteUrl !== undefined) project.liveSiteUrl = liveSiteUrl;
-    if (demoSiteUrl !== undefined) project.demoSiteUrl = demoSiteUrl;
-    if (markupUrl !== undefined) project.markupUrl = markupUrl;
-    if (attachments !== undefined) project.attachments = attachments;
-    if (color !== undefined) project.color = color;
+    // Track actual changes before updating
+    const changes = [];
+    const changeDetails = [];
+    const originalProject = project.toObject();
+
+    // Helper function to format values for display
+    const formatValue = (value) => {
+      if (value === null || value === undefined || value === "") return "Empty";
+      if (typeof value === "string" && value.trim() === "") return "Empty";
+      return value;
+    };
+
+    // Update project fields and track changes
+    if (name !== undefined && name !== originalProject.name) {
+      project.name = name;
+      changes.push(`name to "${name}"`);
+      changeDetails.push({
+        field: "Project Name",
+        icon: "📝",
+        oldValue: formatValue(originalProject.name),
+        newValue: formatValue(name),
+      });
+    }
+    if (
+      description !== undefined &&
+      description !== originalProject.description
+    ) {
+      project.description = description;
+      changes.push(`description`);
+      changeDetails.push({
+        field: "Description",
+        icon: "📄",
+        oldValue: formatValue(originalProject.description),
+        newValue: formatValue(description),
+      });
+    }
+    if (clientName !== undefined && clientName !== originalProject.clientName) {
+      project.clientName = clientName;
+      changes.push(`client name to "${clientName}"`);
+      changeDetails.push({
+        field: "Client Name",
+        icon: "🏢",
+        oldValue: formatValue(originalProject.clientName),
+        newValue: formatValue(clientName),
+      });
+    }
+    if (
+      projectType !== undefined &&
+      projectType !== originalProject.projectType
+    ) {
+      project.projectType = projectType;
+      changes.push(`project type to "${projectType}"`);
+      changeDetails.push({
+        field: "Project Type",
+        icon: "📋",
+        oldValue: formatValue(originalProject.projectType),
+        newValue: formatValue(projectType),
+      });
+    }
+    if (
+      projectStatus !== undefined &&
+      projectStatus !== originalProject.projectStatus
+    ) {
+      project.projectStatus = projectStatus;
+      changes.push(`project status to "${projectStatus}"`);
+      changeDetails.push({
+        field: "Project Status",
+        icon: "📊",
+        oldValue: formatValue(originalProject.projectStatus),
+        newValue: formatValue(projectStatus),
+      });
+    }
+    if (
+      startDate !== undefined &&
+      startDate !== originalProject.startDate?.toISOString().split("T")[0]
+    ) {
+      project.startDate = startDate;
+      changes.push(`start date to "${startDate}"`);
+      changeDetails.push({
+        field: "Start Date",
+        icon: "📅",
+        oldValue: formatValue(
+          originalProject.startDate?.toISOString().split("T")[0]
+        ),
+        newValue: formatValue(startDate),
+      });
+    }
+    if (
+      endDate !== undefined &&
+      endDate !== originalProject.endDate?.toISOString().split("T")[0]
+    ) {
+      project.endDate = endDate;
+      changes.push(`end date to "${endDate}"`);
+      changeDetails.push({
+        field: "End Date",
+        icon: "📅",
+        oldValue: formatValue(
+          originalProject.endDate?.toISOString().split("T")[0]
+        ),
+        newValue: formatValue(endDate),
+      });
+    }
+    if (
+      liveSiteUrl !== undefined &&
+      liveSiteUrl !== originalProject.liveSiteUrl
+    ) {
+      project.liveSiteUrl = liveSiteUrl;
+      changes.push(`live site URL`);
+      changeDetails.push({
+        field: "Live Site URL",
+        icon: "🌐",
+        oldValue: formatValue(originalProject.liveSiteUrl),
+        newValue: formatValue(liveSiteUrl),
+      });
+    }
+    if (
+      demoSiteUrl !== undefined &&
+      demoSiteUrl !== originalProject.demoSiteUrl
+    ) {
+      project.demoSiteUrl = demoSiteUrl;
+      changes.push(`demo site URL`);
+      changeDetails.push({
+        field: "Demo Site URL",
+        icon: "🎯",
+        oldValue: formatValue(originalProject.demoSiteUrl),
+        newValue: formatValue(demoSiteUrl),
+      });
+    }
+    if (markupUrl !== undefined && markupUrl !== originalProject.markupUrl) {
+      project.markupUrl = markupUrl;
+      changes.push(`markup URL`);
+      changeDetails.push({
+        field: "Markup URL",
+        icon: "🎨",
+        oldValue: formatValue(originalProject.markupUrl),
+        newValue: formatValue(markupUrl),
+      });
+    }
+    if (
+      attachments !== undefined &&
+      JSON.stringify(attachments) !==
+        JSON.stringify(originalProject.attachments)
+    ) {
+      project.attachments = attachments;
+      changes.push(`attachments`);
+      changeDetails.push({
+        field: "Attachments",
+        icon: "📎",
+        oldValue:
+          originalProject.attachments?.length > 0
+            ? `${originalProject.attachments.length} files`
+            : "No files",
+        newValue:
+          attachments?.length > 0 ? `${attachments.length} files` : "No files",
+      });
+    }
+    if (color !== undefined && color !== originalProject.color) {
+      project.color = color;
+      changes.push(`project color`);
+      changeDetails.push({
+        field: "Project Color",
+        icon: "🎨",
+        oldValue: formatValue(originalProject.color),
+        newValue: formatValue(color),
+      });
+    }
 
     await project.save();
+
+    // Create activity and send notifications only if there were actual changes
+    if (changes.length > 0) {
+      // Create detailed change messages with old → new values
+      const detailedChanges = changeDetails.map((change) => {
+        const oldValueColor = "#dc2626"; // Red for old values
+        const newValueColor = "#059669"; // Green for new values
+        const fieldColor = "#3b82f6"; // Blue for field names
+
+        return `${change.icon} <span style="color: ${fieldColor}; font-weight: bold;">${change.field}</span> → <span style="color: ${oldValueColor}; font-weight: bold;">"${change.oldValue}"</span> → <span style="color: ${newValueColor}; font-weight: bold;">"${change.newValue}"</span>`;
+      });
+
+      // Create both HTML and plain text versions
+      const htmlMessage = `Updated project:<br/>${detailedChanges.join(
+        "<br/>"
+      )}`;
+      const plainMessage = `Updated project: ${changes.join(", ")}`;
+
+      await createActivityAndNotify(
+        projectId,
+        userId,
+        "project_updated",
+        plainMessage, // Store plain text in database
+        {
+          changes: changes,
+          htmlMessage: htmlMessage, // Store HTML version for display
+          detailedChanges: detailedChanges,
+          changeDetails: changeDetails, // Store structured change data
+          updatedFields: {
+            name,
+            description,
+            clientName,
+            projectType,
+            projectStatus,
+            startDate,
+            endDate,
+            liveSiteUrl,
+            demoSiteUrl,
+            markupUrl,
+            attachments,
+            color,
+          },
+        }
+      );
+    }
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color role");

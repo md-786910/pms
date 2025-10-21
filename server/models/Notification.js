@@ -16,6 +16,7 @@ const notificationSchema = new mongoose.Schema(
       enum: [
         "project_invite",
         "project_joined",
+        "project_activity",
         "card_assigned",
         "card_unassigned",
         "card_updated",

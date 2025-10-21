@@ -4,8 +4,8 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "mdashifreza7869101@gmail.com",
-    pass: "",
+    user: process.env.SMTP_EMAIL,
+    pass: process.env.SMTP_PASSWORD,
   },
 });
 
@@ -269,11 +269,70 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  projectUpdate: (
+    memberName,
+    projectName,
+    updatedByName,
+    changes,
+    projectUrl,
+    detailedChanges = null
+  ) => ({
+    subject: `Project "${projectName}" has been updated - Project Management System`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">📝 Project Update</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${memberName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            <strong>${updatedByName}</strong> has updated the project 
+            <strong>"${projectName}"</strong> that you're a member of.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px;">📋 Changes Made</h3>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #6f42c1;">
+              ${
+                detailedChanges
+                  ? detailedChanges
+                      .map(
+                        (change) =>
+                          `<div style="margin-bottom: 8px; line-height: 1.6;">${change}</div>`
+                      )
+                      .join("")
+                  : `<p style="color: #495057; margin: 0; line-height: 1.5; font-weight: 500;">${changes}</p>`
+              }
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${projectUrl}" style="background: #6f42c1; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Updated Project
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            Click the button above to view the updated project details and see all the changes that were made.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 // Email sending functions
 const sendEmail = async (to, subject, html) => {
   try {
+    console.log(`📧 Attempting to send email to: ${to}`);
+    console.log(`📧 Subject: ${subject}`);
+
     const mailOptions = {
       from: "mdashifreza7869101@gmail.com",
       to,
@@ -282,10 +341,10 @@ const sendEmail = async (to, subject, html) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", result.messageId);
+    console.log("✅ Email sent successfully:", result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error("Email sending error:", error);
+    console.error("❌ Email sending error:", error);
     return { success: false, error: error.message };
   }
 };
@@ -395,6 +454,59 @@ const sendMentionEmail = async (
   return await sendEmail(mentionedUser.email, template.subject, template.html);
 };
 
+const sendProjectUpdateEmail = async (
+  member,
+  project,
+  updatedBy,
+  changes,
+  detailedChanges = null
+) => {
+  try {
+    console.log(`📧 Preparing to send project update email to ${member.email}`);
+
+    const projectUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}`;
+
+    const template = emailTemplates.projectUpdate(
+      member.name,
+      project.name,
+      updatedBy.name,
+      changes,
+      projectUrl,
+      detailedChanges
+    );
+
+    console.log(
+      `📧 Sending email to ${member.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      member.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Project update email sent successfully to ${member.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send project update email to ${member.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending project update email to ${member.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -404,4 +516,5 @@ module.exports = {
   sendCardAssignedEmail,
   sendCardUnassignedEmail,
   sendMentionEmail,
+  sendProjectUpdateEmail,
 };
