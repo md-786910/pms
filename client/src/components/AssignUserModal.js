@@ -123,11 +123,12 @@ const AssignUserModal = ({
     const currentProject = localProject || project;
     return currentProject.members?.some((member) => {
       if (typeof member === "object") {
-        return member.user?._id === user._id || member.user === user._id;
+        return member?.user?._id === user?._id || member?.user === user?._id;
       }
-      return member === user._id;
+      return member === user?._id;
     });
   };
+  console.log({ project, users });
   return (
     <div className="modal-overlay">
       <div className="modal-content max-w-2xl">
@@ -168,24 +169,25 @@ const AssignUserModal = ({
                   })
                 : users
               ).map((projectUser) => {
-                const user = projectUser?.user;
-                const role = projectUser?.role;
+                const user = card ? projectUser?.user : projectUser;
+                const role = card ? projectUser?.role : projectUser?.role;
+
                 const isAssignedUser = isAssigned(user);
-                const isLoading = loading[user._id];
+                const isLoading = loading[user?._id];
 
                 return (
                   <div
-                    key={user._id}
+                    key={user?._id}
                     className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg"
                   >
                     <div className="flex items-center space-x-3">
                       <Avatar user={user} size="sm" />
                       <div>
                         <p className="font-medium text-secondary-900">
-                          {user.name}
+                          {user?.name}
                         </p>
                         <p className="text-sm text-secondary-600">
-                          {user.email}
+                          {user?.email}
                         </p>
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
