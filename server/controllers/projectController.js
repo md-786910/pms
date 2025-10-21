@@ -261,7 +261,7 @@ const createProject = async (req, res) => {
       {
         projectName: name,
         projectType: projectType,
-        membersCount: members.length,
+        membersCount: project.members.length,
       }
     );
 
