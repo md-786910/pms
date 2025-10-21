@@ -242,21 +242,21 @@ const CreateProjectModal = ({ onClose }) => {
         {/* Sticky Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+          className="absolute top-10 right-6 z-10 p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
           title="Close modal"
         >
-          <X className="w-6 h-6 text-gray-600" />
+          <X className="w-4 h-4 text-gray-600" />
         </button>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-6 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex-shrink-0">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-white/20 rounded-xl">
-              <Plus className="w-8 h-8" />
+              <Plus className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold">Create New Project</h2>
-              <p className="text-blue-100 text-lg mt-2">
+              <h2 className="text-2xl font-bold">Create New Project</h2>
+              <p className="text-primary-100 text-lg">
                 Set up a comprehensive project with all necessary details
               </p>
             </div>
@@ -480,6 +480,7 @@ const CreateProjectModal = ({ onClose }) => {
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-300 hover:border-gray-400"
                   }`}
+                  onClick={() => fileInputRef.current?.click()}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
@@ -489,7 +490,6 @@ const CreateProjectModal = ({ onClose }) => {
                     Drag and drop files here, or{" "}
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
                       className="text-blue-600 hover:text-blue-700 font-medium"
                     >
                       browse files

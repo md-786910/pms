@@ -255,11 +255,11 @@ const ProjectBoard = () => {
     const cardStatusColors = getCardStatusColors(column.status);
 
     return {
-      title: column.name,
-      color: column.color,
-      bgColor: cardStatusColors.bgColor,
-      borderColor: cardStatusColors.borderColor,
-      textColor: cardStatusColors.textColor,
+      title: column?.name,
+      color: column?.color,
+      bgColor: cardStatusColors?.bgColor,
+      borderColor: cardStatusColors?.borderColor,
+      textColor: cardStatusColors?.textColor,
     };
   };
 
@@ -521,7 +521,7 @@ const ProjectBoard = () => {
               >
                 {getProjectStatusColors(currentProject.projectStatus).label}
               </span>
-              <span
+              {/* <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
                   getProjectTypeColors(currentProject.projectType).bgColor
                 } ${
@@ -532,7 +532,7 @@ const ProjectBoard = () => {
                 title="Project type"
               >
                 {getProjectTypeColors(currentProject.projectType).label}
-              </span>
+              </span> */}
             </div>
             {/* Date pill */}
             <div className="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5">

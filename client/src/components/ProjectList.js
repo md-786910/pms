@@ -124,7 +124,7 @@ const ProjectCard = ({ project }) => {
       {/* Card Body */}
       <div className="p-6">
         {/* Status Badges */}
-        <div className="flex items-center space-x-2 mb-4">
+        {/* <div className="flex items-center space-x-2 mb-4">
           <span
             className={getStatusBadgeClasses(
               "projectStatus",
@@ -141,7 +141,7 @@ const ProjectCard = ({ project }) => {
           >
             {getProjectTypeColors(project.projectType).label}
           </span>
-        </div>
+        </div> */}
 
         <div className="flex items-center justify-between text-sm text-secondary-500 mb-4">
           <div className="flex items-center space-x-4">
@@ -156,6 +156,14 @@ const ProjectCard = ({ project }) => {
               <span>{formatDate(project.createdAt)}</span>
             </div>
           </div>
+          <span
+            className={getStatusBadgeClasses(
+              "projectStatus",
+              project.projectStatus
+            )}
+          >
+            {getProjectStatusColors(project.projectStatus).label}
+          </span>
         </div>
 
         {/* Team Members */}
