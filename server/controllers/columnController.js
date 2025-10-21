@@ -52,53 +52,49 @@ const ensureArchiveColumn = async (projectId, userId) => {
     // First, clean up any duplicate archive columns
     await cleanupDuplicateArchiveColumns(projectId);
 
-    // Use findOneAndUpdate with upsert to avoid duplicate key errors
-    const archiveColumn = await Column.findOneAndUpdate(
-      {
-        project: projectId,
-        status: "archive",
-      },
-      {
-        $setOnInsert: {
-          name: "Archive",
-          project: projectId,
-          status: "archive",
-          color: "gray",
-          isDefault: true,
-          createdBy: userId,
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-        runValidators: true,
-      }
-    );
+    // Try to find existing archive column first
+    let archiveColumn = await Column.findOne({
+      project: projectId,
+      status: "archive",
+    });
 
-    // If this was a new column, set the position
-    if (archiveColumn && !archiveColumn.position) {
-      // Get the highest position to place archive column at the end
-      const lastColumn = await Column.findOne({
-        project: projectId,
-        _id: { $ne: archiveColumn._id },
-      }).sort({ position: -1 });
-
-      const archivePosition = lastColumn ? lastColumn.position + 1 : 999;
-
-      archiveColumn.position = archivePosition;
-      await archiveColumn.save();
-
-      console.log(
-        `Archive column created for project ${projectId} with position ${archivePosition}`
-      );
-    } else {
+    if (archiveColumn) {
       console.log(`Archive column already exists for project ${projectId}`);
+      return archiveColumn;
     }
 
+    // If no archive column exists, create one
+    console.log(`Creating new archive column for project ${projectId}`);
+
+    // Get the highest position to place archive column at the end
+    const lastColumn = await Column.findOne({
+      project: projectId,
+    }).sort({ position: -1 });
+
+    const archivePosition = lastColumn ? lastColumn.position + 1 : 999;
+
+    // Create archive column
+    archiveColumn = new Column({
+      name: "Archive",
+      project: projectId,
+      status: "archive",
+      color: "gray",
+      position: archivePosition,
+      isDefault: true,
+      createdBy: userId,
+    });
+
+    await archiveColumn.save();
+    console.log(
+      `Archive column created for project ${projectId} with position ${archivePosition}`
+    );
     return archiveColumn;
   } catch (error) {
     console.error("Error ensuring archive column:", error);
     console.error("Error details:", error.message);
+    console.error("Error code:", error.code);
+    console.error("Error keyPattern:", error.keyPattern);
+    console.error("Error keyValue:", error.keyValue);
 
     // If it's still a duplicate key error, try to find the existing column
     if (error.code === 11000) {
@@ -109,12 +105,30 @@ const ensureArchiveColumn = async (projectId, userId) => {
           status: "archive",
         });
         if (existingColumn) {
-          console.log("Found existing archive column");
+          console.log("Found existing archive column:", existingColumn._id);
           return existingColumn;
+        } else {
+          console.log("No existing archive column found, this is unexpected");
         }
       } catch (findError) {
         console.error("Error finding existing archive column:", findError);
       }
+    }
+
+    // If all else fails, try to clean up and retry once
+    console.log("Attempting cleanup and retry...");
+    try {
+      await cleanupDuplicateArchiveColumns(projectId);
+      const retryColumn = await Column.findOne({
+        project: projectId,
+        status: "archive",
+      });
+      if (retryColumn) {
+        console.log("Found archive column after cleanup:", retryColumn._id);
+        return retryColumn;
+      }
+    } catch (retryError) {
+      console.error("Error in retry attempt:", retryError);
     }
 
     return null;
