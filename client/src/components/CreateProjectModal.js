@@ -46,16 +46,14 @@ const CreateProjectModal = ({ onClose }) => {
 
     setLoading(true);
     try {
-      // Create the project first
+      // Create the project first using ProjectContext to ensure state updates
       const projectData = {
         ...formData,
         attachments: [], // Will be uploaded separately
       };
-      const response = await projectAPI.createProject(projectData);
-      const createdProject = response.data.project;
-      console.log("Created project response:", response.data);
-      console.log("Created project:", createdProject);
-      console.log("Created project ID:", createdProject._id);
+      console.log("🔄 CreateProjectModal: Calling createProject with data:", projectData);
+      const createdProject = await createProject(projectData);
+      console.log("✅ CreateProjectModal: Project created successfully:", createdProject);
 
       // If there are files to upload, upload them after project creation
       if (uploadedFiles.length > 0) {
@@ -121,10 +119,10 @@ const CreateProjectModal = ({ onClose }) => {
         "success"
       );
 
-      // Auto-close the modal after successful project creation
-      setTimeout(() => {
-        onClose();
-      }, 1500); // Close after 1.5 seconds to let user see the success message
+      console.log("✅ CreateProjectModal: Project creation completed, closing modal");
+      
+      // Close the modal immediately after successful creation
+      onClose();
     } catch (error) {
       console.error("Create project error:", error);
       showToast("Failed to create project", "error");

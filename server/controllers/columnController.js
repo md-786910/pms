@@ -143,23 +143,32 @@ const getColumns = async (req, res) => {
       });
     }
 
-    // Ensure archive column exists
-    await ensureArchiveColumn(projectId, userId);
+    // Get all columns (excluding archive column for now)
+    const columns = await Column.find({
+      project: projectId,
+      status: { $ne: "archive" }, // Exclude archive column initially
+    }).populate("createdBy", "name email avatar color");
 
-    // Get all columns including archive column
-    const columns = await Column.find({ project: projectId }).populate(
-      "createdBy",
-      "name email avatar color"
+    // Check if there are any archived cards in this project
+    const archivedCardsCount = await Card.countDocuments({
+      project: projectId,
+      isArchived: true,
+    });
+
+    let sortedColumns = [...columns].sort(
+      (a, b) => (a.position || 0) - (b.position || 0)
     );
 
-    // Ensure archive column is always last on the right in the response
-    const sortedColumns = [...columns].sort((a, b) => {
-      const aIsArchive = a.status === "archive";
-      const bIsArchive = b.status === "archive";
-      if (aIsArchive && !bIsArchive) return 1;
-      if (!aIsArchive && bIsArchive) return -1;
-      return (a.position || 0) - (b.position || 0);
-    });
+    // Only include archive column if there are archived cards
+    if (archivedCardsCount > 0) {
+      // Ensure archive column exists
+      const archiveColumn = await ensureArchiveColumn(projectId, userId);
+
+      if (archiveColumn) {
+        // Add archive column at the end
+        sortedColumns.push(archiveColumn);
+      }
+    }
 
     res.json({
       success: true,

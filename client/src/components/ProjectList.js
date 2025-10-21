@@ -13,9 +13,18 @@ import {
 } from "../utils/statusColors";
 
 const ProjectList = () => {
-  const { projects, loading } = useProject();
+  const { projects, loading, fetchProjects } = useProject();
   const { user } = useUser();
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Debug logging
+
+  const handleModalClose = () => {
+    setShowCreateModal(false);
+    // Force refresh projects after modal closes
+    console.log("🔄 ProjectList: Refreshing projects after modal close");
+    fetchProjects();
+  };
 
   if (loading) {
     return (
@@ -78,9 +87,7 @@ const ProjectList = () => {
       )}
 
       {/* Create Project Modal */}
-      {showCreateModal && (
-        <CreateProjectModal onClose={() => setShowCreateModal(false)} />
-      )}
+      {showCreateModal && <CreateProjectModal onClose={handleModalClose} />}
     </div>
   );
 };
