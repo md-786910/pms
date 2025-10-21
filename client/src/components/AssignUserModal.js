@@ -128,7 +128,6 @@ const AssignUserModal = ({
       return member === user._id;
     });
   };
-
   return (
     <div className="modal-overlay">
       <div className="modal-content max-w-2xl">
@@ -157,20 +156,20 @@ const AssignUserModal = ({
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {(card
-                ? users.filter((user) => {
-                    const currentProject = localProject || project;
-                    return currentProject.members?.some((member) => {
-                      if (typeof member === "object") {
-                        return (
-                          member.user?._id === user._id ||
-                          member.user === user._id
-                        );
-                      }
-                      return member === user._id;
-                    });
+                ? project?.members?.filter((user) => {
+                    if (typeof user === "object") {
+                      return user?.user;
+                      // return (
+                      //   member.user?._id === user._id ||
+                      //   member.user === user._id
+                      // );
+                    }
+                    // return member === user._id;
                   })
                 : users
-              ).map((user) => {
+              ).map((projectUser) => {
+                const user = projectUser?.user;
+                const role = projectUser?.role;
                 const isAssignedUser = isAssigned(user);
                 const isLoading = loading[user._id];
 
@@ -190,12 +189,12 @@ const AssignUserModal = ({
                         </p>
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            user.role === "admin"
+                            role === "admin"
                               ? "bg-red-100 text-red-800"
                               : "bg-blue-100 text-blue-800"
                           }`}
                         >
-                          {user.role}
+                          {role}
                         </span>
                       </div>
                     </div>

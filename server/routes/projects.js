@@ -202,7 +202,7 @@ router.put(
     body("description")
       .optional()
       .trim()
-      .isLength({ max: 500 })
+      .isLength({ max: 20000 })
       .withMessage("Description cannot be more than 500 characters"),
     body("color")
       .optional()

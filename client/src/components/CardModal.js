@@ -1444,8 +1444,8 @@ const CardModal = ({
                         return new Date(bTime) - new Date(aTime);
                       })
                       .map((comment) => {
-                        console.log("Rendering comment:", comment);
-                        console.log("Comment user:", comment.user);
+                        // console.log("Rendering comment:", comment);
+                        // console.log("Comment user:", comment.user);
                         return (
                           <div
                             key={comment._id || comment.id}

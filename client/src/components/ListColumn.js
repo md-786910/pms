@@ -73,6 +73,10 @@ const ListColumn = ({
     setShowMenu(false);
   };
 
+  textColor = `text-${color}-700`;
+  bgColor = `bg-${color}-50`;
+  borderColor = `border-${color}-200`;
+
   return (
     <div
       className={`bg-gray-50 rounded-lg border border-gray-200 h-[600px] transition-all duration-200 ${

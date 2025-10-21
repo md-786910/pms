@@ -3,50 +3,113 @@ const Project = require("../models/Project");
 const Card = require("../models/Card");
 const { validationResult } = require("express-validator");
 
+// Helper function to clean up duplicate archive columns
+const cleanupDuplicateArchiveColumns = async (projectId) => {
+  try {
+    console.log(
+      `Cleaning up duplicate archive columns for project ${projectId}`
+    );
+
+    // Find all archive columns for this project
+    const archiveColumns = await Column.find({
+      project: projectId,
+      status: "archive",
+    }).sort({ createdAt: 1 }); // Sort by creation date, oldest first
+
+    if (archiveColumns.length > 1) {
+      console.log(
+        `Found ${archiveColumns.length} archive columns for project ${projectId}, keeping the oldest one`
+      );
+
+      // Keep the first (oldest) archive column
+      const keepColumn = archiveColumns[0];
+      const deleteColumns = archiveColumns.slice(1);
+
+      // Delete the duplicate columns
+      for (const column of deleteColumns) {
+        console.log(`Deleting duplicate archive column ${column._id}`);
+        await Column.findByIdAndDelete(column._id);
+      }
+
+      console.log(
+        `Cleaned up ${deleteColumns.length} duplicate archive columns`
+      );
+      return keepColumn;
+    }
+
+    return archiveColumns[0] || null;
+  } catch (error) {
+    console.error("Error cleaning up duplicate archive columns:", error);
+    return null;
+  }
+};
+
 // Helper function to ensure archive column exists for a project
 const ensureArchiveColumn = async (projectId, userId) => {
   try {
     console.log(`Ensuring archive column for project ${projectId}`);
 
-    // Check if archive column already exists
-    const existingArchiveColumn = await Column.findOne({
+    // First, clean up any duplicate archive columns
+    await cleanupDuplicateArchiveColumns(projectId);
+
+    // Try to find existing archive column first
+    let archiveColumn = await Column.findOne({
       project: projectId,
       status: "archive",
     });
 
-    if (!existingArchiveColumn) {
-      console.log(`Creating archive column for project ${projectId}`);
-
-      // Get the highest position to place archive column at the end
-      const lastColumn = await Column.findOne({ project: projectId }).sort({
-        position: -1,
-      });
-      const archivePosition = lastColumn ? lastColumn.position + 1 : 999;
-
-      // Create archive column
-      const archiveColumn = new Column({
-        name: "Archive",
-        project: projectId,
-        status: "archive",
-        color: "gray",
-        position: archivePosition,
-        isDefault: true,
-        createdBy: userId,
-      });
-
-      await archiveColumn.save();
-      console.log(
-        `Archive column created for project ${projectId} with position ${archivePosition}`
-      );
-      return archiveColumn;
-    } else {
+    if (archiveColumn) {
       console.log(`Archive column already exists for project ${projectId}`);
+      return archiveColumn;
     }
 
-    return existingArchiveColumn;
+    // If no archive column exists, create one
+    console.log(`Creating new archive column for project ${projectId}`);
+
+    // Get the highest position to place archive column at the end
+    const lastColumn = await Column.findOne({
+      project: projectId,
+    }).sort({ position: -1 });
+
+    const archivePosition = lastColumn ? lastColumn.position + 1 : 999;
+
+    // Create archive column
+    archiveColumn = new Column({
+      name: "Archive",
+      project: projectId,
+      status: "archive",
+      color: "gray",
+      position: archivePosition,
+      isDefault: true,
+      createdBy: userId,
+    });
+
+    await archiveColumn.save();
+    console.log(
+      `Archive column created for project ${projectId} with position ${archivePosition}`
+    );
+    return archiveColumn;
   } catch (error) {
     console.error("Error ensuring archive column:", error);
     console.error("Error details:", error.message);
+
+    // If it's a duplicate key error, try to find the existing column
+    if (error.code === 11000) {
+      console.log("Duplicate key error, finding existing archive column");
+      try {
+        const existingColumn = await Column.findOne({
+          project: projectId,
+          status: "archive",
+        });
+        if (existingColumn) {
+          console.log("Found existing archive column");
+          return existingColumn;
+        }
+      } catch (findError) {
+        console.error("Error finding existing archive column:", findError);
+      }
+    }
+
     return null;
   }
 };
@@ -436,4 +499,5 @@ module.exports = {
   deleteColumn,
   reorderColumns,
   ensureArchiveColumn,
+  cleanupDuplicateArchiveColumns,
 };
