@@ -49,6 +49,12 @@ const ensureArchiveColumn = async (projectId, userId) => {
   try {
     console.log(`Ensuring archive column for project ${projectId}`);
 
+    // Validate inputs
+    if (!projectId || !userId) {
+      console.error("Invalid inputs: projectId or userId is missing");
+      return null;
+    }
+
     // First, clean up any duplicate archive columns
     await cleanupDuplicateArchiveColumns(projectId);
 
@@ -73,7 +79,7 @@ const ensureArchiveColumn = async (projectId, userId) => {
 
     const archivePosition = lastColumn ? lastColumn.position + 1 : 999;
 
-    // Create archive column
+    // Create archive column with explicit validation
     archiveColumn = new Column({
       name: "Archive",
       project: projectId,
@@ -84,10 +90,40 @@ const ensureArchiveColumn = async (projectId, userId) => {
       createdBy: userId,
     });
 
-    await archiveColumn.save();
-    console.log(
-      `Archive column created for project ${projectId} with position ${archivePosition}`
-    );
+    // Validate the document before saving
+    const validationError = archiveColumn.validateSync();
+    if (validationError) {
+      console.error("Validation error:", validationError);
+      return null;
+    }
+
+    // Use a transaction to ensure atomicity
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Double-check that no archive column exists (race condition protection)
+        const existingArchive = await Column.findOne({
+          project: projectId,
+          status: "archive",
+        }).session(session);
+
+        if (existingArchive) {
+          console.log(
+            `Archive column already exists (race condition detected) for project ${projectId}`
+          );
+          archiveColumn = existingArchive;
+          return;
+        }
+
+        // Create the archive column
+        await archiveColumn.save({ session });
+        console.log(
+          `Archive column created for project ${projectId} with position ${archivePosition}`
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
     return archiveColumn;
   } catch (error) {
     console.error("Error ensuring archive column:", error);
