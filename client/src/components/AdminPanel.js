@@ -359,7 +359,14 @@ const AdminPanel = () => {
 
       {/* Modals */}
       {showCreateModal && (
-        <CreateProjectModal onClose={() => setShowCreateModal(false)} />
+        <CreateProjectModal
+          onClose={() => {
+            setShowCreateModal(false);
+            // Force refresh projects after modal closes to ensure latest data
+            console.log("🔄 AdminPanel: Refreshing projects after modal close");
+            fetchProjects();
+          }}
+        />
       )}
 
       {showEditModal && selectedProject && (
