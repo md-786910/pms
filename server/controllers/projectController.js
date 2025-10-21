@@ -189,7 +189,10 @@ const updateProject = async (req, res) => {
       color,
     } = req.body;
 
-    const project = await Project.findById(projectId);
+    const project = await Project.findById(projectId).populate(
+      "owner",
+      "name email avatar color role"
+    );
 
     if (!project) {
       return res.status(404).json({
@@ -198,14 +201,23 @@ const updateProject = async (req, res) => {
       });
     }
 
-    // Check if user is owner or admin
+    // Check if user can update this project
     const isOwner = project.owner.toString() === userId.toString();
     const isAdmin = req.user.role === "admin";
+    const isMember = project.members.some(
+      (member) =>
+        member && member.user && member.user.toString() === userId.toString()
+    );
 
-    if (!isOwner && !isAdmin) {
+    // Allow update if:
+    // 1. User is the owner
+    // 2. User is admin
+    // 3. User is a member of the project
+    if (!isOwner && !isAdmin && !isMember) {
       return res.status(403).json({
         success: false,
-        message: "Access denied. Only project owner can update project.",
+        message:
+          "Access denied. Only project owner, admin, or members can update project.",
       });
     }
 
@@ -226,7 +238,7 @@ const updateProject = async (req, res) => {
     await project.save();
 
     // Populate the project with user details
-    await project.populate("owner", "name email avatar color");
+    await project.populate("owner", "name email avatar color role");
     await project.populate("members.user", "name email avatar color");
 
     res.json({

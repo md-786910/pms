@@ -15,6 +15,7 @@ import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
+import EditProjectModal from "./EditProjectModal";
 import { stripHtmlTags } from "../utils/htmlUtils";
 import {
   getProjectStatusColors,
@@ -41,6 +42,7 @@ const ProjectBoard = () => {
   const [showAddColumnModal, setShowAddColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnColor, setNewColumnColor] = useState("gray");
+  const [showEditProjectModal, setShowEditProjectModal] = useState(false);
 
   // Card modal state
   const [selectedCard, setSelectedCard] = useState(null);
@@ -456,6 +458,10 @@ const ProjectBoard = () => {
     }
   };
 
+  const handleEditProject = () => {
+    setShowEditProjectModal(true);
+  };
+
   if (loading || loadingCards) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -504,7 +510,7 @@ const ProjectBoard = () => {
             </div>
           </div>
 
-          {/* Right: Status pills + Date pill */}
+          {/* Right: Status pills + Date pill + Settings */}
           <div className="flex items-center gap-3">
             {/* Status pills */}
             <div className="flex items-center gap-2">
@@ -553,6 +559,14 @@ const ProjectBoard = () => {
                 )}
               </div>
             </div>
+            {/* Settings button */}
+            <button
+              onClick={handleEditProject}
+              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+              title="Project Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
@@ -750,6 +764,14 @@ const ProjectBoard = () => {
           onCardDeleted={handleCardDeleted}
           onCardRestored={handleCardRestored}
           onStatusChange={handleStatusChange}
+        />
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditProjectModal && currentProject && (
+        <EditProjectModal
+          project={currentProject}
+          onClose={() => setShowEditProjectModal(false)}
         />
       )}
     </div>
