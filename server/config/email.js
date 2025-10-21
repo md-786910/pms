@@ -325,6 +325,80 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  cardStatusChanged: (
+    assigneeName,
+    cardTitle,
+    projectName,
+    movedByName,
+    oldStatus,
+    newStatus,
+    cardUrl,
+    dateTime
+  ) => ({
+    subject: `Card status updated: "${cardTitle}" - ${projectName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">🔄 Card Status Update</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${assigneeName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            <strong>${movedByName}</strong> has moved a card that you're assigned to in the project 
+            <strong>"${projectName}"</strong>.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px;">📌 Card Details</h3>
+            <p style="color: #6c757d; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">${cardTitle}</p>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 15px;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="color: #6c757d; font-size: 14px; font-weight: 500;">Status Change:</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                <span style="background-color: #f3f4f6; color: #374151; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                  ${oldStatus}
+                </span>
+                <span style="color: #17a2b8; font-size: 18px;">→</span>
+                <span style="background-color: #d1ecf1; color: #0c5460; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                  ${newStatus}
+                </span>
+              </div>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+              <p style="color: #6c757d; margin: 0; font-size: 13px;">
+                <strong>Moved by:</strong> ${movedByName}
+              </p>
+              <p style="color: #6c757d; margin: 5px 0 0 0; font-size: 13px;">
+                <strong>Project:</strong> ${projectName}
+              </p>
+              <p style="color: #6c757d; margin: 5px 0 0 0; font-size: 13px;">
+                <strong>Time:</strong> ${dateTime}
+              </p>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cardUrl}" style="background: #17a2b8; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Card
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            Click the button above to view the card and see all its details. Stay updated with the latest changes to your assigned tasks.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 // Email sending functions
@@ -507,6 +581,76 @@ const sendProjectUpdateEmail = async (
   }
 };
 
+const sendCardStatusChangedEmail = async (
+  assignee,
+  card,
+  project,
+  movedBy,
+  oldStatus,
+  newStatus
+) => {
+  try {
+    console.log(
+      `📧 Preparing to send card status change email to ${assignee.email}`
+    );
+
+    const cardUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}/card/${card._id}`;
+
+    // Format date and time
+    const now = new Date();
+    const dateTime = now.toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+
+    const template = emailTemplates.cardStatusChanged(
+      assignee.name,
+      card.title,
+      project.name,
+      movedBy.name,
+      oldStatus,
+      newStatus,
+      cardUrl,
+      dateTime
+    );
+
+    console.log(
+      `📧 Sending card status change email to ${assignee.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      assignee.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Card status change email sent successfully to ${assignee.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send card status change email to ${assignee.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending card status change email to ${assignee.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -517,4 +661,5 @@ module.exports = {
   sendCardUnassignedEmail,
   sendMentionEmail,
   sendProjectUpdateEmail,
+  sendCardStatusChangedEmail,
 };

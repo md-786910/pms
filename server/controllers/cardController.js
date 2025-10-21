@@ -7,6 +7,7 @@ const { validationResult } = require("express-validator");
 const {
   sendCardAssignedEmail,
   sendCardUnassignedEmail,
+  sendCardStatusChangedEmail,
 } = require("../config/email");
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
 const { ensureArchiveColumn } = require("./columnController");
@@ -364,6 +365,46 @@ const updateCard = async (req, res) => {
         text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
         timestamp: new Date(),
       });
+
+      // Send email notifications to all assigned members (async, non-blocking)
+      if (card.assignees && card.assignees.length > 0) {
+        setImmediate(async () => {
+          try {
+            const movedBy = await User.findById(userId);
+            const projectData = await Project.findById(card.project);
+
+            if (movedBy && projectData) {
+              // Get assignee details
+              const assigneesData = await User.find({
+                _id: { $in: card.assignees },
+              });
+
+              // Send email to each assignee (except the person who moved it)
+              for (const assignee of assigneesData) {
+                if (assignee._id.toString() !== userId.toString()) {
+                  await sendCardStatusChangedEmail(
+                    assignee,
+                    card,
+                    projectData,
+                    movedBy,
+                    previousStatusLabel,
+                    newStatusLabel
+                  );
+                  console.log(
+                    `Card status change email sent to ${assignee.email}`
+                  );
+                }
+              }
+            }
+          } catch (emailError) {
+            console.error(
+              "Error sending card status change emails:",
+              emailError
+            );
+            // Email failure doesn't affect the main request
+          }
+        });
+      }
     }
 
     // Add automatic comments for assignee changes
@@ -659,6 +700,46 @@ const updateStatus = async (req, res) => {
         text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
         timestamp: new Date(),
       });
+
+      // Send email notifications to all assigned members (async, non-blocking)
+      if (card.assignees && card.assignees.length > 0) {
+        setImmediate(async () => {
+          try {
+            const movedBy = await User.findById(userId);
+            const projectData = await Project.findById(card.project);
+
+            if (movedBy && projectData) {
+              // Get assignee details
+              const assignees = await User.find({
+                _id: { $in: card.assignees },
+              });
+
+              // Send email to each assignee (except the person who moved it)
+              for (const assignee of assignees) {
+                if (assignee._id.toString() !== userId.toString()) {
+                  await sendCardStatusChangedEmail(
+                    assignee,
+                    card,
+                    projectData,
+                    movedBy,
+                    previousStatusLabel,
+                    newStatusLabel
+                  );
+                  console.log(
+                    `Card status change email sent to ${assignee.email}`
+                  );
+                }
+              }
+            }
+          } catch (emailError) {
+            console.error(
+              "Error sending card status change emails:",
+              emailError
+            );
+            // Email failure doesn't affect the main request
+          }
+        });
+      }
     }
 
     // Add activity log entry
