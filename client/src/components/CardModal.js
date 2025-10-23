@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   Edit2,
@@ -81,6 +81,59 @@ const CardModal = ({
     list: false,
     link: false,
   });
+  const [autoSaving, setAutoSaving] = useState(false);
+  const initialDueDateRef = useRef(formData.dueDate);
+  const cardIdRef = useRef(card._id);
+
+  // Update ref when card changes
+  useEffect(() => {
+    initialDueDateRef.current = formData.dueDate;
+    cardIdRef.current = card._id;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card._id]);
+
+  // Auto-save due date when it changes
+  useEffect(() => {
+    const autoSaveDueDate = async () => {
+      // Skip if dueDate hasn't changed from initial value
+      if (formData.dueDate === initialDueDateRef.current) {
+        return;
+      }
+
+      setAutoSaving(true);
+      try {
+        const updateData = {
+          title: formData.title,
+          description: formData.description,
+          dueDate: formData.dueDate,
+        };
+
+        const response = await cardAPI.updateCard(
+          cardIdRef.current,
+          updateData
+        );
+
+        if (response.data.success) {
+          onCardUpdated(response.data.card);
+          initialDueDateRef.current = formData.dueDate;
+          showToast("Due date updated", "success");
+        }
+      } catch (error) {
+        console.error("Error auto-saving due date:", error);
+        showToast("Failed to update due date", "error");
+      } finally {
+        setAutoSaving(false);
+      }
+    };
+
+    // Debounce auto-save for 1 second
+    const timer = setTimeout(() => {
+      autoSaveDueDate();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.dueDate]);
 
   // Dynamic status options based on project columns (excluding Archive)
   const statusOptions = columns
@@ -1582,9 +1635,36 @@ const CardModal = ({
 
                 {/* Due Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Due Date
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Due Date
+                    </label>
+                    {autoSaving && (
+                      <span className="text-xs text-blue-600 flex items-center">
+                        <svg
+                          className="animate-spin h-3 w-3 mr-1"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Saving...
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="date"
                     value={formData.dueDate}
@@ -1592,6 +1672,7 @@ const CardModal = ({
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    disabled={autoSaving}
                   />
                   {/* <div className="p-2 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 text-sm">
