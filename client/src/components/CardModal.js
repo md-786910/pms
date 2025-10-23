@@ -1320,11 +1320,11 @@ const CardModal = ({
 
                   {/* Action Buttons - Only show when editing */}
                   {isEditing && (
-                    <div className="mt-3 flex items-center justify-end space-x-2">
+                    <div className="mt-14 flex items-center justify-end space-x-2">
                       <button
                         onClick={handleSave}
                         disabled={loading}
-                        className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className=" bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Save className="w-4 h-4" />
                         <span>Save</span>
