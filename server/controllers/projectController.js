@@ -7,6 +7,7 @@ const Activity = require("../models/Activity");
 const {
   sendProjectInvitationEmail,
   sendProjectUpdateEmail,
+  sendMemberRemovedEmail,
 } = require("../config/email");
 
 // Helper function to create activity and send notifications
@@ -918,6 +919,16 @@ const removeMember = async (req, res) => {
     });
 
     await notification.save();
+
+    // Send email notification to the removed member
+    setImmediate(async () => {
+      try {
+        await sendMemberRemovedEmail(userToRemove, project, req.user);
+        console.log(`Member removal email sent to ${userToRemove.email}`);
+      } catch (emailError) {
+        console.error("Error sending member removal email:", emailError);
+      }
+    });
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color");

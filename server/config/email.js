@@ -399,6 +399,47 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  memberRemoved: (memberName, projectName, removedByName, projectUrl) => ({
+    subject: `You've been removed from project "${projectName}" - Project Management System`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">👋 Member Removal</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${memberName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            We wanted to inform you that <strong>${removedByName}</strong> has removed you from the project 
+            <strong>"${projectName}"</strong>.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 10px 0; font-size: 18px;">📋 Project Details</h3>
+            <p style="color: #6c757d; margin: 0; font-size: 16px; font-weight: 500;">${projectName}</p>
+            <p style="color: #6c757d; margin: 5px 0 0 0; font-size: 14px;">Removed by: ${removedByName}</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${
+              process.env.CLIENT_URL || "http://localhost:3000"
+            }" style="background: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Dashboard
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            You no longer have access to this project. If you have any questions, please contact the project owner.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 // Email sending functions
@@ -651,6 +692,51 @@ const sendCardStatusChangedEmail = async (
   }
 };
 
+const sendMemberRemovedEmail = async (member, project, removedBy) => {
+  try {
+    console.log(`📧 Preparing to send member removal email to ${member.email}`);
+
+    const projectUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}`;
+
+    const template = emailTemplates.memberRemoved(
+      member.name,
+      project.name,
+      removedBy.name,
+      projectUrl
+    );
+
+    console.log(
+      `📧 Sending member removal email to ${member.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      member.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Member removal email sent successfully to ${member.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send member removal email to ${member.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending member removal email to ${member.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -662,4 +748,5 @@ module.exports = {
   sendMentionEmail,
   sendProjectUpdateEmail,
   sendCardStatusChangedEmail,
+  sendMemberRemovedEmail,
 };
