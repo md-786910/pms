@@ -40,6 +40,7 @@ const ProjectBoard = () => {
   const [selectedStatus, setSelectedStatus] = useState("todo");
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollContainerRef = useRef(null);
+  const addColumnModalRef = useRef(null);
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingColumns, setLoadingColumns] = useState(true);
   const [showAddColumnModal, setShowAddColumnModal] = useState(false);
@@ -88,6 +89,25 @@ const ProjectBoard = () => {
       fetchColumns();
     }
   }, [actualProjectId]);
+
+  // Handle click outside to close add column modal
+  useEffect(() => {
+    if (!showAddColumnModal) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        addColumnModalRef.current &&
+        !addColumnModalRef.current.contains(event.target)
+      ) {
+        setShowAddColumnModal(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAddColumnModal]);
 
   // Handle card modal opening from URL
   useEffect(() => {
@@ -735,7 +755,10 @@ const ProjectBoard = () => {
       {/* Add Column Modal */}
       {showAddColumnModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+          <div
+            ref={addColumnModalRef}
+            className="bg-white rounded-lg p-6 w-96 max-w-md mx-4"
+          >
             <h3 className="text-lg font-semibold mb-4">Add New Column</h3>
 
             <div className="space-y-4">

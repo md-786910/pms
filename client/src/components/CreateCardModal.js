@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { useNotification } from "../contexts/NotificationContext";
 import { cardAPI } from "../utils/api";
@@ -16,6 +16,21 @@ const CreateCardModal = ({
   });
   const [loading, setLoading] = useState(false);
   const { showToast } = useNotification();
+  const modalRef = useRef(null);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,7 +74,7 @@ const CreateCardModal = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+      <div ref={modalRef} className="modal-content">
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <h2 className="text-xl font-semibold text-secondary-900">
             Create New Card

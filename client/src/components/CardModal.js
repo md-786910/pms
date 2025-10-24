@@ -85,8 +85,62 @@ const CardModal = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const modalRef = useRef(null);
+  const imageModalRef = useRef(null);
+  const formattingHelpModalRef = useRef(null);
   const initialDueDateRef = useRef(formData.dueDate);
   const cardIdRef = useRef(card._id);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
+
+  // Handle click outside to close image modal
+  useEffect(() => {
+    if (!showImageModal) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        imageModalRef.current &&
+        !imageModalRef.current.contains(event.target)
+      ) {
+        setShowImageModal(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showImageModal]);
+
+  // Handle click outside to close formatting help modal
+  useEffect(() => {
+    if (!showFormattingHelp) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        formattingHelpModalRef.current &&
+        !formattingHelpModalRef.current.contains(event.target)
+      ) {
+        setShowFormattingHelp(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFormattingHelp]);
 
   // Update ref when card changes
   useEffect(() => {
@@ -1768,7 +1822,10 @@ const CardModal = ({
       {/* Image Modal */}
       {showImageModal && selectedImage && (
         <div className="modal-overlay">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl max-h-[95vh] overflow-hidden">
+          <div
+            ref={imageModalRef}
+            className="bg-white rounded-2xl shadow-2xl max-w-6xl max-h-[95vh] overflow-hidden"
+          >
             {/* Image Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <div className="flex items-center space-x-3">
@@ -1856,7 +1913,10 @@ const CardModal = ({
       {/* Formatting Help Modal */}
       {showFormattingHelp && (
         <div className="modal-overlay">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div
+            ref={formattingHelpModalRef}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">

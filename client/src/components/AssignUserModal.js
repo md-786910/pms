@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { X, UserPlus, UserMinus } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -17,6 +17,21 @@ const AssignUserModal = ({
   const { showToast } = useNotification();
   const [loading, setLoading] = useState({});
   const [localProject, setLocalProject] = useState(project);
+  const modalRef = useRef(null);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleAssignUser = async (user) => {
     setLoading((prev) => ({ ...prev, [user._id]: true }));
@@ -131,7 +146,7 @@ const AssignUserModal = ({
   console.log({ project, users });
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-2xl">
+      <div ref={modalRef} className="modal-content max-w-2xl">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-4">
           <div>
             <h2 className="text-xl font-bold">

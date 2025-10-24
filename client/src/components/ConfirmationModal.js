@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 const ConfirmationModal = ({
@@ -12,6 +12,26 @@ const ConfirmationModal = ({
   type = "warning", // warning, danger, info
   isLoading = false,
 }) => {
+  const modalRef = useRef(null);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        if (!isLoading) {
+          onClose();
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, isLoading, onClose]);
+
   if (!isOpen) return null;
 
   const getTypeStyles = () => {
@@ -56,7 +76,10 @@ const ConfirmationModal = ({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+        <div
+          ref={modalRef}
+          className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all"
+        >
           {/* Header */}
           <div className={`px-6 py-4 border-b ${styles.border}`}>
             <div className="flex items-center justify-between">

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { X, Plus, Save, Upload, Eye, Trash2, Link } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
@@ -23,8 +23,23 @@ const CreateProjectModal = ({ onClose }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  const modalRef = useRef(null);
   const { createProject } = useProject();
   const { showToast } = useNotification();
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,9 +66,15 @@ const CreateProjectModal = ({ onClose }) => {
         ...formData,
         attachments: [], // Will be uploaded separately
       };
-      console.log("🔄 CreateProjectModal: Calling createProject with data:", projectData);
+      console.log(
+        "🔄 CreateProjectModal: Calling createProject with data:",
+        projectData
+      );
       const createdProject = await createProject(projectData);
-      console.log("✅ CreateProjectModal: Project created successfully:", createdProject);
+      console.log(
+        "✅ CreateProjectModal: Project created successfully:",
+        createdProject
+      );
 
       // If there are files to upload, upload them after project creation
       if (uploadedFiles.length > 0) {
@@ -119,8 +140,10 @@ const CreateProjectModal = ({ onClose }) => {
         "success"
       );
 
-      console.log("✅ CreateProjectModal: Project creation completed, closing modal");
-      
+      console.log(
+        "✅ CreateProjectModal: Project creation completed, closing modal"
+      );
+
       // Close the modal immediately after successful creation
       onClose();
     } catch (error) {
@@ -236,7 +259,10 @@ const CreateProjectModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
+      >
         {/* Sticky Close Button */}
         <button
           onClick={onClose}

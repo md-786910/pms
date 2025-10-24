@@ -52,6 +52,7 @@ const FilterPanel = ({
   const [showLabelDropdown, setShowLabelDropdown] = useState(false);
   const memberDropdownRef = useRef(null);
   const labelDropdownRef = useRef(null);
+  const modalRef = useRef(null);
 
   // Get all unique labels from cards
   const allLabels = Array.from(
@@ -82,6 +83,22 @@ const FilterPanel = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   // Apply filters whenever filter states change
   useEffect(() => {
@@ -313,7 +330,10 @@ const FilterPanel = ({
       {/* Filter Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col">
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col"
+          >
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
               <div className="flex items-center justify-between">
