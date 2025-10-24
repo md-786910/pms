@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   X,
   Edit2,
@@ -82,6 +82,9 @@ const CardModal = ({
     link: false,
   });
   const [autoSaving, setAutoSaving] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const modalRef = useRef(null);
   const initialDueDateRef = useRef(formData.dueDate);
   const cardIdRef = useRef(card._id);
 
@@ -134,6 +137,141 @@ const CardModal = ({
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.dueDate]);
+
+  // File upload handler
+  const handleFileUpload = useCallback(
+    async (files) => {
+      if (!files || files.length === 0) return;
+
+      // Check file count limit
+      if (files.length > 5) {
+        showToast("Maximum 5 files can be uploaded at once", "error");
+        return;
+      }
+
+      // Check file sizes (max 10MB each)
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+          showToast(`File "${file.name}" size must be less than 10MB`, "error");
+          return;
+        }
+      }
+
+      try {
+        setIsUploading(true);
+
+        // Create FormData for file upload
+        const formData = new FormData();
+
+        // Append all files
+        for (const file of files) {
+          formData.append("images", file);
+        }
+
+        // Upload the files using the API
+        const response = await cardAPI.uploadFiles(card._id, formData);
+
+        if (response.data.success) {
+          onCardUpdated(response.data.card);
+          const fileCount = files.length;
+          const imageCount = files.filter((f) =>
+            f.type.startsWith("image/")
+          ).length;
+          const docCount = fileCount - imageCount;
+
+          let message = `${fileCount} file(s) uploaded successfully!`;
+          if (imageCount > 0 && docCount > 0) {
+            message = `${imageCount} image(s) and ${docCount} document(s) uploaded successfully!`;
+          } else if (imageCount > 0) {
+            message = `${imageCount} image(s) uploaded successfully!`;
+          } else if (docCount > 0) {
+            message = `${docCount} document(s) uploaded successfully!`;
+          }
+
+          showToast(message, "success");
+        }
+      } catch (error) {
+        console.error("Error uploading files:", error);
+        const errorMessage =
+          error.response?.data?.message || "Failed to upload files";
+        showToast(errorMessage, "error");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [card._id, onCardUpdated, showToast]
+  );
+
+  // Drag and Drop handlers
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const handleDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only set isDragging to false if we're leaving the modal entirely
+      if (!modal.contains(e.relatedTarget)) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        handleFileUpload(files);
+      }
+    };
+
+    // Paste handler
+    const handlePaste = (e) => {
+      const items = e.clipboardData.items;
+      const files = [];
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            files.push(file);
+          }
+        }
+      }
+
+      if (files.length > 0) {
+        handleFileUpload(files);
+      }
+    };
+
+    modal.addEventListener("dragenter", handleDragEnter);
+    modal.addEventListener("dragleave", handleDragLeave);
+    modal.addEventListener("dragover", handleDragOver);
+    modal.addEventListener("drop", handleDrop);
+    document.addEventListener("paste", handlePaste);
+
+    return () => {
+      modal.removeEventListener("dragenter", handleDragEnter);
+      modal.removeEventListener("dragleave", handleDragLeave);
+      modal.removeEventListener("dragover", handleDragOver);
+      modal.removeEventListener("drop", handleDrop);
+      document.removeEventListener("paste", handlePaste);
+    };
+  }, [handleFileUpload]);
 
   // Dynamic status options based on project columns (excluding Archive)
   const statusOptions = columns
@@ -597,66 +735,6 @@ const CardModal = ({
     }
   };
 
-  const handleFileUpload = async (files) => {
-    if (!files || files.length === 0) return;
-
-    // Check file count limit
-    if (files.length > 5) {
-      showToast("Maximum 5 files can be uploaded at once", "error");
-      return;
-    }
-
-    // Check file sizes (max 10MB each)
-    for (const file of files) {
-      if (file.size > 10 * 1024 * 1024) {
-        showToast(`File "${file.name}" size must be less than 10MB`, "error");
-        return;
-      }
-    }
-
-    try {
-      setLoading(true);
-
-      // Create FormData for file upload
-      const formData = new FormData();
-
-      // Append all files
-      for (const file of files) {
-        formData.append("images", file);
-      }
-
-      // Upload the files using the API
-      const response = await cardAPI.uploadFiles(card._id, formData);
-
-      if (response.data.success) {
-        onCardUpdated(response.data.card);
-        const fileCount = files.length;
-        const imageCount = files.filter((f) =>
-          f.type.startsWith("image/")
-        ).length;
-        const docCount = fileCount - imageCount;
-
-        let message = `${fileCount} file(s) uploaded successfully!`;
-        if (imageCount > 0 && docCount > 0) {
-          message = `${imageCount} image(s) and ${docCount} document(s) uploaded successfully!`;
-        } else if (imageCount > 0) {
-          message = `${imageCount} image(s) uploaded successfully!`;
-        } else if (docCount > 0) {
-          message = `${docCount} document(s) uploaded successfully!`;
-        }
-
-        showToast(message, "success");
-      }
-    } catch (error) {
-      console.error("Error uploading files:", error);
-      const errorMessage =
-        error.response?.data?.message || "Failed to upload files";
-      showToast(errorMessage, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFileSelect = (event) => {
     const files = Array.from(event.target.files);
     if (files.length > 0) {
@@ -718,48 +796,6 @@ const CardModal = ({
     showToast(`Priority set to ${priority}`, "success");
   };
 
-  const handleAddChecklist = () => {
-    if (!newChecklist.trim()) return;
-
-    const updatedCard = {
-      ...card,
-      checklists: [
-        ...(card.checklists || []),
-        {
-          id: Date.now().toString(),
-          title: newChecklist.trim(),
-          items: [],
-        },
-      ],
-    };
-    onCardUpdated(updatedCard);
-    setNewChecklist("");
-    showToast("Checklist added successfully!", "success");
-  };
-
-  const handleAssignUser = async (userId) => {
-    try {
-      const response = await fetch(`/api/cards/${card.id}/assign`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to assign user");
-      }
-
-      const updatedCard = await response.json();
-      onCardUpdated(updatedCard);
-      showToast("User assigned successfully!", "success");
-    } catch (error) {
-      console.error("Error assigning user:", error);
-      showToast("Failed to assign user", "error");
-    }
-  };
-
   const handleUnassignUser = async (userId) => {
     try {
       const response = await cardAPI.unassignUser(card._id, userId);
@@ -788,341 +824,8 @@ const CardModal = ({
   };
 
   // Markdown formatting helpers
-  const insertMarkdown = (before, after = "", placeholder = "text") => {
-    const textarea = document.querySelector(
-      'textarea[placeholder*="Markdown shortcuts"]'
-    );
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = formData.description.substring(start, end);
-
-    // Clean up existing markdown if present
-    let cleanText = selectedText;
-    if (before === "**" && after === "**") {
-      // Remove existing bold formatting
-      cleanText = cleanText.replace(/\*\*(.*?)\*\*/g, "$1");
-    } else if (before === "*" && after === "*") {
-      // Remove existing italic formatting
-      cleanText = cleanText.replace(/\*(.*?)\*/g, "$1");
-    } else if (before === "## ") {
-      // Remove existing headers
-      cleanText = cleanText.replace(/^#+\s*/gm, "");
-    } else if (before === "- ") {
-      // Remove existing list formatting
-      cleanText = cleanText.replace(/^-\s*/gm, "");
-    } else if (before === "[" && after === "](url)") {
-      // Remove existing link formatting
-      cleanText = cleanText.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
-    }
-
-    const replacement = cleanText || placeholder;
-
-    const newText =
-      formData.description.substring(0, start) +
-      before +
-      replacement +
-      after +
-      formData.description.substring(end);
-
-    setFormData({ ...formData, description: newText });
-
-    // Restore cursor position
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        start + before.length,
-        start + before.length + replacement.length
-      );
-    }, 0);
-  };
-
-  const handleBold = () => {
-    if (showRichText) {
-      // Clean up any existing malformed HTML first
-      const editor = document.querySelector(".rich-text-editor");
-      if (editor) {
-        const cleanHtml = editor.innerHTML
-          .replace(/<div[^>]*><\/div>/g, "")
-          .replace(/<div[^>]*>/g, "")
-          .replace(/<\/div>/g, "")
-          .replace(/<span[^>]*>/g, "")
-          .replace(/<\/span>/g, "");
-        editor.innerHTML = cleanHtml;
-      }
-
-      document.execCommand("bold", false, null);
-      // Update the form data after formatting
-      setTimeout(() => {
-        const editor = document.querySelector(".rich-text-editor");
-        if (editor) {
-          const markdown = htmlToMarkdown(editor.innerHTML);
-          setFormData({ ...formData, description: markdown });
-        }
-      }, 10);
-    } else {
-      insertMarkdown("**", "**", "bold text");
-      setActiveFormatting((prev) => ({ ...prev, bold: !prev.bold }));
-    }
-  };
-
-  const handleItalic = () => {
-    if (showRichText) {
-      document.execCommand("italic", false, null);
-      // Update the form data after formatting
-      setTimeout(() => {
-        const editor = document.querySelector(".rich-text-editor");
-        if (editor) {
-          const markdown = htmlToMarkdown(editor.innerHTML);
-          setFormData({ ...formData, description: markdown });
-        }
-      }, 10);
-    } else {
-      insertMarkdown("*", "*", "italic text");
-      setActiveFormatting((prev) => ({ ...prev, italic: !prev.italic }));
-    }
-  };
-
-  const handleHeader = () => {
-    if (showRichText) {
-      document.execCommand("formatBlock", false, "h2");
-      // Update the form data after formatting
-      setTimeout(() => {
-        const editor = document.querySelector(".rich-text-editor");
-        if (editor) {
-          const markdown = htmlToMarkdown(editor.innerHTML);
-          setFormData({ ...formData, description: markdown });
-        }
-      }, 10);
-    } else {
-      insertMarkdown("## ", "", "Header");
-      setActiveFormatting((prev) => ({ ...prev, header: !prev.header }));
-    }
-  };
-
-  const handleList = () => {
-    if (showRichText) {
-      document.execCommand("insertUnorderedList", false, null);
-      // Update the form data after formatting
-      setTimeout(() => {
-        const editor = document.querySelector(".rich-text-editor");
-        if (editor) {
-          const markdown = htmlToMarkdown(editor.innerHTML);
-          setFormData({ ...formData, description: markdown });
-        }
-      }, 10);
-    } else {
-      insertMarkdown("- ", "", "List item");
-      setActiveFormatting((prev) => ({ ...prev, list: !prev.list }));
-    }
-  };
-
-  const handleLink = () => {
-    if (showRichText) {
-      const url = prompt("Enter URL:");
-      if (url) {
-        document.execCommand("createLink", false, url);
-        // Update the form data after formatting
-        setTimeout(() => {
-          const editor = document.querySelector(".rich-text-editor");
-          if (editor) {
-            const markdown = htmlToMarkdown(editor.innerHTML);
-            setFormData({ ...formData, description: markdown });
-          }
-        }, 10);
-      }
-    } else {
-      insertMarkdown("[", "](url)", "link text");
-      setActiveFormatting((prev) => ({ ...prev, link: !prev.link }));
-    }
-  };
-
-  const handleClearFormatting = () => {
-    if (showRichText) {
-      // Clean up malformed HTML first
-      const editor = document.querySelector(".rich-text-editor");
-      if (editor) {
-        const cleanHtml = editor.innerHTML
-          .replace(/<div[^>]*><\/div>/g, "")
-          .replace(/<div[^>]*>/g, "")
-          .replace(/<\/div>/g, "")
-          .replace(/<span[^>]*>/g, "")
-          .replace(/<\/span>/g, "")
-          .replace(/<font[^>]*>/g, "")
-          .replace(/<\/font>/g, "");
-        editor.innerHTML = cleanHtml;
-      }
-
-      document.execCommand("removeFormat", false, null);
-      // Update the form data after clearing formatting
-      setTimeout(() => {
-        const editor = document.querySelector(".rich-text-editor");
-        if (editor) {
-          const markdown = htmlToMarkdown(editor.innerHTML);
-          setFormData({ ...formData, description: markdown });
-        }
-      }, 10);
-    } else {
-      const textarea = document.querySelector(
-        'textarea[placeholder*="Markdown shortcuts"]'
-      );
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = formData.description.substring(start, end);
-
-      // Remove all markdown formatting
-      let cleanText = selectedText
-        .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold
-        .replace(/\*(.*?)\*/g, "$1") // Remove italic
-        .replace(/^#+\s*/gm, "") // Remove headers
-        .replace(/^-\s*/gm, "") // Remove list formatting
-        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // Remove links
-        .replace(/---+/g, "") // Remove horizontal rules
-        .trim();
-
-      const newText =
-        formData.description.substring(0, start) +
-        cleanText +
-        formData.description.substring(end);
-
-      setFormData({ ...formData, description: newText });
-
-      // Restore cursor position
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start, start + cleanText.length);
-      }, 0);
-    }
-  };
-
-  // Function to check if cursor is in formatted text
-  const checkActiveFormatting = () => {
-    const textarea = document.querySelector(
-      'textarea[placeholder*="Markdown shortcuts"]'
-    );
-    if (!textarea) return;
-
-    const cursorPos = textarea.selectionStart;
-    const textBeforeCursor = formData.description.substring(0, cursorPos);
-    const textAfterCursor = formData.description.substring(cursorPos);
-
-    // Check for bold formatting
-    const boldBefore = (textBeforeCursor.match(/\*\*([^*]*)$/) || [])[1] || "";
-    const boldAfter = (textAfterCursor.match(/^([^*]*)\*\*/) || [])[1] || "";
-    const isInBold = boldBefore && boldAfter;
-
-    // Check for italic formatting
-    const italicBefore = (textBeforeCursor.match(/\*([^*]*)$/) || [])[1] || "";
-    const italicAfter = (textAfterCursor.match(/^([^*]*)\*/) || [])[1] || "";
-    const isInItalic = italicBefore && italicAfter && !isInBold;
-
-    // Check for header formatting
-    const isInHeader = /^#+\s*$/.test(textBeforeCursor.split("\n").pop());
-
-    // Check for list formatting
-    const isInList = /^-\s*$/.test(textBeforeCursor.split("\n").pop());
-
-    // Check for link formatting
-    const linkBefore = (textBeforeCursor.match(/\[([^\]]*)$/) || [])[1] || "";
-    const linkAfter = (textAfterCursor.match(/^([^\]]*)\]\(/) || [])[1] || "";
-    const isInLink = linkBefore && linkAfter;
-
-    setActiveFormatting({
-      bold: isInBold,
-      italic: isInItalic,
-      header: isInHeader,
-      list: isInList,
-      link: isInLink,
-    });
-  };
-
-  // Simple markdown renderer with inline styles
-  const renderMarkdown = (text) => {
-    if (!text) return "";
-
-    return text
-      .replace(
-        /\*\*(.*?)\*\*/g,
-        '<strong style="font-weight: bold;">$1</strong>'
-      ) // Bold
-      .replace(/\*(.*?)\*/g, '<em style="font-style: italic;">$1</em>') // Italic
-      .replace(
-        /^### (.*$)/gm,
-        '<h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h3>'
-      ) // H3
-      .replace(
-        /^## (.*$)/gm,
-        '<h2 style="font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h2>'
-      ) // H2
-      .replace(
-        /^# (.*$)/gm,
-        '<h1 style="font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h1>'
-      ) // H1
-      .replace(
-        /^- (.*$)/gm,
-        '<li style="margin-left: 1rem; list-style-type: disc;">$1</li>'
-      ) // List items
-      .replace(
-        /\[([^\]]*)\]\(([^)]*)\)/g,
-        '<a href="$2" style="color: #2563eb; text-decoration: underline;" target="_blank" rel="noopener noreferrer">$1</a>'
-      ) // Links
-      .replace(
-        /---+/g,
-        '<hr style="margin: 1rem 0; border: 1px solid #d1d5db;">'
-      ) // Horizontal rules
-      .replace(/\n/g, "<br>"); // Line breaks
-  };
 
   // Convert HTML back to markdown with better handling
-  const htmlToMarkdown = (html) => {
-    if (!html) return "";
-
-    // Clean up malformed HTML first
-    let cleanHtml = html
-      .replace(/<div[^>]*><\/div>/g, "") // Remove empty divs
-      .replace(/<div[^>]*>/g, "") // Remove div opening tags
-      .replace(/<\/div>/g, "") // Remove div closing tags
-      .replace(/<span[^>]*>/g, "") // Remove span opening tags
-      .replace(/<\/span>/g, "") // Remove span closing tags
-      .replace(/<font[^>]*>/g, "") // Remove font opening tags
-      .replace(/<\/font>/g, "") // Remove font closing tags
-      .replace(/<br\s*\/?>/g, "\n") // Convert br to newlines
-      .replace(/&nbsp;/g, " "); // Convert non-breaking spaces
-
-    return cleanHtml
-      .replace(/<strong[^>]*>(.*?)<\/strong>/g, "**$1**") // Bold
-      .replace(/<b[^>]*>(.*?)<\/b>/g, "**$1**") // Bold (alternative)
-      .replace(/<em[^>]*>(.*?)<\/em>/g, "*$1*") // Italic
-      .replace(/<i[^>]*>(.*?)<\/i>/g, "*$1*") // Italic (alternative)
-      .replace(/<u[^>]*>(.*?)<\/u>/g, "$1") // Underline (markdown doesn't support underline)
-      .replace(/<h1[^>]*>(.*?)<\/h1>/g, "# $1") // H1
-      .replace(/<h2[^>]*>(.*?)<\/h2>/g, "## $1") // H2
-      .replace(/<h3[^>]*>(.*?)<\/h3>/g, "### $1") // H3
-      .replace(/<h4[^>]*>(.*?)<\/h4>/g, "#### $1") // H4
-      .replace(/<h5[^>]*>(.*?)<\/h5>/g, "##### $1") // H5
-      .replace(/<h6[^>]*>(.*?)<\/h6>/g, "###### $1") // H6
-      .replace(/<ul[^>]*>(.*?)<\/ul>/g, "$1") // Unordered list wrapper
-      .replace(/<ol[^>]*>(.*?)<\/ol>/g, "$1") // Ordered list wrapper
-      .replace(/<li[^>]*>(.*?)<\/li>/g, "- $1") // List items
-      .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g, "[$2]($1)") // Links
-      .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*>/g, "![$2]($1)") // Images with alt
-      .replace(/<img[^>]*src="([^"]*)"[^>]*>/g, "![]($1)") // Images without alt
-      .replace(/<hr[^>]*>/g, "---") // Horizontal rules
-      .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/g, "> $1") // Blockquotes
-      .replace(/<code[^>]*>(.*?)<\/code>/g, "`$1`") // Inline code
-      .replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/g, "```\n$1\n```") // Code blocks
-      .replace(/<p[^>]*>(.*?)<\/p>/g, "$1\n") // Paragraphs
-      .replace(/&lt;/g, "<") // Less than
-      .replace(/&gt;/g, ">") // Greater than
-      .replace(/&amp;/g, "&") // Ampersand
-      .replace(/&quot;/g, '"') // Quote
-      .replace(/\n\s*\n/g, "\n\n") // Clean up multiple newlines
-      .replace(/^\s+|\s+$/g, "") // Trim whitespace
-      .trim();
-  };
 
   const assignees = getAssignees();
   const projectMembers =
@@ -1221,7 +924,10 @@ const CardModal = ({
       />
 
       <div className="modal-overlay">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden">
+        <div
+          ref={modalRef}
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
+        >
           {/* Modal Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
             <div className="flex items-center justify-between">
@@ -1452,6 +1158,9 @@ const CardModal = ({
                   </div>
                 )}
                 <div className="space-y-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Add Comment
+                  </label>
                   <div className="comment-editor">
                     <SimpleCommentEditor
                       value={commentText || ""}
@@ -2014,6 +1723,36 @@ const CardModal = ({
             </div>
           </div>
         </div>
+
+        {/* Drag Overlay */}
+        {isDragging && (
+          <div
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 m-0 bg-blue-600 bg-opacity-90 z-50 flex items-center justify-center pointer-events-none rounded-2xl"
+            style={{ width: "40%", height: "30%" }}
+          >
+            <div className="text-center text-white">
+              <Upload className="w-12 h-12 mx-auto mb-3 animate-bounce" />
+              <p className="text-lg font-bold">Drop files here to upload</p>
+              <p className="text-sm mt-1 opacity-90">
+                Supports images and documents
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Overlay */}
+        {isUploading && (
+          <div
+            className="absolute top-0 left-0 right-0 bottom-0 m-0 bg-black bg-opacity-70 z-50 flex items-center justify-center pointer-events-none rounded-2xl"
+            style={{ width: "100%", height: "100%" }}
+          >
+            <div className="text-center text-white">
+              <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-lg font-semibold">Uploading files...</p>
+              <p className="text-xs mt-1 opacity-80">Please wait</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Assign User Modal */}
