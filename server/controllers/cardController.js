@@ -213,6 +213,25 @@ const createCard = async (req, res) => {
       createdBy: userId,
     });
 
+    // Get user information and status label for automatic comment
+    const creator = await User.findById(userId).select("name");
+    const statusLabel = await getStatusLabel(project, status);
+
+    // Add automatic comment for card creation
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${creator.name}</strong> created this card in <strong>${statusLabel}</strong></p>`,
+      timestamp: new Date(),
+    });
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "created",
+      user: userId,
+      timestamp: new Date(),
+      details: `Card created in ${statusLabel}`,
+    });
+
     await card.save();
 
     // Populate the card with user details
