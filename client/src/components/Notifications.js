@@ -222,13 +222,6 @@ const Notifications = () => {
                           <Check className="w-4 h-4" />
                         </button>
                       )}
-                      <button
-                        onClick={() => deleteNotification(notification.id)}
-                        className="p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors duration-200"
-                        title="Delete notification"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 </div>

@@ -465,13 +465,21 @@ const deleteColumn = async (req, res) => {
       });
     }
 
-    // Move all cards from this column to "todo" column
-    await Card.updateMany(
-      { project: projectId, status: column.status },
-      { status: "todo" }
-    );
+    // Check if column has any cards
+    const cardsCount = await Card.countDocuments({
+      project: projectId,
+      status: column.status,
+    });
 
-    // Delete the column
+    if (cardsCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot delete column that contains cards. Please move or delete all cards first.",
+      });
+    }
+
+    // Delete the column (only possible if no cards exist)
     await Column.findByIdAndDelete(columnId);
 
     res.json({

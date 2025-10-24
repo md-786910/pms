@@ -59,11 +59,13 @@ const ConfirmationModal = ({
 
   const styles = getTypeStyles();
 
-  const handleConfirm = () => {
+  const handleConfirm = (e) => {
+    e.stopPropagation();
     onConfirm();
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e) => {
+    e.stopPropagation();
     if (!isLoading) {
       onClose();
     }
@@ -72,12 +74,21 @@ const ConfirmationModal = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isLoading) {
+            onClose();
+          }
+        }}
+      />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           ref={modalRef}
+          onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all"
         >
           {/* Header */}
@@ -88,7 +99,10 @@ const ConfirmationModal = ({
                 <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
               </div>
               <button
-                onClick={handleCancel}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancel(e);
+                }}
                 disabled={isLoading}
                 className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >

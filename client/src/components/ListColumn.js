@@ -154,14 +154,19 @@ const ListColumn = ({
                   <Edit2 className="w-4 h-4" />
                   <span>Rename Column</span>
                 </button>
-                <div className="border-t border-gray-100 my-1"></div>
-                <button
-                  onClick={handleDelete}
-                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete Column</span>
-                </button>
+                {/* Only show delete button if column has no cards */}
+                {cards.length === 0 && (
+                  <>
+                    <div className="border-t border-gray-100 my-1"></div>
+                    <button
+                      onClick={handleDelete}
+                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete Column</span>
+                    </button>
+                  </>
+                )}
                 {status !== "archive" && (
                   <button
                     onClick={() => {

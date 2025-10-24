@@ -1630,15 +1630,10 @@ const removeAttachment = async (req, res) => {
       attachmentToRemove.mimeType.startsWith("image/");
     const commentText = isImage
       ? `
-        <p><strong>${user.name}</strong> removed an image:</p>
-        <img src="${attachmentToRemove.url}" alt="${attachmentToRemove.originalName}" style="max-width: 300px; margin-top: 8px; border-radius: 6px;" />
+        <p><strong>${user.name}</strong> removed an image: ${attachmentToRemove.originalName}</p>
       `
       : `
-        <p><strong>${user.name}</strong> removed an attachment: 
-          <a href="${attachmentToRemove.url}" target="_blank" style="background-color: #fee2e2; padding: 2px 6px; border-radius: 4px; font-weight: 500; text-decoration: none;">
-            ${attachmentToRemove.originalName}
-          </a>
-        </p>
+        <p><strong>${user.name}</strong> removed an attachment: ${attachmentToRemove.originalName} </p>
       `;
 
     card.comments.push({

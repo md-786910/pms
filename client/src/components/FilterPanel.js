@@ -54,12 +54,73 @@ const FilterPanel = ({
   const labelDropdownRef = useRef(null);
   const modalRef = useRef(null);
 
-  // Get all unique labels from cards
-  const allLabels = Array.from(
-    new Set(
-      cards.flatMap((card) => card.labels || []).map((label) => label.name)
-    )
-  );
+  // Get all unique labels from cards with their colors
+  const getAllLabels = () => {
+    const labelMap = new Map();
+    cards.forEach((card) => {
+      if (card.labels) {
+        card.labels.forEach((label) => {
+          if (!labelMap.has(label.name)) {
+            labelMap.set(label.name, {
+              name: label.name,
+              color: label.color || "green",
+            });
+          }
+        });
+      }
+    });
+    return Array.from(labelMap.values());
+  };
+
+  const allLabels = getAllLabels();
+
+  // Label colors - matching other components
+  const labelColors = [
+    {
+      value: "light-green",
+      bg: "bg-green-300",
+      text: "text-black",
+    },
+    { value: "green", bg: "bg-green-500", text: "text-white" },
+    {
+      value: "dark-green",
+      bg: "bg-green-700",
+      text: "text-white",
+    },
+    {
+      value: "light-yellow",
+      bg: "bg-yellow-300",
+      text: "text-black",
+    },
+    { value: "yellow", bg: "bg-yellow-500", text: "text-black" },
+    {
+      value: "dark-yellow",
+      bg: "bg-yellow-700",
+      text: "text-white",
+    },
+    { value: "orange", bg: "bg-orange-500", text: "text-white" },
+    { value: "red", bg: "bg-red-500", text: "text-white" },
+    { value: "purple", bg: "bg-purple-500", text: "text-white" },
+    { value: "pink", bg: "bg-pink-500", text: "text-white" },
+    { value: "blue", bg: "bg-blue-500", text: "text-white" },
+    { value: "gray", bg: "bg-gray-500", text: "text-white" },
+  ];
+
+  // Get label color config
+  const getLabelColorConfig = (labelColor) => {
+    let colorConfig = labelColors.find((c) => c.value === labelColor);
+
+    // Map light colors to their saturated equivalents for consistency
+    if (!colorConfig) {
+      colorConfig = labelColors.find((c) => c.value === "green");
+    } else if (labelColor === "light-green") {
+      colorConfig = labelColors.find((c) => c.value === "green");
+    } else if (labelColor === "light-yellow") {
+      colorConfig = labelColors.find((c) => c.value === "yellow");
+    }
+
+    return colorConfig || labelColors.find((c) => c.value === "green");
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -618,27 +679,34 @@ const FilterPanel = ({
                       </button>
                       {showLabelDropdown && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                          {allLabels.map((labelName) => (
-                            <label
-                              key={labelName}
-                              className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={labelFilters.includes(labelName)}
-                                onChange={() => handleLabelToggle(labelName)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                                {labelName}
-                              </span>
-                              {labelFilters.includes(labelName) && (
-                                <span className="text-xs text-gray-500 ml-auto">
-                                  ({getLabelCount(labelName)})
+                          {allLabels.map((label) => {
+                            const colorConfig = getLabelColorConfig(
+                              label.color
+                            );
+                            return (
+                              <label
+                                key={label.name}
+                                className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={labelFilters.includes(label.name)}
+                                  onChange={() => handleLabelToggle(label.name)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorConfig.bg} ${colorConfig.text}`}
+                                >
+                                  {label.name}
                                 </span>
-                              )}
-                            </label>
-                          ))}
+                                {labelFilters.includes(label.name) && (
+                                  <span className="text-xs text-gray-500 ml-auto">
+                                    ({getLabelCount(label.name)})
+                                  </span>
+                                )}
+                              </label>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

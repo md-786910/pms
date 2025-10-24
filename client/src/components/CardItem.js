@@ -426,18 +426,18 @@ const CardItem = ({
           {/* Card Image or Description */}
           {(() => {
             // Debug: Log card attachments
-            console.log("Card attachments:", card.attachments);
-            console.log(
-              "Card:",
-              card.title,
-              "has",
-              card.attachments?.length || 0,
-              "attachments"
-            );
+            // console.log("Card attachments:", card.attachments);
+            // console.log(
+            //   "Card:",
+            //   card.title,
+            //   "has",
+            //   card.attachments?.length || 0,
+            //   "attachments"
+            // );
 
             // Get the first image attachment
             const firstImage = card.attachments?.find((attachment) => {
-              console.log("Checking attachment:", attachment);
+              // console.log("Checking attachment:", attachment);
               // Check by MIME type first
               if (attachment.mimeType?.startsWith("image/")) {
                 console.log("Found image by MIME type:", attachment.mimeType);
@@ -555,7 +555,6 @@ const CardItem = ({
                 </div>
               );
             }
-            console.log("No attachments or description found");
             return null;
           })()}
         </div>
@@ -578,12 +577,7 @@ const CardItem = ({
                   <span className="font-medium">{card.attachments.length}</span>
                 </div>
               )}
-              {card.labels && card.labels.length > 0 && (
-                <div className="flex items-center space-x-1">
-                  <Tag className="w-3.5 h-3.5" />
-                  <span className="font-medium">{card.labels.length}</span>
-                </div>
-              )}
+
               {dueDateInfo && (
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-3.5 h-3.5" />
@@ -611,6 +605,88 @@ const CardItem = ({
               </div>
             )}
           </div>
+
+          {card.labels && card.labels.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              {card.labels.slice(0, 3).map((label) => {
+                // Color mapping for labels - using saturated colors to match LabelsModal
+                const labelColors = [
+                  {
+                    value: "light-green",
+                    bg: "bg-green-300",
+                    text: "text-black",
+                  },
+                  {
+                    value: "green",
+                    bg: "bg-green-500",
+                    text: "text-white",
+                  },
+                  {
+                    value: "dark-green",
+                    bg: "bg-green-700",
+                    text: "text-white",
+                  },
+                  {
+                    value: "light-yellow",
+                    bg: "bg-yellow-300",
+                    text: "text-black",
+                  },
+                  {
+                    value: "yellow",
+                    bg: "bg-yellow-500",
+                    text: "text-black",
+                  },
+                  {
+                    value: "dark-yellow",
+                    bg: "bg-yellow-700",
+                    text: "text-white",
+                  },
+                  {
+                    value: "orange",
+                    bg: "bg-orange-500",
+                    text: "text-white",
+                  },
+                  { value: "red", bg: "bg-red-500", text: "text-white" },
+                  {
+                    value: "purple",
+                    bg: "bg-purple-500",
+                    text: "text-white",
+                  },
+                  { value: "pink", bg: "bg-pink-500", text: "text-white" },
+                  { value: "blue", bg: "bg-blue-500", text: "text-white" },
+                  { value: "gray", bg: "bg-gray-500", text: "text-white" },
+                ];
+
+                let colorConfig =
+                  labelColors.find((c) => c.value === label.color) ||
+                  labelColors[10]; // Default to blue
+
+                // Map light colors to their saturated equivalents for consistency
+                if (label.color === "light-green") {
+                  colorConfig = labelColors.find((c) => c.value === "green");
+                } else if (label.color === "light-yellow") {
+                  colorConfig = labelColors.find((c) => c.value === "yellow");
+                }
+
+                const bgColor = colorConfig.bg;
+                const textColor = colorConfig.text;
+
+                return (
+                  <span
+                    key={label._id || label.id}
+                    className={`px-1.5 py-0.5 rounded text-xs font-medium ${bgColor} ${textColor}`}
+                  >
+                    {label.name}
+                  </span>
+                );
+              })}
+              {card.labels.length > 3 && (
+                <span className="text-xs text-gray-500 font-medium">
+                  +{card.labels.length - 3}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Card Items Section with Progress */}

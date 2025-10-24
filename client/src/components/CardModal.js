@@ -24,6 +24,7 @@ import AssignUserModal from "./AssignUserModal";
 import ConfirmationModal from "./ConfirmationModal";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 import SimpleCommentEditor from "./SimpleCommentEditor";
+import LabelsModal from "./LabelsModal";
 import { API_URL } from "../utils/endpoints";
 
 const CardModal = ({
@@ -37,6 +38,118 @@ const CardModal = ({
   const { users, user } = useUser();
   const { currentProject } = useProject();
   const { showToast } = useNotification();
+
+  // Check if card is archived
+  const isArchived = card.isArchived || card.status === "archive";
+
+  // Helper function to check if a comment is a system-generated comment
+  const isSystemComment = (comment) => {
+    const text = comment.text || "";
+    // Check if comment contains HTML tags or system-generated content
+    return (
+      text.includes("<p><strong>") || // System comments have HTML structure
+      text.includes("uploaded an image") ||
+      text.includes("uploaded an attachment") ||
+      text.includes("moved this card") ||
+      text.includes("archived this card") ||
+      text.includes("restored this card") ||
+      text.includes("<img src=") ||
+      text.includes("<a href=") ||
+      text.includes("</p>")
+    );
+  };
+
+  // Label colors like Trello - matching LabelsModal
+  const labelColors = [
+    {
+      name: "Light Green",
+      value: "light-green",
+      bg: "bg-green-300",
+      text: "text-black",
+    },
+    { name: "Green", value: "green", bg: "bg-green-500", text: "text-white" },
+    {
+      name: "Dark Green",
+      value: "dark-green",
+      bg: "bg-green-700",
+      text: "text-white",
+    },
+    {
+      name: "Light Yellow",
+      value: "light-yellow",
+      bg: "bg-yellow-300",
+      text: "text-black",
+    },
+    {
+      name: "Yellow",
+      value: "yellow",
+      bg: "bg-yellow-500",
+      text: "text-black",
+    },
+    {
+      name: "Dark Yellow",
+      value: "dark-yellow",
+      bg: "bg-yellow-700",
+      text: "text-white",
+    },
+    {
+      name: "Orange",
+      value: "orange",
+      bg: "bg-orange-500",
+      text: "text-white",
+    },
+    { name: "Red", value: "red", bg: "bg-red-500", text: "text-white" },
+    {
+      name: "Purple",
+      value: "purple",
+      bg: "bg-purple-500",
+      text: "text-white",
+    },
+    { name: "Pink", value: "pink", bg: "bg-pink-500", text: "text-white" },
+    { name: "Blue", value: "blue", bg: "bg-blue-500", text: "text-white" },
+    { name: "Gray", value: "gray", bg: "bg-gray-500", text: "text-white" },
+  ];
+
+  // Get existing labels from all cards in the project
+  const getExistingLabels = () => {
+    const allLabels = new Map();
+
+    // Collect labels from current project cards (if available)
+    if (currentProject && currentProject.cards) {
+      currentProject.cards.forEach((card) => {
+        if (card.labels) {
+          card.labels.forEach((label) => {
+            if (!allLabels.has(label.name)) {
+              allLabels.set(label.name, {
+                name: label.name,
+                color: label.color || "blue",
+                count: 1,
+              });
+            } else {
+              allLabels.get(label.name).count++;
+            }
+          });
+        }
+      });
+    }
+
+    // Also include labels from the current card
+    if (card && card.labels) {
+      card.labels.forEach((label) => {
+        if (!allLabels.has(label.name)) {
+          allLabels.set(label.name, {
+            name: label.name,
+            color: label.color || "blue",
+            count: 1,
+          });
+        } else {
+          allLabels.get(label.name).count++;
+        }
+      });
+    }
+
+    return Array.from(allLabels.values()).sort((a, b) => b.count - a.count);
+  };
 
   // Mention functionality - now handled by QuillEditor
   const handleMentionSelect = (mention, newText) => {
@@ -55,8 +168,12 @@ const CardModal = ({
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newLabel, setNewLabel] = useState("");
+  const [newLabelColor, setNewLabelColor] = useState("blue");
+  const [showLabelDropdown, setShowLabelDropdown] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const [newChecklist, setNewChecklist] = useState("");
   const [items, setItems] = useState([]);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -94,7 +211,16 @@ const CardModal = ({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
-        onClose();
+        // Don't close modal if confirmation modal is open
+        if (
+          !showDeleteConfirm &&
+          !showAssignModal &&
+          !showImageModal &&
+          !showFormattingHelp &&
+          !showLabelsModal
+        ) {
+          onClose();
+        }
       }
     };
 
@@ -102,7 +228,14 @@ const CardModal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [onClose]);
+  }, [
+    onClose,
+    showDeleteConfirm,
+    showAssignModal,
+    showImageModal,
+    showFormattingHelp,
+    showLabelsModal,
+  ]);
 
   // Handle click outside to close image modal
   useEffect(() => {
@@ -141,6 +274,23 @@ const CardModal = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showFormattingHelp]);
+
+  // Handle click outside to close label dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showLabelDropdown && !event.target.closest(".label-dropdown")) {
+        setShowLabelDropdown(false);
+      }
+      if (showColorPicker && !event.target.closest(".color-picker")) {
+        setShowColorPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLabelDropdown, showColorPicker]);
 
   // Update ref when card changes
   useEffect(() => {
@@ -618,16 +768,35 @@ const CardModal = ({
     try {
       const response = await cardAPI.addLabel(card._id, {
         name: newLabel.trim(),
-        color: "blue", // Default color
+        color: newLabelColor,
       });
 
       if (response.data.success) {
         onCardUpdated(response.data.card);
         setNewLabel("");
+        setNewLabelColor("blue");
         showToast("Label added successfully!", "success");
       }
     } catch (error) {
       console.error("Error adding label:", error);
+      showToast("Failed to add label", "error");
+    }
+  };
+
+  const handleAddExistingLabel = async (labelName, labelColor) => {
+    try {
+      const response = await cardAPI.addLabel(card._id, {
+        name: labelName,
+        color: labelColor,
+      });
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        setShowLabelDropdown(false);
+        showToast("Label added successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error adding existing label:", error);
       showToast("Failed to add label", "error");
     }
   };
@@ -774,6 +943,11 @@ const CardModal = ({
   };
 
   const handleStartEditComment = (comment) => {
+    // Prevent editing system-generated comments
+    if (isSystemComment(comment)) {
+      showToast("Cannot edit system-generated comments", "error");
+      return;
+    }
     setEditingComment(comment._id || comment.id);
     setEditCommentText(comment.text);
   };
@@ -1265,7 +1439,7 @@ const CardModal = ({
                         return (
                           <div
                             key={comment._id || comment.id}
-                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200"
+                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200 group"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-3">
@@ -1303,17 +1477,18 @@ const CardModal = ({
                                 </div>
                               </div>
                               {(comment.user?._id === user?._id ||
-                                comment.user?._id === user?.id) && (
-                                <button
-                                  onClick={() =>
-                                    handleStartEditComment(comment)
-                                  }
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
-                                  title="Edit comment"
-                                >
-                                  <Edit className="w-3 h-3" />
-                                </button>
-                              )}
+                                comment.user?._id === user?.id) &&
+                                !isSystemComment(comment) && (
+                                  <button
+                                    onClick={() =>
+                                      handleStartEditComment(comment)
+                                    }
+                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
+                                    title="Edit comment"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </button>
+                                )}
                             </div>
                             {editingComment === (comment._id || comment.id) ? (
                               <div className="space-y-2">
@@ -1375,12 +1550,19 @@ const CardModal = ({
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Status
+                    {isArchived && (
+                      <span className="text-xs text-gray-500 ml-2 font-normal">
+                        (Disabled for archived cards)
+                      </span>
+                    )}
                   </label>
                   <select
                     value={card.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    disabled={loadingColumns}
+                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                      isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
+                    disabled={loadingColumns || isArchived}
                   >
                     {loadingColumns ? (
                       <option value="">Loading columns...</option>
@@ -1401,6 +1583,11 @@ const CardModal = ({
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-semibold text-gray-700">
                       Due Date
+                      {isArchived && (
+                        <span className="text-xs text-gray-500 ml-2 font-normal">
+                          (Disabled for archived cards)
+                        </span>
+                      )}
                     </label>
                     {autoSaving && (
                       <span className="text-xs text-blue-600 flex items-center">
@@ -1434,8 +1621,10 @@ const CardModal = ({
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    disabled={autoSaving}
+                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                      isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
+                    disabled={autoSaving || isArchived}
                   />
                   {/* <div className="p-2 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 text-sm">
@@ -1474,45 +1663,65 @@ const CardModal = ({
 
                 {/* Labels */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Labels ({card.labels?.length || 0})
-                  </label>
-
-                  <div className="flex flex-wrap gap-1 mb-2 max-h-32 overflow-y-auto">
-                    {card.labels?.map((label) => (
-                      <span
-                        key={label._id || label.id}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
-                      >
-                        {label.name}
-                        <button
-                          onClick={() =>
-                            handleRemoveLabel(label._id || label.id)
-                          }
-                          className="ml-1 hover:text-blue-900"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex space-x-1">
-                    <input
-                      type="text"
-                      value={newLabel}
-                      onChange={(e) => setNewLabel(e.target.value)}
-                      placeholder="Add label..."
-                      className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
-                    />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Labels ({card.labels?.length || 0})
+                    </label>
                     <button
-                      onClick={handleAddLabel}
-                      disabled={!newLabel.trim()}
-                      className="bg-gray-600 text-white hover:bg-gray-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => setShowLabelsModal(true)}
+                      className="text-blue-600 hover:text-blue-800 text-xs font-medium"
                     >
-                      Add
+                      Manage Labels
                     </button>
                   </div>
+
+                  <div className="flex flex-wrap gap-1 mb-2 max-h-32 overflow-y-auto">
+                    {card.labels?.map((label) => {
+                      let colorConfig = labelColors.find(
+                        (c) => c.value === (label.color || "blue")
+                      );
+
+                      // Map light colors to their saturated equivalents for consistency
+                      if (!colorConfig) {
+                        colorConfig = labelColors.find(
+                          (c) => c.value === "green"
+                        );
+                      } else if (label.color === "light-green") {
+                        colorConfig = labelColors.find(
+                          (c) => c.value === "green"
+                        );
+                      } else if (label.color === "light-yellow") {
+                        colorConfig = labelColors.find(
+                          (c) => c.value === "yellow"
+                        );
+                      }
+
+                      return (
+                        <span
+                          key={label._id || label.id}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            colorConfig?.bg || "bg-blue-500"
+                          } ${colorConfig?.text || "text-white"}`}
+                        >
+                          {label.name}
+                          <button
+                            onClick={() =>
+                              handleRemoveLabel(label._id || label.id)
+                            }
+                            className="ml-1 hover:opacity-75 text-xs"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  {card.labels?.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 text-xs">
+                      No labels assigned
+                    </div>
+                  )}
                 </div>
 
                 {/* Assignees */}
@@ -1908,6 +2117,15 @@ const CardModal = ({
         cancelText="Cancel"
         type="warning"
         isLoading={loading}
+      />
+
+      {/* Labels Modal */}
+      <LabelsModal
+        isOpen={showLabelsModal}
+        onClose={() => setShowLabelsModal(false)}
+        card={card}
+        onCardUpdated={onCardUpdated}
+        projectLabels={getExistingLabels()}
       />
 
       {/* Formatting Help Modal */}
