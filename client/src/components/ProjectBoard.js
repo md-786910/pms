@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Settings,
   Calendar,
+  Filter,
+  X,
 } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
@@ -16,6 +18,7 @@ import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
 import EditProjectModal from "./EditProjectModal";
+import FilterPanel from "./FilterPanel";
 import { stripHtmlTags } from "../utils/htmlUtils";
 import {
   getProjectStatusColors,
@@ -50,6 +53,11 @@ const ProjectBoard = () => {
   const [projectData, setProjectData] = useState([]);
   const [draggingColumnId, setDraggingColumnId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
+
+  // Filter state
+  const [filteredCards, setFilteredCards] = useState([]);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -123,7 +131,9 @@ const ProjectBoard = () => {
       console.log("Fetching cards for project:", actualProjectId);
       const response = await cardAPI.getCards(actualProjectId, true); // Include archived cards
       console.log("Cards response:", response);
-      setCards(response.data.cards || []);
+      const fetchedCards = response.data.cards || [];
+      setCards(fetchedCards);
+      setFilteredCards(fetchedCards); // Initialize filtered cards
     } catch (error) {
       console.error("Error fetching cards:", error);
       console.error("Error details:", error.response?.data);
@@ -150,11 +160,21 @@ const ProjectBoard = () => {
 
   const handleCardCreated = (newCard) => {
     setCards((prev) => [...prev, newCard]);
+    setFilteredCards((prev) => [...prev, newCard]);
     showToast("Card created successfully!", "success");
+  };
+
+  const handleCancelFilter = () => {
+    setFilteredCards(cards);
+    setHasActiveFilters(false);
+    showToast("Filters cleared", "success");
   };
 
   const handleCardUpdated = (updatedCard) => {
     setCards((prev) =>
+      prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
+    );
+    setFilteredCards((prev) =>
       prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
     );
     // Update selected card if it's the one being updated
@@ -166,6 +186,13 @@ const ProjectBoard = () => {
   const handleCardDeleted = (cardId) => {
     // Update the card to be archived instead of removing it
     setCards((prev) =>
+      prev.map((card) =>
+        card._id === cardId
+          ? { ...card, isArchived: true, status: "archive" }
+          : card
+      )
+    );
+    setFilteredCards((prev) =>
       prev.map((card) =>
         card._id === cardId
           ? { ...card, isArchived: true, status: "archive" }
@@ -215,6 +242,11 @@ const ProjectBoard = () => {
           card._id === cardId ? { ...card, status: newStatus } : card
         )
       );
+      setFilteredCards((prev) =>
+        prev.map((card) =>
+          card._id === cardId ? { ...card, status: newStatus } : card
+        )
+      );
       // Update selected card if it's the one being updated
       if (selectedCard && selectedCard._id === cardId) {
         setSelectedCard((prev) => ({ ...prev, status: newStatus }));
@@ -243,10 +275,10 @@ const ProjectBoard = () => {
   const getCardsByStatus = (status) => {
     if (status === "archive") {
       // For archive column, show only archived cards
-      return cards.filter((card) => card.isArchived === true);
+      return filteredCards.filter((card) => card.isArchived === true);
     } else {
       // For other columns, show only non-archived cards with matching status
-      return cards.filter(
+      return filteredCards.filter(
         (card) => card.status === status && card.isArchived !== true
       );
     }
@@ -365,6 +397,11 @@ const ProjectBoard = () => {
 
         // Update cards with the old status to use the new status
         setCards((prev) =>
+          prev.map((card) =>
+            card.status === status ? { ...card, status: newStatus } : card
+          )
+        );
+        setFilteredCards((prev) =>
           prev.map((card) =>
             card.status === status ? { ...card, status: newStatus } : card
           )
@@ -510,7 +547,7 @@ const ProjectBoard = () => {
             </div>
           </div>
 
-          {/* Right: Status pills + Date pill + Settings */}
+          {/* Right: Status pills + Date pill + Filter + Settings */}
           <div className="flex items-center gap-3">
             {/* Status pills */}
             <div className="flex items-center gap-2">
@@ -558,6 +595,29 @@ const ProjectBoard = () => {
                   </>
                 )}
               </div>
+            </div>
+            {/* Filter button and Cancel Filter button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors relative"
+                title="Filter cards"
+              >
+                <Filter className="w-5 h-5" />
+                {hasActiveFilters && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700"></span>
+                )}
+              </button>
+              {hasActiveFilters && (
+                <button
+                  onClick={handleCancelFilter}
+                  className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5 px-3"
+                  title="Cancel all filters"
+                >
+                  <X className="w-4 h-4" />
+                  <span className="text-sm font-medium">Cancel Filter</span>
+                </button>
+              )}
             </div>
             {/* Settings button */}
             <button
@@ -774,6 +834,19 @@ const ProjectBoard = () => {
           onClose={() => setShowEditProjectModal(false)}
         />
       )}
+
+      {/* Filter Panel */}
+      <FilterPanel
+        isOpen={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        cards={cards}
+        onFilterChange={(filtered) => {
+          setFilteredCards(filtered);
+          setHasActiveFilters(filtered.length !== cards.length);
+        }}
+        columns={columns}
+        project={currentProject}
+      />
     </div>
   );
 };
