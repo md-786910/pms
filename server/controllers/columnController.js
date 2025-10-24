@@ -3,6 +3,7 @@ const Column = require("../models/Column");
 const Project = require("../models/Project");
 const Card = require("../models/Card");
 const { validationResult } = require("express-validator");
+const { getIO } = require("../config/socket");
 
 // Helper function to clean up duplicate archive columns
 const cleanupDuplicateArchiveColumns = async (projectId) => {
@@ -315,6 +316,17 @@ const createColumn = async (req, res) => {
     // Populate the createdBy field
     await column.populate("createdBy", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${projectId}`).emit("column-created", {
+        column,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.status(201).json({
       success: true,
       message: "Column created successfully",
@@ -399,6 +411,17 @@ const updateColumn = async (req, res) => {
 
     // Populate the createdBy field
     await column.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${column.project}`).emit("column-updated", {
+        column,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,

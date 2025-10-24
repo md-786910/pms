@@ -13,6 +13,7 @@ import InvitationPage from "./components/InvitationPage";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { UserProvider } from "./contexts/UserContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
+import { SocketProvider } from "./contexts/SocketContext";
 import { useUser } from "./contexts/UserContext";
 
 function AppContent() {
@@ -92,11 +93,13 @@ function App() {
           path="*"
           element={
             <UserProvider>
-              <ProjectProvider>
-                <NotificationProvider>
-                  <AppContent />
-                </NotificationProvider>
-              </ProjectProvider>
+              <SocketProvider>
+                <ProjectProvider>
+                  <NotificationProvider>
+                    <AppContent />
+                  </NotificationProvider>
+                </ProjectProvider>
+              </SocketProvider>
             </UserProvider>
           }
         />

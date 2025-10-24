@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { useSocket } from "../contexts/SocketContext";
+import { useUser } from "../contexts/UserContext";
 import { cardAPI, columnAPI, projectAPI } from "../utils/api";
 import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
@@ -32,6 +34,8 @@ const ProjectBoard = () => {
   const navigate = useNavigate();
   const { currentProject, fetchProject, loading } = useProject();
   const { showToast } = useNotification();
+  const { socket, joinProject, leaveProject } = useSocket();
+  const { user } = useUser();
   const [cards, setCards] = useState([]);
   const [columns, setColumns] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -89,6 +93,168 @@ const ProjectBoard = () => {
       fetchColumns();
     }
   }, [actualProjectId]);
+
+  // Join/leave project room on mount/unmount
+  useEffect(() => {
+    if (actualProjectId && socket) {
+      joinProject(actualProjectId);
+      return () => {
+        leaveProject(actualProjectId);
+      };
+    }
+  }, [actualProjectId, socket, joinProject, leaveProject]);
+
+  // Listen for Socket.IO events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCardCreated = (data) => {
+      console.log("Card created event received:", data);
+      // Only update if not created by current user
+      if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
+        setCards((prev) => [...prev, data.card]);
+        setFilteredCards((prev) => [...prev, data.card]);
+        showToast(`New card "${data.card.title}" created!`, "success");
+      }
+    };
+
+    const handleCardUpdated = (data) => {
+      console.log("Card updated event received:", data);
+      // Only update if not updated by current user
+      if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
+        setCards((prev) =>
+          prev.map((card) => (card._id === data.card._id ? data.card : card))
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) => (card._id === data.card._id ? data.card : card))
+        );
+        // Update selected card if it's the one being updated
+        if (selectedCard && selectedCard._id === data.card._id) {
+          setSelectedCard(data.card);
+        }
+      }
+    };
+
+    const handleCardArchived = (data) => {
+      console.log("Card archived event received:", data);
+      if (data.card) {
+        setCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, isArchived: true, status: "archive" }
+              : card
+          )
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, isArchived: true, status: "archive" }
+              : card
+          )
+        );
+        // Close modal if the archived card was selected
+        if (selectedCard && selectedCard._id === data.card._id) {
+          setShowCardModal(false);
+          setSelectedCard(null);
+        }
+      }
+    };
+
+    const handleCardRestored = (data) => {
+      console.log("Card restored event received:", data);
+      if (data.card) {
+        // Use the function directly instead of calling fetchCards
+        cardAPI
+          .getCards(actualProjectId, true)
+          .then((response) => {
+            const fetchedCards = response.data.cards || [];
+            setCards(fetchedCards);
+            setFilteredCards(fetchedCards);
+          })
+          .catch((error) => {
+            console.error("Error fetching cards:", error);
+          });
+      }
+    };
+
+    const handleCardStatusChanged = (data) => {
+      console.log("Card status changed event received:", data);
+      if (data.card) {
+        setCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, status: data.card.status }
+              : card
+          )
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, status: data.card.status }
+              : card
+          )
+        );
+        // Update selected card if it's the one being updated
+        if (selectedCard && selectedCard._id === data.card._id) {
+          setSelectedCard((prev) => ({ ...prev, status: data.card.status }));
+        }
+      }
+    };
+
+    const handleColumnCreated = (data) => {
+      console.log("Column created event received:", data);
+      // Only update if not created by current user
+      if (
+        data.column &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        setColumns((prev) => [...prev, data.column]);
+        showToast(`New column "${data.column.name}" created!`, "success");
+      }
+    };
+
+    const handleColumnUpdated = (data) => {
+      console.log("Column updated event received:", data);
+      if (data.column) {
+        setColumns((prev) =>
+          prev.map((col) => (col._id === data.column._id ? data.column : col))
+        );
+      }
+    };
+
+    socket.on("card-created", handleCardCreated);
+    socket.on("card-updated", handleCardUpdated);
+    socket.on("card-archived", handleCardArchived);
+    socket.on("card-restored", handleCardRestored);
+    socket.on("card-status-changed", handleCardStatusChanged);
+    socket.on("card-user-assigned", handleCardUpdated);
+    socket.on("card-user-unassigned", handleCardUpdated);
+    socket.on("card-label-added", handleCardUpdated);
+    socket.on("card-label-removed", handleCardUpdated);
+    socket.on("card-attachment-added", handleCardUpdated);
+    socket.on("card-attachment-removed", handleCardUpdated);
+    socket.on("card-files-uploaded", handleCardUpdated);
+    socket.on("column-created", handleColumnCreated);
+    socket.on("column-updated", handleColumnUpdated);
+
+    return () => {
+      socket.off("card-created", handleCardCreated);
+      socket.off("card-updated", handleCardUpdated);
+      socket.off("card-archived", handleCardArchived);
+      socket.off("card-restored", handleCardRestored);
+      socket.off("card-status-changed", handleCardStatusChanged);
+      socket.off("card-user-assigned", handleCardUpdated);
+      socket.off("card-user-unassigned", handleCardUpdated);
+      socket.off("card-label-added", handleCardUpdated);
+      socket.off("card-label-removed", handleCardUpdated);
+      socket.off("card-attachment-added", handleCardUpdated);
+      socket.off("card-attachment-removed", handleCardUpdated);
+      socket.off("card-files-uploaded", handleCardUpdated);
+      socket.off("column-created", handleColumnCreated);
+      socket.off("column-updated", handleColumnUpdated);
+    };
+  }, [socket, selectedCard, showToast, user]);
 
   // Handle click outside to close add column modal
   useEffect(() => {

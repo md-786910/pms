@@ -11,6 +11,7 @@ const {
 } = require("../config/email");
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
 const { ensureArchiveColumn } = require("./columnController");
+const { getIO } = require("../config/socket");
 
 // Helper function to get status label from column
 const getStatusLabel = async (projectId, statusValue) => {
@@ -255,6 +256,17 @@ const createCard = async (req, res) => {
       }
     }
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${project}`).emit("card-created", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.status(201).json({
       success: true,
       message: "Card created successfully",
@@ -481,6 +493,17 @@ const updateCard = async (req, res) => {
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-updated", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Card updated successfully",
@@ -562,6 +585,17 @@ const archiveCard = async (req, res) => {
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-archived", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -649,6 +683,17 @@ const restoreCard = async (req, res) => {
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-restored", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -775,6 +820,17 @@ const updateStatus = async (req, res) => {
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-status-changed", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Card status updated successfully",
@@ -891,6 +947,17 @@ const assignUser = async (req, res) => {
       });
     }
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-user-assigned", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "User assigned successfully",
@@ -1005,6 +1072,17 @@ const unassignUser = async (req, res) => {
           // Email failure doesn't affect the main request
         }
       });
+    }
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-user-unassigned", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
     }
 
     res.json({
@@ -1189,6 +1267,17 @@ const addComment = async (req, res) => {
     await card.populate("createdBy", "name email avatar color");
     await card.populate("comments.user", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-comment-added", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Comment added successfully",
@@ -1276,6 +1365,17 @@ const updateComment = async (req, res) => {
     await card.populate("createdBy", "name email avatar color");
     await card.populate("comments.user", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-comment-updated", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Comment updated successfully",
@@ -1337,6 +1437,17 @@ const addLabel = async (req, res) => {
     card.labels.push({ name, color });
     await card.save();
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-label-added", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Label added successfully",
@@ -1387,6 +1498,17 @@ const removeLabel = async (req, res) => {
       (label) => label._id.toString() !== labelId
     );
     await card.save();
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-label-removed", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1445,6 +1567,17 @@ const addAttachment = async (req, res) => {
 
     card.attachments.push(attachment);
     await card.save();
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-attachment-added", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1549,6 +1682,17 @@ const uploadFiles = async (req, res) => {
     // Populate user info for frontend
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-files-uploaded", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1655,6 +1799,17 @@ const removeAttachment = async (req, res) => {
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-attachment-removed", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,

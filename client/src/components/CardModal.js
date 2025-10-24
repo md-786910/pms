@@ -18,6 +18,7 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { useSocket } from "../contexts/SocketContext";
 import { cardAPI, cardItemAPI } from "../utils/api";
 import Avatar from "./Avatar";
 import AssignUserModal from "./AssignUserModal";
@@ -38,6 +39,7 @@ const CardModal = ({
   const { users, user } = useUser();
   const { currentProject } = useProject();
   const { showToast } = useNotification();
+  const { socket } = useSocket();
 
   // Check if card is archived
   const isArchived = card.isArchived || card.status === "archive";
@@ -729,6 +731,110 @@ const CardModal = ({
       refetchCard();
     }
   }, [card.comments, card._id, onCardUpdated]);
+
+  // Listen for Socket.IO events for card updates
+  React.useEffect(() => {
+    if (!socket) return;
+
+    const handleCardUpdated = (data) => {
+      console.log("Card updated event received in modal:", data);
+      if (data.card && data.card._id === card._id) {
+        onCardUpdated(data.card);
+      }
+    };
+
+    const handleCardCommentAdded = (data) => {
+      console.log("Card comment added event received:", data);
+      if (data.card && data.card._id === card._id) {
+        onCardUpdated(data.card);
+      }
+    };
+
+    const handleCardLabelAdded = (data) => {
+      console.log("Card label added event received:", data);
+      if (data.card && data.card._id === card._id) {
+        onCardUpdated(data.card);
+      }
+    };
+
+    const handleCardItemCreated = (data) => {
+      console.log("Card item created event received:", data);
+      if (
+        data.cardId === card._id &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        setItems((prev) => [...prev, data.item]);
+      }
+    };
+
+    const handleCardItemUpdated = (data) => {
+      console.log("Card item updated event received:", data);
+      if (
+        data.cardId === card._id &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        setItems((prev) =>
+          prev.map((item) => (item._id === data.item._id ? data.item : item))
+        );
+      }
+    };
+
+    const handleCardItemDeleted = (data) => {
+      console.log("Card item deleted event received:", data);
+      if (
+        data.cardId === card._id &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        setItems((prev) => prev.filter((item) => item._id !== data.itemId));
+      }
+    };
+
+    const handleCardItemsReordered = (data) => {
+      console.log("Card items reordered event received:", data);
+      if (
+        data.cardId === card._id &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        setItems(data.items);
+      }
+    };
+
+    socket.on("card-updated", handleCardUpdated);
+    socket.on("card-comment-added", handleCardCommentAdded);
+    socket.on("card-comment-updated", handleCardUpdated);
+    socket.on("card-label-added", handleCardLabelAdded);
+    socket.on("card-label-removed", handleCardUpdated);
+    socket.on("card-user-assigned", handleCardUpdated);
+    socket.on("card-user-unassigned", handleCardUpdated);
+    socket.on("card-attachment-added", handleCardUpdated);
+    socket.on("card-attachment-removed", handleCardUpdated);
+    socket.on("card-files-uploaded", handleCardUpdated);
+    socket.on("card-item-created", handleCardItemCreated);
+    socket.on("card-item-updated", handleCardItemUpdated);
+    socket.on("card-item-deleted", handleCardItemDeleted);
+    socket.on("card-items-reordered", handleCardItemsReordered);
+
+    return () => {
+      socket.off("card-updated", handleCardUpdated);
+      socket.off("card-comment-added", handleCardCommentAdded);
+      socket.off("card-comment-updated", handleCardUpdated);
+      socket.off("card-label-added", handleCardLabelAdded);
+      socket.off("card-label-removed", handleCardUpdated);
+      socket.off("card-user-assigned", handleCardUpdated);
+      socket.off("card-user-unassigned", handleCardUpdated);
+      socket.off("card-attachment-added", handleCardUpdated);
+      socket.off("card-attachment-removed", handleCardUpdated);
+      socket.off("card-files-uploaded", handleCardUpdated);
+      socket.off("card-item-created", handleCardItemCreated);
+      socket.off("card-item-updated", handleCardItemUpdated);
+      socket.off("card-item-deleted", handleCardItemDeleted);
+      socket.off("card-items-reordered", handleCardItemsReordered);
+    };
+  }, [socket, card._id, onCardUpdated, user]);
 
   // Add selection change listener for rich text editor
   React.useEffect(() => {

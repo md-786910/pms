@@ -22,6 +22,9 @@ const PORT = config.PORT;
 // Connect to MongoDB
 connectDB();
 
+// Initialize Socket.IO
+const { initializeSocket } = require("./config/socket");
+
 // Middleware
 app.use(
   cors({
@@ -105,6 +108,9 @@ const server = app.listen(PORT, () => {
   console.log(`Database: ${config.MONGODB_URI}`);
   console.log(`Client URL: ${config.CLIENT_URL}`);
 });
+
+// Initialize Socket.IO
+initializeSocket(server);
 
 // Handle server errors gracefully
 server.on("error", (err) => {
