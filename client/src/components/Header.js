@@ -25,7 +25,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 backdrop-blur-xl border-b border-indigo-500/20 px-6 py-4 shadow-lg shadow-indigo-500/10 relative z-[10000]">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Mobile Search */}
@@ -33,17 +33,22 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
             <AdvancedSearch />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">P</span>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20">
+              <span className="text-white font-bold text-lg">P</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">
-              Project Management
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold text-white tracking-tight">
+                Project Management
+              </h1>
+              <p className="text-xs text-indigo-100">
+                Stay organized, stay ahead
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           {/* Advanced Search */}
           <div className="hidden md:block">
             <AdvancedSearch />
@@ -51,10 +56,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
           {/* Notifications */}
           <div className="relative">
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-              <Bell className="w-5 h-5 text-gray-600" />
+            <button className="p-2.5 rounded-xl hover:bg-white/20 transition-all duration-300 backdrop-blur-sm">
+              <Bell className="w-5 h-5 text-white" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white">
                   {unreadCount}
                 </span>
               )}
@@ -65,32 +70,32 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200"
+              className="flex items-center space-x-3 hover:bg-white/20 rounded-xl p-2 transition-all duration-300 backdrop-blur-sm"
             >
               <Avatar user={user} size="sm" />
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
-                  {user?.name}
+                <p className="text-sm font-semibold text-white">{user?.name}</p>
+                <p className="text-xs text-indigo-100 capitalize">
+                  {user?.role}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
               </div>
             </button>
 
             {/* User Dropdown Menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
+              <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 py-2 z-50 animate-fade-in">
+                <div className="px-4 py-3 border-b border-slate-200/50">
+                  <p className="text-sm font-semibold text-slate-900">
                     {user?.name}
                   </p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+                  <p className="text-xs text-slate-600">{user?.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span className="font-medium">Sign Out</span>
                 </button>
               </div>
             )}

@@ -63,32 +63,26 @@ const Notifications = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      {/* Compact Modern Header */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-
+          <div className="flex items-center gap-3">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Notifications</h1>
-              <p className="text-primary-100 text-lg">
-                Stay updated with your project activities
-              </p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Notifications
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="bg-white bg-opacity-20 rounded-xl p-3">
-              <Bell className="w-6 h-6" />
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{notifications.length}</div>
-              <div className="text-primary-100 text-sm">Total</div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 px-4 py-2 bg-indigo-50 rounded-xl">
+              <Bell className="w-5 h-5 text-indigo-600" />
+              <div className="text-right">
+                <div className="text-lg font-bold text-indigo-700">
+                  {notifications.length}
+                </div>
+                <div className="text-xs text-indigo-600">Total</div>
+              </div>
             </div>
           </div>
         </div>

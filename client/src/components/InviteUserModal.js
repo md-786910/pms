@@ -137,40 +137,44 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
 
   return (
     <div className="modal-overlay">
-      <div ref={modalRef} className="modal-content max-w-2xl">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-4">
+      <div
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        className="modal-content max-w-2xl border-4 border-white"
+      >
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between px-6 py-4">
           <div>
             <h2 className="text-xl font-bold">Invite Users to Project</h2>
             <p className="text-primary-100 text-lg">{project.name}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 bg-primary-100 transition-colors duration-200 hover:scale-105"
+            className="p-2 rounded-xl hover:bg-slate-100 bg-indigo-100 transition-all duration-300 hover:scale-105"
           >
-            <X className="w-5 h-5 text-secondary-600" />
+            <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
         <div className="p-6">
           {/* Invite Type Tabs */}
-          <div className="flex space-x-1 mb-6 bg-secondary-100 rounded-lg p-1">
+          <div className="flex space-x-1 mb-6 bg-slate-100 rounded-xl p-1">
             <button
               onClick={() => setInviteType("email")}
-              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-colors duration-200 ${
+              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-xl transition-all duration-300 ${
                 inviteType === "email"
-                  ? "bg-white text-primary-700 shadow-sm"
-                  : "text-secondary-600 hover:text-secondary-900"
+                  ? "bg-white text-indigo-700 shadow-lg"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <Mail className="w-4 h-4" />
-              <span className="font-medium">Email Invite</span>
+              <span className="font-semibold">Email Invite</span>
             </button>
             <button
               onClick={() => setInviteType("existing")}
-              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-colors duration-200 ${
+              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-xl transition-all duration-300 ${
                 inviteType === "existing"
-                  ? "bg-white text-primary-700 shadow-sm"
-                  : "text-secondary-600 hover:text-secondary-900"
+                  ? "bg-white text-indigo-700 shadow-lg"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <UserPlus className="w-4 h-4" />
@@ -184,7 +188,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-secondary-700 mb-2"
+                    className="block text-sm font-semibold text-slate-700 mb-2"
                   >
                     Email Address *
                   </label>
@@ -205,7 +209,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                 <div>
                   <label
                     htmlFor="message"
-                    className="block text-sm font-medium text-secondary-700 mb-2"
+                    className="block text-sm font-semibold text-slate-700 mb-2"
                   >
                     Personal Message (Optional)
                   </label>
@@ -224,14 +228,14 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
               </>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-3">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
                   Select Users to Add ({selectedUsers.length} selected)
                 </label>
 
                 {availableUsers.length === 0 ? (
-                  <div className="text-center py-8 bg-secondary-50 rounded-lg">
-                    <UserPlus className="w-12 h-12 text-secondary-300 mx-auto mb-3" />
-                    <p className="text-secondary-600">
+                  <div className="text-center py-8 bg-slate-50 rounded-xl">
+                    <UserPlus className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-600">
                       All available users are already in this project
                     </p>
                   </div>
@@ -240,12 +244,12 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                     {availableUsers.map((user) => (
                       <div
                         key={user._id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-colors duration-200 cursor-pointer ${
+                        className={`flex items-center space-x-3 p-3 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
                           selectedUsers.some(
                             (selectedUser) => selectedUser._id === user._id
                           )
-                            ? "border-primary-200 bg-primary-50"
-                            : "border-secondary-200 hover:border-secondary-300"
+                            ? "border-indigo-200 bg-indigo-50"
+                            : "border-slate-200 hover:border-slate-300"
                         }`}
                         onClick={() => handleUserToggle(user)}
                       >
@@ -255,16 +259,14 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                             (selectedUser) => selectedUser._id === user._id
                           )}
                           onChange={() => handleUserToggle(user)}
-                          className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
+                          className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                         />
                         <Avatar user={user} size="sm" />
                         <div className="flex-1">
-                          <p className="font-medium text-secondary-900">
+                          <p className="font-semibold text-slate-900">
                             {user.name}
                           </p>
-                          <p className="text-sm text-secondary-600">
-                            {user.email}
-                          </p>
+                          <p className="text-sm text-slate-600">{user.email}</p>
                         </div>
                       </div>
                     ))}
@@ -273,7 +275,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
               </div>
             )}
 
-            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-secondary-200">
+            <div className="flex items-center justify-end space-x-3 pt-5 border-t border-slate-200">
               <button
                 type="button"
                 onClick={onClose}

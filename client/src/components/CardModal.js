@@ -1294,871 +1294,886 @@ const CardModal = ({
         }}
       />
 
-      <div className="modal-overlay">
+      <div className="fixed inset-0 z-[99999] overflow-y-auto">
+        {/* Transparent Backdrop */}
         <div
-          ref={modalRef}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
-        >
-          {/* Modal Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">📋</span>
-                </div>
-                <div>
-                  <h2
-                    className="text-2xl font-bold cursor-pointer"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) =>
-                          setFormData({ ...formData, title: e.target.value })
-                        }
-                        className="bg-transparent border-none outline-none focus:outline-none text-2xl font-bold text-white placeholder-white placeholder-opacity-70"
-                        placeholder="Card title..."
-                        autoFocus
-                      />
-                    ) : (
-                      card.title
-                    )}
-                  </h2>
-                  <p className="text-blue-100 text-sm">
-                    {isEditing ? "Click to edit" : "Card Details"}
-                  </p>
-                </div>
-              </div>
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+          onClick={onClose}
+        />
 
-              <div className="flex items-center space-x-3">
-                {isEditing ? (
-                  <>
-                    <button
-                      onClick={handleSave}
-                      disabled={loading}
-                      className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 shadow-sm text-sm"
-                    >
-                      <Save className="w-4 h-4" />
-                      <span>{loading ? "Saving..." : "Save"}</span>
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="bg-white bg-opacity-20 text-white hover:bg-opacity-30 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
-                    >
-                      <XIcon className="w-4 h-4" />
-                      <span>Cancel</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {card.isArchived ? (
-                      <button
-                        onClick={handleRestore}
-                        disabled={loading}
-                        className="bg-green-500 text-white hover:bg-green-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50"
-                        title="Restore card"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        <span>Restore</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleArchive}
-                        className="bg-orange-500 text-white hover:bg-orange-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
-                        title="Archive card"
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
-                    )}
-                  </>
-                )}
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Modal Content */}
-          <div className="p-8 max-h-[calc(95vh-200px)] ">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
-                {/* Description */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Description
-                    </label>
-                    {!isEditing && (
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
-                      >
-                        {/* <Edit2 className="w-4 h-4" />
-                        <span>Edit</span> */}
-                      </button>
-                    )}
+        {/* Modal Container with Better Separation */}
+        <div className="flex min-h-screen items-center justify-center p-6">
+          <div
+            ref={modalRef}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative border-4 border-white ring-4 ring-indigo-500/10"
+          >
+            {/* Modal Header - Compact */}
+            <div className="bg-white px-6 py-4 border-b border-slate-200/50">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <span className="text-lg text-white">📋</span>
                   </div>
-
-                  {/* Description Content */}
-                  <div className="relative">
-                    {isEditing ? (
-                      <div className="simple-quill-editor description-editor">
-                        <SimpleQuillEditor
-                          value={formData.description || ""}
-                          onChange={(content) => {
-                            setFormData({
-                              ...formData,
-                              description: content,
-                            });
-                          }}
-                          placeholder="Add a description..."
+                  <div className="min-w-0 flex-1">
+                    <h2
+                      className="text-lg font-bold cursor-pointer truncate bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                      onClick={() => setIsEditing(true)}
+                      title="Click to edit"
+                    >
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={formData.title}
+                          onChange={(e) =>
+                            setFormData({ ...formData, title: e.target.value })
+                          }
+                          className="bg-transparent border-none outline-none focus:outline-none text-lg font-bold text-indigo-600 placeholder-indigo-400"
+                          placeholder="Card title..."
+                          autoFocus
                         />
-                      </div>
-                    ) : (
-                      <div
-                        className="w-full p-4 min-h-[80px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
-                        onClick={() => setIsEditing(true)}
-                      >
-                        {formData.description && formData.description.trim() ? (
-                          <div
-                            className="prose prose-sm max-w-none"
-                            style={{
-                              fontSize: "14px",
-                              lineHeight: "1.5",
-                              color: "#374151",
-                            }}
-                            dangerouslySetInnerHTML={{
-                              __html: formData.description,
-                            }}
-                          />
-                        ) : (
-                          <div className="flex items-center text-gray-500 text-sm">
-                            <Edit2 className="w-4 h-4 mr-2" />
-                            <span>Click to edit</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      ) : (
+                        card.title
+                      )}
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isEditing ? "Edit title" : "Card Details"}
+                    </p>
                   </div>
+                </div>
 
-                  {/* Action Buttons - Only show when editing */}
-                  {isEditing && (
-                    <div className="mt-14 flex items-center justify-end space-x-2">
+                <div className="flex items-center space-x-3">
+                  {isEditing ? (
+                    <>
                       <button
                         onClick={handleSave}
                         disabled={loading}
-                        className=" bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 shadow-sm text-sm"
                       >
                         <Save className="w-4 h-4" />
-                        <span>Save</span>
+                        <span>{loading ? "Saving..." : "Save"}</span>
                       </button>
                       <button
-                        onClick={() => {
-                          setIsEditing(false);
-                          // Reset to original description if user cancels
-                          setFormData({
-                            ...formData,
-                            description: card.description,
-                          });
-                        }}
-                        className="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                        onClick={() => setIsEditing(false)}
+                        className="bg-white bg-opacity-20 text-white hover:bg-opacity-30 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
                       >
-                        Cancel
+                        <XIcon className="w-4 h-4" />
+                        <span>Cancel</span>
                       </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Images */}
-                {getImageAttachments().length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Images ({getImageAttachments().length})
-                    </label>
-                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
-                      {getImageAttachments().map((attachment) => (
-                        <div
-                          key={attachment._id || attachment.id}
-                          className="relative group cursor-pointer"
-                          onClick={() => {
-                            setSelectedImage(attachment);
-                            setShowImageModal(true);
-                          }}
+                    </>
+                  ) : (
+                    <>
+                      {card.isArchived ? (
+                        <button
+                          onClick={handleRestore}
+                          disabled={loading}
+                          className="bg-green-500 text-white hover:bg-green-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50"
+                          title="Restore card"
                         >
-                          <img
-                            src={
-                              attachment.url.startsWith("http")
-                                ? attachment.url
-                                : `${API_URL}${attachment.url}`
-                            }
-                            alt={
-                              attachment.originalName ||
-                              attachment.filename ||
-                              attachment.name
-                            }
-                            className="w-full h-28 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors duration-200"
-                            onError={(e) => {
-                              e.target.src = "/placeholder-image.png"; // Fallback image
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center">
-                            <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteAttachment(
-                                attachment._id || attachment.id
-                              );
-                            }}
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200"
-                            title="Delete image"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Add Comment
-                  </label>
-                  <div className="comment-editor">
-                    <SimpleCommentEditor
-                      value={commentText || ""}
-                      onChange={(content) => {
-                        console.log("SimpleCommentEditor onChange:", content);
-                        setCommentText(content);
-                      }}
-                      onMentionSelect={(mention) => {
-                        console.log("Mention selected:", mention);
-                        setMentions((prev) => [...prev, mention]);
-                      }}
-                      onSend={(content) => {
-                        console.log("Sending comment:", content);
-                        setCommentText(content);
-                        handleAddComment();
-                      }}
-                      placeholder="Add a comment... (use @ to mention someone)"
-                      projectMembers={(() => {
-                        const members = currentProject?.members || [];
-                        console.log("Project members for mentions:", members);
-                        return members;
-                      })()}
-                      currentUser={user}
-                      cardMembers={getAssignees()}
-                    />
-                  </div>
-                </div>
-
-                {/* Comments */}
-                <div className="bg-white p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Comments ({card.comments.length})
-                    </h3>
-                  </div>
-
-                  <div className="space-y-3 mb-6 pr-2">
-                    {card.comments
-                      .sort((a, b) => {
-                        // Sort by updatedAt if available, otherwise by timestamp
-                        const aTime = a.updatedAt || a.timestamp || a.createdAt;
-                        const bTime = b.updatedAt || b.timestamp || b.createdAt;
-                        return new Date(bTime) - new Date(aTime);
-                      })
-                      .map((comment) => {
-                        // console.log("Rendering comment:", comment);
-                        // console.log("Comment user:", comment.user);
-                        return (
-                          <div
-                            key={comment._id || comment.id}
-                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200 group"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-3">
-                                <Avatar
-                                  user={comment.user}
-                                  size="sm"
-                                  fallback={
-                                    comment.user?.name
-                                      ? comment.user.name
-                                          .charAt(0)
-                                          .toUpperCase()
-                                      : "U"
-                                  }
-                                />
-                                <div>
-                                  <span className="font-medium text-gray-900">
-                                    {comment.user?.name ||
-                                      (comment.user &&
-                                      typeof comment.user === "string"
-                                        ? "Loading..."
-                                        : "Unknown User")}
-                                  </span>
-                                  <span className="text-xs text-gray-500 ml-2">
-                                    {new Date(
-                                      comment.timestamp || comment.createdAt
-                                    ).toLocaleString()}
-                                    {comment.updatedAt &&
-                                      comment.updatedAt !==
-                                        comment.timestamp && (
-                                        <span className="text-gray-400 ml-1">
-                                          (edited)
-                                        </span>
-                                      )}
-                                  </span>
-                                </div>
-                              </div>
-                              {(comment.user?._id === user?._id ||
-                                comment.user?._id === user?.id) &&
-                                !isSystemComment(comment) && (
-                                  <button
-                                    onClick={() =>
-                                      handleStartEditComment(comment)
-                                    }
-                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
-                                    title="Edit comment"
-                                  >
-                                    <Edit className="w-3 h-3" />
-                                  </button>
-                                )}
-                            </div>
-                            {editingComment === (comment._id || comment.id) ? (
-                              <div className="space-y-2">
-                                <textarea
-                                  value={editCommentText}
-                                  onChange={(e) =>
-                                    setEditCommentText(e.target.value)
-                                  }
-                                  className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  rows="3"
-                                  placeholder="Edit your comment..."
-                                />
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={handleSaveEditComment}
-                                    className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={handleCancelEditComment}
-                                    className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div
-                                className={`text-sm text-gray-700 prose prose-sm max-w-none ${
-                                  (comment.text &&
-                                    comment.text.includes(
-                                      "moved this card from"
-                                    )) ||
-                                  (comment.text &&
-                                    comment.text.includes("assigned")) ||
-                                  (comment.text &&
-                                    comment.text.includes("removed"))
-                                    ? "activity-comment"
-                                    : ""
-                                }`}
-                                dangerouslySetInnerHTML={{
-                                  __html:
-                                    renderCommentWithMentions(comment.text) ||
-                                    "<p><br></p>",
-                                }}
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
+                          <RotateCcw className="w-4 h-4" />
+                          <span>Restore</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleArchive}
+                          className="bg-orange-500 text-white hover:bg-orange-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
+                          title="Archive card"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
+            </div>
 
-              {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto">
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Status
-                    {isArchived && (
-                      <span className="text-xs text-gray-500 ml-2 font-normal">
-                        (Disabled for archived cards)
-                      </span>
+            {/* Modal Content */}
+            <div className="p-8 max-h-[calc(95vh-200px)] ">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Content */}
+                <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
+                  {/* Description */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Description
+                      </label>
+                      {!isEditing && (
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
+                        >
+                          {/* <Edit2 className="w-4 h-4" />
+                        <span>Edit</span> */}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Description Content */}
+                    <div className="relative">
+                      {isEditing ? (
+                        <div className="simple-quill-editor description-editor">
+                          <SimpleQuillEditor
+                            value={formData.description || ""}
+                            onChange={(content) => {
+                              setFormData({
+                                ...formData,
+                                description: content,
+                              });
+                            }}
+                            placeholder="Add a description..."
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className="w-full p-4 min-h-[80px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          {formData.description &&
+                          formData.description.trim() ? (
+                            <div
+                              className="prose prose-sm max-w-none"
+                              style={{
+                                fontSize: "14px",
+                                lineHeight: "1.5",
+                                color: "#374151",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: formData.description,
+                              }}
+                            />
+                          ) : (
+                            <div className="flex items-center text-gray-500 text-sm">
+                              <Edit2 className="w-4 h-4 mr-2" />
+                              <span>Click to edit</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons - Only show when editing */}
+                    {isEditing && (
+                      <div className="mt-14 flex items-center justify-end space-x-2">
+                        <button
+                          onClick={handleSave}
+                          disabled={loading}
+                          className=" bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Save className="w-4 h-4" />
+                          <span>Save</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsEditing(false);
+                            // Reset to original description if user cancels
+                            setFormData({
+                              ...formData,
+                              description: card.description,
+                            });
+                          }}
+                          className="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     )}
-                  </label>
-                  <select
-                    value={card.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
-                      isArchived ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                    disabled={loadingColumns || isArchived}
-                  >
-                    {loadingColumns ? (
-                      <option value="">Loading columns...</option>
-                    ) : allStatusOptions.length > 0 ? (
-                      allStatusOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">No columns available</option>
-                    )}
-                  </select>
+                  </div>
+
+                  {/* Images */}
+                  {getImageAttachments().length > 0 && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Images ({getImageAttachments().length})
+                      </label>
+                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
+                        {getImageAttachments().map((attachment) => (
+                          <div
+                            key={attachment._id || attachment.id}
+                            className="relative group cursor-pointer"
+                            onClick={() => {
+                              setSelectedImage(attachment);
+                              setShowImageModal(true);
+                            }}
+                          >
+                            <img
+                              src={
+                                attachment.url.startsWith("http")
+                                  ? attachment.url
+                                  : `${API_URL}${attachment.url}`
+                              }
+                              alt={
+                                attachment.originalName ||
+                                attachment.filename ||
+                                attachment.name
+                              }
+                              className="w-full h-28 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors duration-200"
+                              onError={(e) => {
+                                e.target.src = "/placeholder-image.png"; // Fallback image
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center">
+                              <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAttachment(
+                                  attachment._id || attachment.id
+                                );
+                              }}
+                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200"
+                              title="Delete image"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Add Comment
+                    </label>
+                    <div className="comment-editor">
+                      <SimpleCommentEditor
+                        value={commentText || ""}
+                        onChange={(content) => {
+                          console.log("SimpleCommentEditor onChange:", content);
+                          setCommentText(content);
+                        }}
+                        onMentionSelect={(mention) => {
+                          console.log("Mention selected:", mention);
+                          setMentions((prev) => [...prev, mention]);
+                        }}
+                        onSend={(content) => {
+                          console.log("Sending comment:", content);
+                          setCommentText(content);
+                          handleAddComment();
+                        }}
+                        placeholder="Add a comment... (use @ to mention someone)"
+                        projectMembers={(() => {
+                          const members = currentProject?.members || [];
+                          console.log("Project members for mentions:", members);
+                          return members;
+                        })()}
+                        currentUser={user}
+                        cardMembers={getAssignees()}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Comments */}
+                  <div className="bg-white p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Comments ({card.comments.length})
+                      </h3>
+                    </div>
+
+                    <div className="space-y-3 mb-6 pr-2">
+                      {card.comments
+                        .sort((a, b) => {
+                          // Sort by updatedAt if available, otherwise by timestamp
+                          const aTime =
+                            a.updatedAt || a.timestamp || a.createdAt;
+                          const bTime =
+                            b.updatedAt || b.timestamp || b.createdAt;
+                          return new Date(bTime) - new Date(aTime);
+                        })
+                        .map((comment) => {
+                          // console.log("Rendering comment:", comment);
+                          // console.log("Comment user:", comment.user);
+                          return (
+                            <div
+                              key={comment._id || comment.id}
+                              className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200 group"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-3">
+                                  <Avatar
+                                    user={comment.user}
+                                    size="sm"
+                                    fallback={
+                                      comment.user?.name
+                                        ? comment.user.name
+                                            .charAt(0)
+                                            .toUpperCase()
+                                        : "U"
+                                    }
+                                  />
+                                  <div>
+                                    <span className="font-medium text-gray-900">
+                                      {comment.user?.name ||
+                                        (comment.user &&
+                                        typeof comment.user === "string"
+                                          ? "Loading..."
+                                          : "Unknown User")}
+                                    </span>
+                                    <span className="text-xs text-gray-500 ml-2">
+                                      {new Date(
+                                        comment.timestamp || comment.createdAt
+                                      ).toLocaleString()}
+                                      {comment.updatedAt &&
+                                        comment.updatedAt !==
+                                          comment.timestamp && (
+                                          <span className="text-gray-400 ml-1">
+                                            (edited)
+                                          </span>
+                                        )}
+                                    </span>
+                                  </div>
+                                </div>
+                                {(comment.user?._id === user?._id ||
+                                  comment.user?._id === user?.id) &&
+                                  !isSystemComment(comment) && (
+                                    <button
+                                      onClick={() =>
+                                        handleStartEditComment(comment)
+                                      }
+                                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
+                                      title="Edit comment"
+                                    >
+                                      <Edit className="w-3 h-3" />
+                                    </button>
+                                  )}
+                              </div>
+                              {editingComment ===
+                              (comment._id || comment.id) ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editCommentText}
+                                    onChange={(e) =>
+                                      setEditCommentText(e.target.value)
+                                    }
+                                    className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    rows="3"
+                                    placeholder="Edit your comment..."
+                                  />
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={handleSaveEditComment}
+                                      className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={handleCancelEditComment}
+                                      className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  className={`text-sm text-gray-700 prose prose-sm max-w-none ${
+                                    (comment.text &&
+                                      comment.text.includes(
+                                        "moved this card from"
+                                      )) ||
+                                    (comment.text &&
+                                      comment.text.includes("assigned")) ||
+                                    (comment.text &&
+                                      comment.text.includes("removed"))
+                                      ? "activity-comment"
+                                      : ""
+                                  }`}
+                                  dangerouslySetInnerHTML={{
+                                    __html:
+                                      renderCommentWithMentions(comment.text) ||
+                                      "<p><br></p>",
+                                  }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Due Date */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Due Date
+                {/* Sidebar */}
+                <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto">
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Status
                       {isArchived && (
                         <span className="text-xs text-gray-500 ml-2 font-normal">
                           (Disabled for archived cards)
                         </span>
                       )}
                     </label>
-                    {autoSaving && (
-                      <span className="text-xs text-blue-600 flex items-center">
-                        <svg
-                          className="animate-spin h-3 w-3 mr-1"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Saving...
-                      </span>
-                    )}
+                    <select
+                      value={card.status}
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                      className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                        isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                      }`}
+                      disabled={loadingColumns || isArchived}
+                    >
+                      {loadingColumns ? (
+                        <option value="">Loading columns...</option>
+                      ) : allStatusOptions.length > 0 ? (
+                        allStatusOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No columns available</option>
+                      )}
+                    </select>
                   </div>
-                  <input
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dueDate: e.target.value })
-                    }
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
-                      isArchived ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                    disabled={autoSaving || isArchived}
-                  />
-                  {/* <div className="p-2 bg-gray-50 rounded-lg">
+
+                  {/* Due Date */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Due Date
+                        {isArchived && (
+                          <span className="text-xs text-gray-500 ml-2 font-normal">
+                            (Disabled for archived cards)
+                          </span>
+                        )}
+                      </label>
+                      {autoSaving && (
+                        <span className="text-xs text-blue-600 flex items-center">
+                          <svg
+                            className="animate-spin h-3 w-3 mr-1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Saving...
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="date"
+                      value={formData.dueDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, dueDate: e.target.value })
+                      }
+                      className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                        isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                      }`}
+                      disabled={autoSaving || isArchived}
+                    />
+                    {/* <div className="p-2 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 text-sm">
                       {card.dueDate
                         ? new Date(card.dueDate).toLocaleString()
                         : "No due date set"}
                     </p>
                   </div> */}
-                </div>
-
-                {/* Priority */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Priority
-                  </label>
-                  <div className="flex space-x-1">
-                    {["low", "medium", "high"].map((priority) => (
-                      <button
-                        key={priority}
-                        onClick={() => handleSetPriority(priority)}
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          card.priority === priority
-                            ? priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : priority === "medium"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                      </button>
-                    ))}
                   </div>
-                </div>
 
-                {/* Labels */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Labels ({card.labels?.length || 0})
+                  {/* Priority */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Priority
                     </label>
-                    <button
-                      onClick={() => setShowLabelsModal(true)}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium"
-                    >
-                      Manage Labels
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 mb-2 max-h-32 overflow-y-auto">
-                    {card.labels?.map((label) => {
-                      let colorConfig = labelColors.find(
-                        (c) => c.value === (label.color || "blue")
-                      );
-
-                      // Map light colors to their saturated equivalents for consistency
-                      if (!colorConfig) {
-                        colorConfig = labelColors.find(
-                          (c) => c.value === "green"
-                        );
-                      } else if (label.color === "light-green") {
-                        colorConfig = labelColors.find(
-                          (c) => c.value === "green"
-                        );
-                      } else if (label.color === "light-yellow") {
-                        colorConfig = labelColors.find(
-                          (c) => c.value === "yellow"
-                        );
-                      }
-
-                      return (
-                        <span
-                          key={label._id || label.id}
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            colorConfig?.bg || "bg-blue-500"
-                          } ${colorConfig?.text || "text-white"}`}
+                    <div className="flex space-x-1">
+                      {["low", "medium", "high"].map((priority) => (
+                        <button
+                          key={priority}
+                          onClick={() => handleSetPriority(priority)}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            card.priority === priority
+                              ? priority === "high"
+                                ? "bg-red-100 text-red-700"
+                                : priority === "medium"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
                         >
-                          {label.name}
-                          <button
-                            onClick={() =>
-                              handleRemoveLabel(label._id || label.id)
-                            }
-                            className="ml-1 hover:opacity-75 text-xs"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  {card.labels?.length === 0 && (
-                    <div className="text-center py-4 text-gray-500 text-xs">
-                      No labels assigned
+                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                        </button>
+                      ))}
                     </div>
-                  )}
-                </div>
-
-                {/* Assignees */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Assignees ({assignees.length})
-                    </label>
-                    <button
-                      onClick={() => setShowAssignModal(true)}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      Manage
-                    </button>
                   </div>
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {assignees.length > 0 ? (
-                      assignees.map((user) => (
-                        <div
-                          key={user._id || user.id}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <Avatar user={user} size="xs" />
-                            <span className="text-xs text-gray-700">
-                              {user.name || "Unknown User"}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() =>
-                              handleUnassignUser(user._id || user.id)
-                            }
-                            className="text-red-500 hover:text-red-700 text-xs"
+
+                  {/* Labels */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Labels ({card.labels?.length || 0})
+                      </label>
+                      <button
+                        onClick={() => setShowLabelsModal(true)}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                      >
+                        Manage Labels
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 mb-2 max-h-32 overflow-y-auto">
+                      {card.labels?.map((label) => {
+                        let colorConfig = labelColors.find(
+                          (c) => c.value === (label.color || "blue")
+                        );
+
+                        // Map light colors to their saturated equivalents for consistency
+                        if (!colorConfig) {
+                          colorConfig = labelColors.find(
+                            (c) => c.value === "green"
+                          );
+                        } else if (label.color === "light-green") {
+                          colorConfig = labelColors.find(
+                            (c) => c.value === "green"
+                          );
+                        } else if (label.color === "light-yellow") {
+                          colorConfig = labelColors.find(
+                            (c) => c.value === "yellow"
+                          );
+                        }
+
+                        return (
+                          <span
+                            key={label._id || label.id}
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              colorConfig?.bg || "bg-blue-500"
+                            } ${colorConfig?.text || "text-white"}`}
                           >
-                            Remove
-                          </button>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 italic text-xs">
-                        No assignees
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* File Attachments */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Documents ({getOtherAttachments().length})
-                  </label>
-
-                  <div className="space-y-1 mb-2 max-h-40 overflow-y-auto">
-                    {getOtherAttachments().length > 0 ? (
-                      getOtherAttachments().map((attachment) => (
-                        <div
-                          key={attachment._id || attachment.id}
-                          className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors duration-200"
-                        >
-                          <span className="text-lg">
-                            {getFileIcon(attachment)}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 text-xs truncate">
-                              {attachment.originalName ||
-                                attachment.filename ||
-                                attachment.name}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              {attachment.uploadedAt
-                                ? new Date(
-                                    attachment.uploadedAt
-                                  ).toLocaleString()
-                                : "Unknown date"}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <a
-                              href={
-                                attachment.url.startsWith("http")
-                                  ? attachment.url
-                                  : `${API_URL}${attachment.url}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 text-xs"
-                            >
-                              View
-                            </a>
+                            {label.name}
                             <button
                               onClick={() =>
-                                handleDeleteAttachment(
-                                  attachment._id || attachment.id
-                                )
+                                handleRemoveLabel(label._id || label.id)
                               }
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
-                              title="Delete attachment"
+                              className="ml-1 hover:opacity-75 text-xs"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              ×
                             </button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 italic text-xs">
-                        No file attachments
-                      </p>
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    {card.labels?.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 text-xs">
+                        No labels assigned
+                      </div>
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    {/* File Upload */}
-                    <div className="space-y-1">
-                      <div className="flex space-x-1">
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,.7z,.json,.xml,.odt,.ods,.odp"
-                          onChange={handleFileSelect}
-                          className="hidden"
-                          id="file-upload"
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs cursor-pointer flex items-center justify-center space-x-1"
-                        >
-                          <Upload className="w-3 h-3" />
-                          <span>Upload Files (Max 5)</span>
-                        </label>
-                      </div>
-                      <p className="text-xs text-gray-500 text-center">
-                        Max 5 files, 10MB each. Supports images and documents.
-                      </p>
-                    </div>
-
-                    {/* URL Attachment */}
-                    <div className="flex space-x-1">
-                      <input
-                        type="url"
-                        value={attachmentUrl}
-                        onChange={(e) => setAttachmentUrl(e.target.value)}
-                        placeholder="Enter attachment URL..."
-                        className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
-                      />
+                  {/* Assignees */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Assignees ({assignees.length})
+                      </label>
                       <button
-                        onClick={handleAddAttachment}
-                        disabled={!attachmentUrl.trim()}
-                        className="bg-gray-600 text-white hover:bg-gray-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setShowAssignModal(true)}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                       >
-                        Add
+                        Manage
                       </button>
                     </div>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {assignees.length > 0 ? (
+                        assignees.map((user) => (
+                          <div
+                            key={user._id || user.id}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <Avatar user={user} size="xs" />
+                              <span className="text-xs text-gray-700">
+                                {user.name || "Unknown User"}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() =>
+                                handleUnassignUser(user._id || user.id)
+                              }
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 italic text-xs">
+                          No assignees
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Card Items Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Items ({items.length})
+                  {/* File Attachments */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Documents ({getOtherAttachments().length})
                     </label>
-                    <button
-                      onClick={() => setShowAddItem(!showAddItem)}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Item</span>
-                    </button>
-                  </div>
 
-                  {/* Items List */}
-                  <div className="space-y-2">
-                    {loadingItems ? (
-                      <div className="text-center py-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
-                      </div>
-                    ) : items.length > 0 ? (
-                      items.map((item) => (
-                        <div
-                          key={item._id}
-                          className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors"
-                        >
-                          <button
-                            onClick={() =>
-                              handleToggleItem(item._id, item.completed)
-                            }
-                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                              item.completed
-                                ? "bg-green-500 border-green-500 text-white"
-                                : "border-gray-300 hover:border-gray-400"
-                            }`}
+                    <div className="space-y-1 mb-2 max-h-40 overflow-y-auto">
+                      {getOtherAttachments().length > 0 ? (
+                        getOtherAttachments().map((attachment) => (
+                          <div
+                            key={attachment._id || attachment.id}
+                            className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors duration-200"
                           >
-                            {item.completed && (
-                              <CheckSquare className="w-3 h-3" />
-                            )}
-                          </button>
-                          <span
-                            className={`flex-1 text-sm ${
-                              item.completed
-                                ? "line-through text-gray-400"
-                                : "text-gray-700"
-                            }`}
+                            <span className="text-lg">
+                              {getFileIcon(attachment)}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 text-xs truncate">
+                                {attachment.originalName ||
+                                  attachment.filename ||
+                                  attachment.name}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {attachment.uploadedAt
+                                  ? new Date(
+                                      attachment.uploadedAt
+                                    ).toLocaleString()
+                                  : "Unknown date"}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <a
+                                href={
+                                  attachment.url.startsWith("http")
+                                    ? attachment.url
+                                    : `${API_URL}${attachment.url}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 text-xs"
+                              >
+                                View
+                              </a>
+                              <button
+                                onClick={() =>
+                                  handleDeleteAttachment(
+                                    attachment._id || attachment.id
+                                  )
+                                }
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
+                                title="Delete attachment"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 italic text-xs">
+                          No file attachments
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      {/* File Upload */}
+                      <div className="space-y-1">
+                        <div className="flex space-x-1">
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,.7z,.json,.xml,.odt,.ods,.odp"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                            id="file-upload"
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs cursor-pointer flex items-center justify-center space-x-1"
                           >
-                            {item.title}
-                          </span>
-                          <button
-                            onClick={() => handleDeleteItem(item._id)}
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                            <Upload className="w-3 h-3" />
+                            <span>Upload Files (Max 5)</span>
+                          </label>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 italic text-sm text-center py-2">
-                        No items yet
-                      </p>
-                    )}
-                  </div>
+                        <p className="text-xs text-gray-500 text-center">
+                          Max 5 files, 10MB each. Supports images and documents.
+                        </p>
+                      </div>
 
-                  {/* Add Item Form */}
-                  {showAddItem && (
-                    <div className="mt-3 space-y-2">
-                      <input
-                        type="text"
-                        value={newItemTitle}
-                        onChange={(e) => setNewItemTitle(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            handleAddItem();
-                          } else if (e.key === "Escape") {
-                            setShowAddItem(false);
-                            setNewItemTitle("");
-                          }
-                        }}
-                        placeholder="Enter item title..."
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        autoFocus
-                      />
-                      <div className="flex space-x-2">
+                      {/* URL Attachment */}
+                      <div className="flex space-x-1">
+                        <input
+                          type="url"
+                          value={attachmentUrl}
+                          onChange={(e) => setAttachmentUrl(e.target.value)}
+                          placeholder="Enter attachment URL..."
+                          className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                        />
                         <button
-                          onClick={handleAddItem}
-                          disabled={!newItemTitle.trim()}
-                          className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-3 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={handleAddAttachment}
+                          disabled={!attachmentUrl.trim()}
+                          className="bg-gray-600 text-white hover:bg-gray-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Add Item
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowAddItem(false);
-                            setNewItemTitle("");
-                          }}
-                          className="bg-gray-300 text-gray-700 hover:bg-gray-400 font-medium py-1.5 px-3 rounded-lg transition-colors text-sm"
-                        >
-                          Cancel
+                          Add
                         </button>
                       </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Card Items Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Items ({items.length})
+                      </label>
+                      <button
+                        onClick={() => setShowAddItem(!showAddItem)}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Item</span>
+                      </button>
+                    </div>
+
+                    {/* Items List */}
+                    <div className="space-y-2">
+                      {loadingItems ? (
+                        <div className="text-center py-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                        </div>
+                      ) : items.length > 0 ? (
+                        items.map((item) => (
+                          <div
+                            key={item._id}
+                            className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors"
+                          >
+                            <button
+                              onClick={() =>
+                                handleToggleItem(item._id, item.completed)
+                              }
+                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                item.completed
+                                  ? "bg-green-500 border-green-500 text-white"
+                                  : "border-gray-300 hover:border-gray-400"
+                              }`}
+                            >
+                              {item.completed && (
+                                <CheckSquare className="w-3 h-3" />
+                              )}
+                            </button>
+                            <span
+                              className={`flex-1 text-sm ${
+                                item.completed
+                                  ? "line-through text-gray-400"
+                                  : "text-gray-700"
+                              }`}
+                            >
+                              {item.title}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteItem(item._id)}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 italic text-sm text-center py-2">
+                          No items yet
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Add Item Form */}
+                    {showAddItem && (
+                      <div className="mt-3 space-y-2">
+                        <input
+                          type="text"
+                          value={newItemTitle}
+                          onChange={(e) => setNewItemTitle(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              handleAddItem();
+                            } else if (e.key === "Escape") {
+                              setShowAddItem(false);
+                              setNewItemTitle("");
+                            }
+                          }}
+                          placeholder="Enter item title..."
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          autoFocus
+                        />
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={handleAddItem}
+                            disabled={!newItemTitle.trim()}
+                            className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-3 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Add Item
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowAddItem(false);
+                              setNewItemTitle("");
+                            }}
+                            className="bg-gray-300 text-gray-700 hover:bg-gray-400 font-medium py-1.5 px-3 rounded-lg transition-colors text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Drag Overlay */}
+            {isDragging && (
+              <div
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 m-0 bg-indigo-600 bg-opacity-90 z-50 flex items-center justify-center pointer-events-none rounded-2xl"
+                style={{ width: "40%", height: "30%" }}
+              >
+                <div className="text-center text-white">
+                  <Upload className="w-12 h-12 mx-auto mb-3 animate-bounce" />
+                  <p className="text-lg font-bold">Drop files here to upload</p>
+                  <p className="text-sm mt-1 opacity-90">
+                    Supports images and documents
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Upload Overlay */}
+            {isUploading && (
+              <div
+                className="absolute top-0 left-0 right-0 bottom-0 m-0 bg-black bg-opacity-70 z-50 flex items-center justify-center pointer-events-none rounded-2xl"
+                style={{ width: "100%", height: "100%" }}
+              >
+                <div className="text-center text-white">
+                  <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-lg font-semibold">Uploading files...</p>
+                  <p className="text-xs mt-1 opacity-80">Please wait</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Drag Overlay */}
-        {isDragging && (
-          <div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 m-0 bg-blue-600 bg-opacity-90 z-50 flex items-center justify-center pointer-events-none rounded-2xl"
-            style={{ width: "40%", height: "30%" }}
-          >
-            <div className="text-center text-white">
-              <Upload className="w-12 h-12 mx-auto mb-3 animate-bounce" />
-              <p className="text-lg font-bold">Drop files here to upload</p>
-              <p className="text-sm mt-1 opacity-90">
-                Supports images and documents
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Upload Overlay */}
-        {isUploading && (
-          <div
-            className="absolute top-0 left-0 right-0 bottom-0 m-0 bg-black bg-opacity-70 z-50 flex items-center justify-center pointer-events-none rounded-2xl"
-            style={{ width: "100%", height: "100%" }}
-          >
-            <div className="text-center text-white">
-              <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-              <p className="text-lg font-semibold">Uploading files...</p>
-              <p className="text-xs mt-1 opacity-80">Please wait</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Assign User Modal */}
@@ -2173,10 +2188,11 @@ const CardModal = ({
 
       {/* Image Modal */}
       {showImageModal && selectedImage && (
-        <div className="modal-overlay">
+        <div className="fixed inset-0 z-[999999] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             ref={imageModalRef}
-            className="bg-white rounded-2xl shadow-2xl max-w-6xl max-h-[95vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl max-w-6xl max-h-[95vh] overflow-hidden border-4 border-white"
           >
             {/* Image Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -2273,10 +2289,11 @@ const CardModal = ({
 
       {/* Formatting Help Modal */}
       {showFormattingHelp && (
-        <div className="modal-overlay">
+        <div className="fixed inset-0 z-[999999] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             ref={formattingHelpModalRef}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 border-4 border-white"
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">

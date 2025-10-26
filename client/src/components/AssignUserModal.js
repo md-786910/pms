@@ -158,15 +158,15 @@ const AssignUserModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 bg-primary-100 transition-colors duration-200 hover:scale-105"
+            className="p-2 rounded-xl hover:bg-slate-100 bg-indigo-100 transition-all duration-300 hover:scale-105"
           >
-            <X className="w-5 h-5 text-secondary-600" />
+            <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
         <div className="p-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-secondary-900">
+            <h3 className="text-lg font-semibold text-slate-900">
               {card ? "Project Members" : "All Users"}
             </h3>
 
@@ -193,17 +193,15 @@ const AssignUserModal = ({
                 return (
                   <div
                     key={user?._id}
-                    className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-xl"
                   >
                     <div className="flex items-center space-x-3">
                       <Avatar user={user} size="sm" />
                       <div>
-                        <p className="font-medium text-secondary-900">
+                        <p className="font-semibold text-slate-900">
                           {user?.name}
                         </p>
-                        <p className="text-sm text-secondary-600">
-                          {user?.email}
-                        </p>
+                        <p className="text-sm text-slate-600">{user?.email}</p>
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             role === "admin"
@@ -247,7 +245,7 @@ const AssignUserModal = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end pt-6 border-t border-secondary-200 mt-6">
+          <div className="flex items-center justify-end pt-6 border-t border-slate-200 mt-6">
             <button onClick={onClose} className="btn-secondary">
               Close
             </button>

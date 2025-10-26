@@ -286,7 +286,7 @@ const CardItem = ({
   return (
     <>
       <div
-        className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200 group relative"
+        className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-soft border border-slate-200/50 hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 ease-in-out group relative"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -307,15 +307,15 @@ const CardItem = ({
               ) : (
                 <div>
                   <h4
-                    className="font-medium text-gray-900 text-sm leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1"
+                    className="font-semibold text-slate-900 text-sm leading-tight cursor-pointer hover:text-indigo-600 transition-all duration-300 mb-1"
                     onClick={handleTitleEdit}
                     title="Click to edit title"
                   >
                     {card.title}
                   </h4>
                   {/* Issue Number and Priority */}
-                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">
+                  <div className="flex items-center space-x-2 text-xs text-slate-500">
+                    <span className="bg-slate-100 px-2.5 py-0.5 rounded-lg font-medium">
                       #{card._id?.slice(-4) || "0000"}
                     </span>
                     {card.priority && (

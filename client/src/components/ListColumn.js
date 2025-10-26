@@ -79,14 +79,14 @@ const ListColumn = ({
 
   return (
     <div
-      className={`bg-gray-50 rounded-lg border border-gray-200 h-[600px] transition-all duration-200 ${
-        isHovered ? "shadow-lg" : "shadow-sm"
+      className={`bg-white/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 h-[600px] transition-all duration-300 ease-in-out ${
+        isHovered ? "shadow-xl" : "shadow-soft"
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Column Header */}
-      <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg">
+      <div className="p-4 border-b border-slate-200/50 bg-gradient-to-r from-white to-indigo-50/30 rounded-t-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 flex-1">
             {isEditing ? (
@@ -101,11 +101,11 @@ const ListColumn = ({
               />
             ) : (
               <h3
-                className={`text-sm font-semibold ${textColor} uppercase tracking-wide flex-1 ${
+                className={`text-sm font-bold ${textColor} uppercase tracking-wide flex-1 ${
                   status !== "archive"
-                    ? "cursor-pointer hover:bg-gray-100"
+                    ? "cursor-pointer hover:bg-indigo-50 rounded-xl transition-all duration-300"
                     : "cursor-not-allowed"
-                } px-2 py-1 rounded`}
+                } px-3 py-1.5`}
                 onClick={() => {
                   if (status !== "archive") setIsEditing(true);
                 }}
@@ -119,7 +119,7 @@ const ListColumn = ({
               </h3>
             )}
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${textColor} bg-gray-100`}
+              className={`px-3 py-1 rounded-full text-xs font-bold ${textColor} bg-gradient-to-r from-slate-100 to-indigo-100 shadow-sm border border-slate-200/50`}
             >
               {cards.length}
             </span>
@@ -143,7 +143,7 @@ const ListColumn = ({
             </button>
 
             {showMenu && status !== "archive" && (
-              <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+              <div className="absolute right-0 top-8 w-48 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 py-2 z-20 animate-fade-in">
                 <button
                   onClick={() => {
                     setIsEditing(true);
@@ -213,10 +213,10 @@ const ListColumn = ({
 
       {/* Add Card Button - Always Visible (except for Archive column) */}
       {status !== "archive" && (
-        <div className="p-3 border-t border-gray-100">
+        <div className="p-3 border-t border-slate-200/50 bg-gradient-to-r from-white to-indigo-50/20 rounded-b-2xl">
           <button
             onClick={() => onAddCard(status)}
-            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400"
+            className="w-full flex items-center justify-center space-x-2 py-2.5 px-3 text-sm text-slate-600 hover:text-indigo-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 rounded-xl transition-all duration-300 border-2 border-dashed border-slate-300 hover:border-indigo-400 font-medium"
           >
             <Plus className="w-4 h-4" />
             <span>Add a card</span>

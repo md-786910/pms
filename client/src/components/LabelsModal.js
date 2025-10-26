@@ -592,10 +592,10 @@ const LabelsModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto">
+    <div className="fixed inset-0 z-[999999] overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
         onClick={(e) => {
           e.stopPropagation();
           // Don't close if there's a delete confirmation modal open
@@ -802,9 +802,9 @@ const LabelsModal = ({
 
       {/* Delete Confirmation Modal */}
       {labelToDelete && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999999] flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black bg-opacity-50"
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={cancelDelete}
           />
           <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">

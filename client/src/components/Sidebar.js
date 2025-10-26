@@ -82,30 +82,32 @@ const Sidebar = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${
+        className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-white via-indigo-50/30 to-white backdrop-blur-xl border-r border-slate-200/50 shadow-2xl transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${
           isCollapsed ? "w-16" : "w-72"
         } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center justify-between px-4 py-6 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-6 border-b border-slate-200/50 bg-gradient-to-r from-indigo-50/50 to-white">
           {!isCollapsed && (
-            <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+            <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+              Menu
+            </h2>
           )}
           <button
             onClick={onToggleSidebar}
-            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            className="hidden lg:flex p-2 rounded-xl hover:bg-slate-100 transition-all duration-300 text-slate-600 hover:text-indigo-600"
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-5 h-5" />
             )}
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
+            className="p-2 rounded-xl hover:bg-slate-100 transition-all duration-300 lg:hidden text-slate-600"
           >
-            <X className="w-4 h-4 text-gray-600" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -128,10 +130,10 @@ const Sidebar = ({
                   isCollapsed
                     ? "justify-center px-2 py-3"
                     : "justify-between px-3 py-3"
-                } rounded-lg transition-colors duration-200 ${
+                } rounded-xl transition-all duration-300 ease-in-out ${
                   isActive
-                    ? "bg-blue-100 text-blue-700 border border-blue-200"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/30"
+                    : "text-slate-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-700"
                 }`}
                 title={isCollapsed ? item.name : ""}
               >
@@ -157,7 +159,7 @@ const Sidebar = ({
         </nav>
 
         {/* User info */}
-        <div className="p-4 border-t border-gray-200 mt-auto">
+        <div className="p-4 border-t border-slate-200/50 mt-auto bg-gradient-to-r from-white to-indigo-50/20">
           <div
             className={`flex items-center ${
               isCollapsed ? "justify-center" : "space-x-3"
@@ -166,10 +168,12 @@ const Sidebar = ({
             <Avatar user={user} size="sm" />
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-semibold text-slate-900 truncate">
                   {user?.name}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="text-xs text-slate-500 capitalize">
+                  {user?.role}
+                </p>
               </div>
             )}
           </div>

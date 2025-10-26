@@ -90,32 +90,33 @@ const AdminPanel = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      {/* Compact Modern Header */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
+              className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition-all duration-300"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
 
             <div>
-              <h1 className="text-2xl font-bold mb-2">Admin Panel</h1>
-              <p className="text-primary-100 text-lg">
-                Manage projects and team members
-              </p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Admin Panel
+              </h1>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="bg-white bg-opacity-20 rounded-xl p-3">
-              <Settings className="w-6 h-6" />
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{projects?.length || 0}</div>
-              <div className="text-primary-100 text-sm">Projects</div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 px-4 py-2 bg-indigo-50 rounded-xl">
+              <Settings className="w-5 h-5 text-indigo-600" />
+              <div className="text-right">
+                <div className="text-lg font-bold text-indigo-700">
+                  {projects?.length || 0}
+                </div>
+                <div className="text-xs text-indigo-600">Projects</div>
+              </div>
             </div>
           </div>
         </div>

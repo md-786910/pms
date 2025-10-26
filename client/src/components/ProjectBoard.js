@@ -696,10 +696,10 @@ const ProjectBoard = () => {
   if (!currentProject) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-secondary-900 mb-2">
+        <h3 className="text-lg font-medium text-slate-900 mb-2">
           Project not found
         </h3>
-        <p className="text-secondary-600 mb-6">
+        <p className="text-slate-600 mb-6">
           The project you're looking for doesn't exist.
         </p>
         <Link to="/" className="btn-primary">
@@ -711,104 +711,90 @@ const ProjectBoard = () => {
 
   return (
     <div className="h-full flex flex-col max-h-full">
-      {/* Compact Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-[26px] text-white mb-4 flex-shrink-0">
-        <div className="flex items-center justify-between gap-3">
+      {/* Compact Modern Header */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 px-6 py-4 mb-6 flex-shrink-0">
+        <div className="flex items-center justify-between gap-4">
           {/* Left: Back + title + description */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
             <Link
               to="/"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition-all duration-300"
               title="Back"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold truncate max-w-[40vw]">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold truncate tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 {currentProject.name}
               </h1>
-              <p className="text-blue-100 text-sm truncate max-w-[50vw]">
+              <p className="text-slate-500 text-xs truncate mt-0.5">
                 {stripHtmlTags(currentProject.description)}
               </p>
             </div>
           </div>
 
           {/* Right: Status pills + Date pill + Filter + Settings */}
-          <div className="flex items-center gap-3">
-            {/* Status pills */}
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
-                  getProjectStatusColors(currentProject.projectStatus).bgColor
-                } ${
-                  getProjectStatusColors(currentProject.projectStatus).textColor
-                } ${
-                  getProjectStatusColors(currentProject.projectStatus)
-                    .borderColor
-                }`}
-                title="Project status"
-              >
-                {getProjectStatusColors(currentProject.projectStatus).label}
-              </span>
-              {/* <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
-                  getProjectTypeColors(currentProject.projectType).bgColor
-                } ${
-                  getProjectTypeColors(currentProject.projectType).textColor
-                } ${
-                  getProjectTypeColors(currentProject.projectType).borderColor
-                }`}
-                title="Project type"
-              >
-                {getProjectTypeColors(currentProject.projectType).label}
-              </span> */}
-            </div>
-            {/* Date pill */}
-            <div className="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5">
-              <div className="w-7 h-7 bg-white/25 rounded-full flex items-center justify-center">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div className="text-xs">
-                <span className="font-medium">
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Status pill */}
+            <span
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${
+                getProjectStatusColors(currentProject.projectStatus).bgColor
+              } ${
+                getProjectStatusColors(currentProject.projectStatus).textColor
+              } ${
+                getProjectStatusColors(currentProject.projectStatus).borderColor
+              }`}
+              title="Project status"
+            >
+              {getProjectStatusColors(currentProject.projectStatus).label}
+            </span>
+
+            {/* Date pill - Compact */}
+            <div className="flex items-center gap-2 bg-slate-50 rounded-full px-3 py-1.5">
+              <Calendar className="w-4 h-4 text-slate-600" />
+              <div className="text-xs text-slate-700">
+                <span className="font-semibold">
                   {formatDate(projectData.project?.startDate)}
                 </span>
                 {projectData.project?.endDate && (
                   <>
-                    <span className="opacity-70 mx-1">→</span>
-                    <span className="font-medium">
+                    <span className="text-slate-400 mx-1">→</span>
+                    <span className="font-semibold">
                       {formatDate(projectData.project?.endDate)}
                     </span>
                   </>
                 )}
               </div>
             </div>
-            {/* Filter button and Cancel Filter button */}
+
+            {/* Filter button */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilterPanel(!showFilterPanel)}
-                className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors relative"
+                className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition-all duration-300 relative"
                 title="Filter cards"
               >
                 <Filter className="w-5 h-5" />
                 {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700"></span>
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white shadow-lg"></span>
                 )}
               </button>
               {hasActiveFilters && (
                 <button
                   onClick={handleCancelFilter}
-                  className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5 px-3"
+                  className="py-2 px-3 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white transition-all duration-300 flex items-center gap-1.5 text-xs font-semibold shadow-lg"
                   title="Cancel all filters"
                 >
-                  <X className="w-4 h-4" />
-                  <span className="text-sm font-medium">Cancel Filter</span>
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancel</span>
                 </button>
               )}
             </div>
+
             {/* Settings button */}
             <button
               onClick={handleEditProject}
-              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition-all duration-300"
               title="Project Settings"
             >
               <Settings className="w-5 h-5" />
@@ -872,17 +858,17 @@ const ProjectBoard = () => {
 
             {/* Add Column Button - Fixed Position */}
             <div className="w-80 flex-shrink-0">
-              <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 h-[600px] flex items-center justify-center hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 group">
+              <div className="bg-gradient-to-br from-slate-50 to-indigo-50/30 rounded-2xl border-2 border-dashed border-slate-300 h-[600px] flex items-center justify-center hover:bg-gradient-to-br hover:from-slate-100 hover:to-indigo-100/50 hover:border-indigo-400 transition-all duration-300 group backdrop-blur-sm">
                 <button
                   onClick={() => setShowAddColumnModal(true)}
-                  className="flex flex-col items-center space-y-3 text-gray-500 hover:text-gray-700 transition-colors duration-200 group-hover:scale-105"
+                  className="flex flex-col items-center space-y-3 text-slate-600 hover:text-indigo-600 transition-all duration-300 group-hover:scale-105"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gray-200 group-hover:bg-gray-300 flex items-center justify-center transition-colors duration-200">
-                    <Plus className="w-6 h-6" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 group-hover:from-indigo-200 group-hover:to-purple-200 flex items-center justify-center transition-all duration-300 shadow-lg">
+                    <Plus className="w-7 h-7 text-indigo-600" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium">Add Column</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-sm font-semibold">Add Column</p>
+                    <p className="text-xs text-slate-500 mt-1">
                       Create a new workflow stage
                     </p>
                   </div>
@@ -900,7 +886,7 @@ const ProjectBoard = () => {
         {showScrollButton && (
           <button
             onClick={scrollToEnd}
-            className="absolute bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200 z-10"
+            className="absolute bottom-6 right-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-3 rounded-full shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 z-10"
             title="Scroll to end"
           >
             <ChevronRight className="w-5 h-5" />
@@ -920,16 +906,18 @@ const ProjectBoard = () => {
 
       {/* Add Column Modal */}
       {showAddColumnModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div
             ref={addColumnModalRef}
-            className="bg-white rounded-lg p-6 w-96 max-w-md mx-4"
+            className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 w-96 max-w-md mx-4 shadow-2xl border border-slate-200/50"
           >
-            <h3 className="text-lg font-semibold mb-4">Add New Column</h3>
+            <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-5">
+              Add New Column
+            </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Column Name
                 </label>
                 <input
@@ -937,46 +925,43 @@ const ProjectBoard = () => {
                   value={newColumnName}
                   onChange={(e) => setNewColumnName(e.target.value)}
                   placeholder="Enter column name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Color
                 </label>
-                <div className="flex space-x-2">
+                <div className="flex space-x-3">
                   {["blue", "green", "red", "gray", "yellow"].map((color) => (
                     <button
                       key={color}
                       onClick={() => setNewColumnColor(color)}
-                      className={`w-8 h-8 rounded-full border-2 ${
+                      className={`w-10 h-10 rounded-xl border-2 transition-all duration-300 ${
                         newColumnColor === color
-                          ? "border-gray-800"
-                          : "border-gray-300"
-                      } bg-${color}-500 hover:opacity-80 transition-opacity`}
+                          ? "border-slate-800 shadow-lg"
+                          : "border-slate-300 hover:border-slate-400"
+                      } bg-${color}-500 hover:scale-110`}
                     />
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex justify-end space-x-3 mt-6 pt-5 border-t border-slate-200/50">
               <button
                 onClick={() => {
                   setShowAddColumnModal(false);
                   setNewColumnName("");
                   setNewColumnColor("gray");
                 }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                className="px-5 py-2.5 text-slate-600 hover:text-slate-800 transition-all duration-300"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleAddColumn}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
+              <button onClick={handleAddColumn} className="btn-primary">
                 Create Column
               </button>
             </div>

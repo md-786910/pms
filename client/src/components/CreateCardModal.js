@@ -75,23 +75,23 @@ const CreateCardModal = ({
   return (
     <div className="modal-overlay">
       <div ref={modalRef} className="modal-content">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
-          <h2 className="text-xl font-semibold text-secondary-900">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200/50 bg-gradient-to-r from-indigo-50/50 to-white rounded-t-3xl">
+          <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
             Create New Card
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 transition-colors duration-200"
+            className="p-2 rounded-xl hover:bg-slate-100 transition-all duration-300"
           >
-            <X className="w-5 h-5 text-secondary-600" />
+            <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-secondary-700 mb-2"
+              className="block text-sm font-semibold text-slate-700 mb-2"
             >
               Card Title *
             </label>
@@ -110,7 +110,7 @@ const CreateCardModal = ({
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-secondary-700 mb-2"
+              className="block text-sm font-semibold text-slate-700 mb-2"
             >
               Description
             </label>
@@ -124,13 +124,13 @@ const CreateCardModal = ({
                   description: e.target.value,
                 });
               }}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] resize-y"
+              className="w-full p-4 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[120px] resize-y transition-all duration-300 bg-white"
               placeholder="Enter card description (use @ to mention someone, # for tags)"
               rows={4}
             />
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-4">
+          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-slate-200/50">
             <button
               type="button"
               onClick={onClose}

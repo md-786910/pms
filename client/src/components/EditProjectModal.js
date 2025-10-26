@@ -351,10 +351,11 @@ const EditProjectModal = ({ project, onClose }) => {
   if (!project) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[999999] p-4">
       <div
         ref={modalRef}
-        className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col border-4 border-white"
       >
         {/* Sticky Close Button */}
         <button
@@ -365,15 +366,17 @@ const EditProjectModal = ({ project, onClose }) => {
           <X className="w-4 h-4 text-gray-600" />
         </button>
 
-        {/* Modal Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex-shrink-0">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-white/20 rounded-xl">
-              <Save className="w-4 h-4" />
+        {/* Modal Header - Compact */}
+        <div className="bg-white px-6 py-4 border-b border-slate-200/50 flex-shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Save className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Edit Project</h2>
-              <p className="text-primary-100 text-lg">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Edit Project
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Update project details and manage attachments
               </p>
             </div>
