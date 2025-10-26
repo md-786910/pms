@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Edit2, Plus } from "lucide-react";
+import { X, Edit2, Plus, Trash2 } from "lucide-react";
 import { useNotification } from "../contexts/NotificationContext";
-import { cardAPI } from "../utils/api";
+import { useSocket } from "../contexts/SocketContext";
+import { useUser } from "../contexts/UserContext";
+import { cardAPI, projectAPI } from "../utils/api";
 
 const LabelsModal = ({
   isOpen,
   onClose,
   card,
   onCardUpdated,
-  projectLabels = [],
+  projectLabels = [], // Deprecated - labels are now fetched from API
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLabels, setSelectedLabels] = useState(new Set());
@@ -19,7 +21,10 @@ const LabelsModal = ({
   const [editingLabel, setEditingLabel] = useState(null);
   const [editLabelName, setEditLabelName] = useState("");
   const [editLabelColor, setEditLabelColor] = useState("blue");
+  const [labelToDelete, setLabelToDelete] = useState(null);
   const { showToast } = useNotification();
+  const { socket } = useSocket();
+  const { user } = useUser();
   const modalRef = useRef(null);
   const isInitializedRef = useRef(false);
   const editedLabelsRef = useRef(new Map()); // Track edited labels
@@ -75,58 +80,173 @@ const LabelsModal = ({
     { name: "Gray", value: "gray", bg: "bg-gray-500", text: "text-white" },
   ];
 
-  // Initialize selected labels from card
+  // Initialize selected labels from card when card or modal opens
   useEffect(() => {
-    if (card && card.labels) {
+    if (isOpen && card && card.labels && card.labels.length > 0) {
       const labelNames = card.labels.map((label) => label.name);
+      console.log("Initializing selected labels:", labelNames);
       setSelectedLabels(new Set(labelNames));
+    } else if (isOpen && card) {
+      console.log("Card has no labels, resetting selection");
+      setSelectedLabels(new Set());
     }
-  }, [card]);
+  }, [isOpen, card]);
 
-  // Set available labels from project when modal opens
+  // Note: We're now fetching labels directly from the API, so this effect is kept for backwards compatibility
+  // but it should not override the API-fetched labels
   useEffect(() => {
-    if (isOpen && projectLabels && projectLabels.length > 0) {
-      if (!isInitializedRef.current) {
-        // Initial load
-        setAvailableLabels(projectLabels);
-        isInitializedRef.current = true;
-      } else {
-        // Update - merge changes from projectLabels, preserving our edits
-        setAvailableLabels((prev) => {
-          const updated = [...prev];
-          projectLabels.forEach((projectLabel) => {
-            // Check if this label was edited
-            const edit = editedLabelsRef.current.get(projectLabel.name);
-            const labelToUse = edit
-              ? { ...projectLabel, name: edit.newName, color: edit.color }
-              : projectLabel;
-
-            const existingIndex = updated.findIndex(
-              (l) => l.name === projectLabel.name || l.name === edit?.newName
-            );
-            if (existingIndex === -1) {
-              // New label, add it
-              updated.push(labelToUse);
-            } else {
-              // Update existing label
-              updated[existingIndex] = labelToUse;
-            }
-          });
-          return updated;
-        });
-      }
-    }
-
     // Reset initialization and edited labels when modal closes
     if (!isOpen) {
       isInitializedRef.current = false;
       editedLabelsRef.current.clear();
     }
-  }, [isOpen, projectLabels]);
+  }, [isOpen]);
+
+  // Fetch project labels from API
+  useEffect(() => {
+    const fetchProjectLabels = async () => {
+      if (isOpen && card && card.project) {
+        try {
+          // Get project ID - handle both string and object formats
+          let projectId;
+          if (typeof card.project === "object") {
+            projectId = card.project._id || card.project.id || card.project;
+          } else {
+            projectId = card.project;
+          }
+
+          console.log("Fetching labels for project:", projectId);
+          console.log("Card object:", card);
+          console.log("Card.project:", card.project);
+
+          const response = await projectAPI.getProjectLabels(projectId);
+          console.log("Fetched labels from API:", response.data);
+          if (response.data.success && response.data.labels) {
+            console.log("Setting available labels:", response.data.labels);
+            setAvailableLabels(response.data.labels);
+          }
+        } catch (error) {
+          console.error("Error fetching project labels:", error);
+          console.error("Error details:", error.response?.data);
+          showToast("Failed to load labels", "error");
+        }
+      }
+    };
+
+    if (isOpen) {
+      fetchProjectLabels();
+    }
+  }, [isOpen, card]);
+
+  // Listen for Socket.IO events for real-time label updates
+  useEffect(() => {
+    if (!socket || !isOpen || !card) return;
+
+    const handleLabelCreated = (data) => {
+      console.log("Label created event received:", data);
+      if (data.label) {
+        // Skip if this event is from the current user (already added via API)
+        const currentUserId = user?._id || user?.id;
+        if (data.userId === currentUserId) {
+          console.log("Label created by current user, skipping Socket event");
+          return;
+        }
+
+        // Check if label already exists to prevent duplicates
+        setAvailableLabels((prev) => {
+          const existingByID = prev.find(
+            (label) =>
+              (label._id || label.id) === (data.label._id || data.label.id)
+          );
+          const existingByName = prev.find(
+            (label) => label.name === data.label.name
+          );
+
+          if (existingByID || existingByName) {
+            console.log("Label already exists, skipping duplicate");
+            return prev;
+          }
+          return [...prev, data.label];
+        });
+      }
+    };
+
+    const handleLabelUpdated = (data) => {
+      console.log("Label updated event received:", data);
+
+      // Skip if this event is from the current user (already updated via API)
+      const currentUserId = user?._id || user?.id;
+      if (data.userId === currentUserId) {
+        console.log("Label updated by current user, skipping Socket event");
+        return;
+      }
+
+      if (data.label) {
+        setAvailableLabels((prev) => {
+          const oldLabel = prev.find((l) => l._id === data.label._id);
+
+          // Update available labels
+          const updated = prev.map((label) =>
+            label._id === data.label._id ? data.label : label
+          );
+
+          // Update selected labels if name changed
+          if (oldLabel && oldLabel.name !== data.label.name) {
+            setSelectedLabels((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(oldLabel.name);
+              newSet.add(data.label.name);
+              return newSet;
+            });
+          }
+
+          return updated;
+        });
+      }
+    };
+
+    const handleLabelRemoved = (data) => {
+      console.log("Label removed event received:", data);
+
+      // Skip if this event is from the current user (already removed via API)
+      const currentUserId = user?._id || user?.id;
+      if (data.userId === currentUserId) {
+        console.log("Label removed by current user, skipping Socket event");
+        return;
+      }
+
+      if (data.labelName && data.labelId) {
+        // Remove from available labels
+        setAvailableLabels((prev) =>
+          prev.filter((label) => (label._id || label.id) !== data.labelId)
+        );
+
+        // Remove from selected labels
+        setSelectedLabels((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(data.labelName);
+          return newSet;
+        });
+      }
+    };
+
+    socket.on("project-label-created", handleLabelCreated);
+    socket.on("project-label-updated", handleLabelUpdated);
+    socket.on("project-label-removed", handleLabelRemoved);
+
+    return () => {
+      socket.off("project-label-created", handleLabelCreated);
+      socket.off("project-label-updated", handleLabelUpdated);
+      socket.off("project-label-removed", handleLabelRemoved);
+    };
+  }, [socket, isOpen, card]);
 
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Don't close if there's a delete confirmation modal open
+      if (labelToDelete) return;
+
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         onClose();
       }
@@ -139,7 +259,7 @@ const LabelsModal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, labelToDelete]);
 
   // Filter labels based on search term
   const filteredLabels = availableLabels.filter((label) =>
@@ -212,30 +332,43 @@ const LabelsModal = ({
     if (!newLabelName.trim()) return;
 
     try {
-      // Add the label to the card immediately
-      const response = await cardAPI.addLabel(card._id, {
+      const projectId =
+        typeof card.project === "object" && card.project._id
+          ? card.project._id
+          : card.project;
+
+      // First, add the label to the project (Label model)
+      const projectResponse = await projectAPI.createLabel(projectId, {
         name: newLabelName.trim(),
         color: newLabelColor,
       });
 
-      if (response.data.success) {
-        // Add to available labels
-        const newLabel = {
+      if (projectResponse.data.success) {
+        // Add the label to the card
+        const cardResponse = await cardAPI.addLabel(card._id, {
           name: newLabelName.trim(),
           color: newLabelColor,
-        };
-        setAvailableLabels((prev) => [...prev, newLabel]);
+        });
 
-        // Also add to selected labels
-        setSelectedLabels((prev) => new Set([...prev, newLabel.name]));
+        if (cardResponse.data.success) {
+          // Add to available labels
+          const newLabel = projectResponse.data.label || {
+            name: newLabelName.trim(),
+            color: newLabelColor,
+          };
+          setAvailableLabels((prev) => [...prev, newLabel]);
 
-        // Update the card
-        onCardUpdated(response.data.card);
+          // Also add to selected labels
+          setSelectedLabels((prev) => new Set([...prev, newLabel.name]));
 
-        setNewLabelName("");
-        setNewLabelColor("blue");
-        setShowCreateLabel(false);
-        showToast("Label created and applied successfully!", "success");
+          // Update the card
+          onCardUpdated(cardResponse.data.card);
+
+          setNewLabelName("");
+          setNewLabelColor("blue");
+          setShowCreateLabel(false);
+          showToast("Label created and applied successfully!", "success");
+        }
       }
     } catch (error) {
       console.error("Error creating label:", error);
@@ -257,74 +390,90 @@ const LabelsModal = ({
     if (!editLabelName.trim()) return;
 
     try {
-      // Find the original label on the card
-      const currentLabels = card.labels || [];
-      const labelToUpdate = currentLabels.find(
+      // Get the label from available labels (project-level label)
+      const originalLabel = availableLabels.find(
         (label) => label.name === editingLabel
       );
 
-      if (labelToUpdate && labelToUpdate._id) {
-        // Check if anything actually changed
-        const nameChanged = editLabelName.trim() !== editingLabel;
-        const colorChanged = editLabelColor !== labelToUpdate.color;
+      if (!originalLabel) {
+        showToast("Label not found", "error");
+        setEditingLabel(null);
+        return;
+      }
 
-        if (nameChanged || colorChanged) {
-          // Store the edit in ref for persistence
-          editedLabelsRef.current.set(editingLabel, {
-            oldName: editingLabel,
-            newName: editLabelName.trim(),
-            color: editLabelColor,
+      // Get project ID
+      const projectId =
+        typeof card.project === "object" && card.project._id
+          ? card.project._id
+          : card.project;
+
+      const labelId = originalLabel._id;
+
+      // Check if anything actually changed
+      const nameChanged = editLabelName.trim() !== editingLabel;
+      const colorChanged = editLabelColor !== originalLabel.color;
+
+      if (!nameChanged && !colorChanged) {
+        showToast("No changes to save", "info");
+        setEditingLabel(null);
+        setEditLabelName("");
+        setEditLabelColor("blue");
+        return;
+      }
+
+      // Update the project-level label
+      const response = await projectAPI.updateLabel(projectId, labelId, {
+        name: editLabelName.trim(),
+        color: editLabelColor,
+      });
+
+      if (response.data.success) {
+        // Update available labels
+        const updatedLabel = response.data.label;
+        setAvailableLabels((prev) =>
+          prev.map((label) =>
+            label._id === labelId
+              ? {
+                  ...label,
+                  name: updatedLabel.name,
+                  color: updatedLabel.color,
+                }
+              : label
+          )
+        );
+
+        // Update selected labels if name changed
+        if (nameChanged) {
+          setSelectedLabels((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(editingLabel);
+            newSet.add(editLabelName.trim());
+            return newSet;
           });
-
-          // First, update available labels list
-          setAvailableLabels((prev) =>
-            prev.map((label) =>
-              label.name === editingLabel
-                ? {
-                    ...label,
-                    name: editLabelName.trim(),
-                    color: editLabelColor,
-                  }
-                : label
-            )
-          );
-
-          // Remove old label
-          const removeResponse = await cardAPI.removeLabel(
-            card._id,
-            labelToUpdate._id
-          );
-
-          if (removeResponse.data.success) {
-            // Add updated label
-            const addResponse = await cardAPI.addLabel(card._id, {
-              name: editLabelName.trim(),
-              color: editLabelColor,
-            });
-
-            if (addResponse.data.success) {
-              // Update selected labels if name changed
-              if (nameChanged) {
-                setSelectedLabels((prev) => {
-                  const newSet = new Set(prev);
-                  newSet.delete(editingLabel);
-                  newSet.add(editLabelName.trim());
-                  return newSet;
-                });
-              }
-
-              onCardUpdated(addResponse.data.card);
-              showToast("Label updated successfully!", "success");
-            } else {
-              showToast("Failed to add updated label", "error");
-            }
-          } else {
-            showToast("Failed to remove old label", "error");
-          }
-        } else {
-          // Nothing changed
-          showToast("No changes to save", "info");
         }
+
+        // Find if this label was on the card and update it locally
+        const currentLabels = card.labels || [];
+        const labelOnCard = currentLabels.find((l) => l.name === editingLabel);
+
+        if (labelOnCard) {
+          const updatedLabels = card.labels.map((l) => {
+            if (l.name === editingLabel) {
+              return {
+                ...l,
+                name: editLabelName.trim(),
+                color: editLabelColor,
+              };
+            }
+            return l;
+          });
+          const updatedCard = { ...card, labels: updatedLabels };
+          onCardUpdated(updatedCard);
+        }
+
+        showToast("Label updated successfully!", "success");
+      } else {
+        showToast("Failed to update label", "error");
       }
 
       setEditingLabel(null);
@@ -332,7 +481,12 @@ const LabelsModal = ({
       setEditLabelColor("blue");
     } catch (error) {
       console.error("Error updating label:", error);
-      showToast("Failed to update label", "error");
+      console.error("Error details:", error.response?.data);
+      showToast(
+        "Failed to update label: " +
+          (error.response?.data?.message || error.message),
+        "error"
+      );
     }
   };
 
@@ -344,6 +498,97 @@ const LabelsModal = ({
     setEditLabelColor("blue");
   };
 
+  // Handle delete label
+  const handleDeleteLabel = async (label, e) => {
+    e.stopPropagation();
+    setLabelToDelete(label);
+  };
+
+  // Confirm and execute delete
+  const confirmDelete = async () => {
+    if (!labelToDelete) return;
+
+    try {
+      // Get project ID (handle both string and object formats)
+      const projectId =
+        typeof card.project === "object" && card.project._id
+          ? card.project._id
+          : card.project;
+
+      const labelId = labelToDelete._id || labelToDelete.id;
+
+      console.log("Deleting label:", labelToDelete);
+      console.log("Label ID:", labelId);
+      console.log("Project ID:", projectId);
+
+      if (!labelId) {
+        console.error("Label ID is undefined!");
+        showToast("Error: Label ID is missing", "error");
+        setLabelToDelete(null);
+        return;
+      }
+
+      // Permanently delete the label from project and all cards
+      const response = await projectAPI.deleteLabel(projectId, labelId);
+
+      console.log("Delete response:", response);
+
+      if (response.data.success) {
+        // Remove from selected labels if it was selected
+        setSelectedLabels((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(labelToDelete.name);
+          return newSet;
+        });
+
+        // Remove from available labels (project level)
+        setAvailableLabels((prev) =>
+          prev.filter(
+            (l) => (l._id || l.id) !== (labelToDelete._id || labelToDelete.id)
+          )
+        );
+
+        // Check if the label was on the current card and update it
+        const currentLabels = card.labels || [];
+        const labelOnCard = currentLabels.find(
+          (l) => l.name === labelToDelete.name && l._id
+        );
+
+        if (labelOnCard) {
+          // Remove label from card state
+          const updatedCard = {
+            ...card,
+            labels: card.labels.filter((l) => l._id !== labelOnCard._id),
+          };
+          onCardUpdated(updatedCard);
+        }
+
+        showToast(
+          `Permanently deleted "${labelToDelete.name}" from project and ${
+            response.data.cardsUpdated || 0
+          } card(s)`,
+          "success"
+        );
+      }
+    } catch (error) {
+      console.error(`Error deleting label:`, error);
+      console.error(`Label object:`, labelToDelete);
+      console.error(`Error details:`, error.response?.data || error.message);
+      showToast(
+        "Failed to delete label: " +
+          (error.response?.data?.message || error.message),
+        "error"
+      );
+    }
+
+    setLabelToDelete(null);
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setLabelToDelete(null);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -353,7 +598,10 @@ const LabelsModal = ({
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
         onClick={(e) => {
           e.stopPropagation();
-          onClose();
+          // Don't close if there's a delete confirmation modal open
+          if (!labelToDelete) {
+            onClose();
+          }
         }}
       />
 
@@ -371,7 +619,10 @@ const LabelsModal = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onClose();
+                  // Don't close if there's a delete confirmation modal open
+                  if (!labelToDelete) {
+                    onClose();
+                  }
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -414,7 +665,7 @@ const LabelsModal = ({
 
                 return (
                   <div
-                    key={label.name}
+                    key={label._id || label.id || label.name}
                     className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg"
                   >
                     {/* Checkbox */}
@@ -468,13 +719,22 @@ const LabelsModal = ({
                         >
                           {label.name}
                         </div>
-                        <button
-                          onClick={(e) => handleEditLabel(label, e)}
-                          className="text-gray-400 hover:text-gray-600 p-1"
-                          title="Edit label"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => handleEditLabel(label, e)}
+                            className="text-gray-400 hover:text-gray-600 p-1"
+                            title="Edit label"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteLabel(label, e)}
+                            className="text-gray-400 hover:text-red-600 p-1 transition-colors"
+                            title="Delete label"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </>
                     )}
                   </div>
@@ -539,6 +799,43 @@ const LabelsModal = ({
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {labelToDelete && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={cancelDelete}
+          />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Permanently Delete Label
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to permanently delete the label "
+              {labelToDelete.name}"?
+              <span className="block mt-2 text-sm text-red-600 font-semibold">
+                This will remove the label from ALL cards in this project and
+                cannot be undone.
+              </span>
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                onClick={cancelDelete}
+                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

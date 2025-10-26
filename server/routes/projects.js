@@ -79,6 +79,7 @@ router.post(
       console.log("Upload route - Files:", req.files);
 
       const projectId = req.params.id;
+      const userId = req.user._id;
       const uploadedFiles = req.files || [];
 
       if (uploadedFiles.length === 0) {
@@ -90,6 +91,11 @@ router.post(
 
       // Get the project (already validated by projectMemberAuth)
       const Project = require("../models/Project");
+      const Activity = require("../models/Activity");
+      const User = require("../models/User");
+      const Notification = require("../models/Notification");
+      const { sendProjectUpdateEmail } = require("../config/email");
+
       const project = await Project.findById(projectId);
 
       // Add uploaded files to project attachments
@@ -104,6 +110,83 @@ router.post(
 
       project.attachments = [...(project.attachments || []), ...newAttachments];
       await project.save();
+
+      // Create activity for file uploads
+      const fileNames = newAttachments
+        .map((att) => att.originalName)
+        .join(", ");
+      const changeDetails = newAttachments.map((att) => ({
+        field: "File Added",
+        icon: "➕",
+        oldValue: "N/A",
+        newValue: att.originalName,
+      }));
+
+      const activity = new Activity({
+        project: projectId,
+        user: userId,
+        type: "attachment_added",
+        message: `Added ${uploadedFiles.length} file(s) to project`,
+        details: {
+          changes: [`added ${uploadedFiles.length} file(s)`],
+          changeDetails: changeDetails,
+          uploadedFiles: newAttachments.map((att) => att.originalName),
+        },
+      });
+      await activity.save();
+
+      // Get project with members for notifications
+      const projectWithMembers = await Project.findById(projectId).populate(
+        "members.user",
+        "name email"
+      );
+      const updatedBy = await User.findById(userId).select("name email");
+
+      if (projectWithMembers && updatedBy) {
+        // Create notifications and send emails for all project members except the user who performed the action
+        const notifications = [];
+        const emailPromises = [];
+
+        for (const member of projectWithMembers.members) {
+          if (member.user._id.toString() !== userId.toString()) {
+            notifications.push({
+              user: member.user._id,
+              sender: userId,
+              type: "project_activity",
+              title: "Project Activity",
+              message: `Added ${uploadedFiles.length} file(s) to project`,
+              relatedProject: projectId,
+              data: {
+                activityType: "attachment_added",
+                activityId: activity._id,
+              },
+            });
+
+            // Send email notification for file uploads
+            emailPromises.push(
+              sendProjectUpdateEmail(
+                member.user,
+                projectWithMembers,
+                updatedBy,
+                `Added ${uploadedFiles.length} file(s): ${fileNames}`,
+                changeDetails
+              )
+            );
+          }
+        }
+
+        // Save notifications
+        if (notifications.length > 0) {
+          await Notification.insertMany(notifications);
+        }
+
+        // Send emails asynchronously
+        if (emailPromises.length > 0) {
+          Promise.allSettled(emailPromises).catch((error) => {
+            console.error("Error sending file upload emails:", error);
+          });
+        }
+      }
 
       res.json({
         success: true,
@@ -135,6 +218,11 @@ router.delete(
 
       // Get the project
       const Project = require("../models/Project");
+      const Activity = require("../models/Activity");
+      const User = require("../models/User");
+      const Notification = require("../models/Notification");
+      const { sendProjectUpdateEmail } = require("../config/email");
+
       const project = await Project.findById(projectId);
 
       if (!project) {
@@ -155,6 +243,9 @@ router.delete(
         });
       }
 
+      // Store attachment details before removal
+      const attachmentName = attachment.originalName;
+
       // Remove attachment from project
       project.attachments = project.attachments.filter(
         (att) => att._id.toString() !== attachmentId
@@ -168,6 +259,82 @@ router.delete(
       } = require("../middleware/upload");
       const filePath = getFilePathFromUrl(attachment.url);
       deleteFile(filePath);
+
+      // Create activity for file removal
+      const changeDetails = [
+        {
+          field: "File Removed",
+          icon: "➖",
+          oldValue: attachmentName,
+          newValue: "N/A",
+        },
+      ];
+
+      const activity = new Activity({
+        project: projectId,
+        user: userId,
+        type: "attachment_removed",
+        message: `Removed file "${attachmentName}" from project`,
+        details: {
+          changes: [`removed file "${attachmentName}"`],
+          changeDetails: changeDetails,
+          removedFile: attachmentName,
+        },
+      });
+      await activity.save();
+
+      // Get project with members for notifications
+      const projectWithMembers = await Project.findById(projectId).populate(
+        "members.user",
+        "name email"
+      );
+      const updatedBy = await User.findById(userId).select("name email");
+
+      if (projectWithMembers && updatedBy) {
+        // Create notifications and send emails for all project members except the user who performed the action
+        const notifications = [];
+        const emailPromises = [];
+
+        for (const member of projectWithMembers.members) {
+          if (member.user._id.toString() !== userId.toString()) {
+            notifications.push({
+              user: member.user._id,
+              sender: userId,
+              type: "project_activity",
+              title: "Project Activity",
+              message: `Removed file "${attachmentName}" from project`,
+              relatedProject: projectId,
+              data: {
+                activityType: "attachment_removed",
+                activityId: activity._id,
+              },
+            });
+
+            // Send email notification for file removal
+            emailPromises.push(
+              sendProjectUpdateEmail(
+                member.user,
+                projectWithMembers,
+                updatedBy,
+                `Removed file: ${attachmentName}`,
+                changeDetails
+              )
+            );
+          }
+        }
+
+        // Save notifications
+        if (notifications.length > 0) {
+          await Notification.insertMany(notifications);
+        }
+
+        // Send emails asynchronously
+        if (emailPromises.length > 0) {
+          Promise.allSettled(emailPromises).catch((error) => {
+            console.error("Error sending file deletion emails:", error);
+          });
+        }
+      }
 
       res.json({
         success: true,

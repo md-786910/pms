@@ -28,6 +28,21 @@ const getStatusLabel = async (projectId, statusValue) => {
   }
 };
 
+// Helper function to strip HTML tags for text comparison
+const stripHtmlTags = (html) => {
+  if (!html) return "";
+  // Remove HTML tags and decode HTML entities
+  return html
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
+    .replace(/&amp;/g, "&") // Decode HTML entities
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+};
+
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
 // @access  Private
@@ -330,6 +345,8 @@ const updateCard = async (req, res) => {
     // Store previous values for comparison
     const previousStatus = card.status;
     const previousAssignees = [...card.assignees];
+    const previousDescription = card.description || "";
+    const previousTitle = card.title || "";
 
     if (title) card.title = title;
     if (description !== undefined) card.description = description;
@@ -377,6 +394,55 @@ const updateCard = async (req, res) => {
         text: `<p><strong>${user.name}</strong> changed the due date from <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedOldDate}</span> to <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedNewDate}</span></p>`,
         timestamp: new Date(),
       });
+    }
+
+    // Add automatic comments for description changes
+    if (description !== undefined) {
+      const hadDescription = previousDescription && previousDescription.trim();
+      const hasDescription = description && description.trim();
+
+      // Only add comment if there's an actual change
+      if (hasDescription && hadDescription) {
+        // Both exist - check if they're actually different (strip HTML for comparison)
+        const prevClean = stripHtmlTags(previousDescription).trim();
+        const newClean = stripHtmlTags(description).trim();
+        if (newClean !== prevClean) {
+          card.comments.push({
+            user: userId,
+            text: `<p><strong>${user.name}</strong> updated the description</p>`,
+            timestamp: new Date(),
+          });
+        }
+      } else if (hasDescription && !hadDescription) {
+        // Description was added
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> added a description</p>`,
+          timestamp: new Date(),
+        });
+      } else if (!hasDescription && hadDescription) {
+        // Description was removed
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> removed the description</p>`,
+          timestamp: new Date(),
+        });
+      }
+    }
+
+    // Add automatic comments for title changes
+    if (title) {
+      const prevTitleClean = previousTitle ? previousTitle.trim() : "";
+      const newTitleClean = title ? title.trim() : "";
+
+      // Only add comment if title actually changed
+      if (newTitleClean && prevTitleClean && newTitleClean !== prevTitleClean) {
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> renamed the card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousTitle}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${title}</span></p>`,
+          timestamp: new Date(),
+        });
+      }
     }
 
     // Add automatic comments for status changes

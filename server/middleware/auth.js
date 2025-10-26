@@ -79,9 +79,24 @@ const adminAuth = async (req, res, next) => {
 
 const projectMemberAuth = async (req, res, next) => {
   try {
+    console.log("projectMemberAuth - Starting");
+    console.log("projectMemberAuth - req.params:", req.params);
+    console.log("projectMemberAuth - req.params.id:", req.params.id);
+    console.log(
+      "projectMemberAuth - req.params.projectId:",
+      req.params.projectId
+    );
+
     await auth(req, res, async () => {
       const Project = require("../models/Project");
-      const projectId = req.params.projectId || req.params.id;
+      // Try multiple sources for the project ID
+      const projectId =
+        req.projectId ||
+        req.projectIdFromUrl ||
+        req.params.id ||
+        req.params.projectId;
+
+      console.log("Inside auth callback - projectId:", projectId);
 
       console.log("ProjectMemberAuth - Raw projectId:", projectId);
       console.log("ProjectMemberAuth - Type:", typeof projectId);
@@ -92,7 +107,7 @@ const projectMemberAuth = async (req, res, next) => {
         !projectId ||
         projectId === "undefined" ||
         projectId === "null" ||
-        projectId.trim() === ""
+        (typeof projectId === "string" && projectId.trim() === "")
       ) {
         console.log("ProjectMemberAuth - Invalid projectId:", projectId);
         return res.status(400).json({

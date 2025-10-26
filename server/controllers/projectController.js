@@ -350,6 +350,30 @@ const updateProject = async (req, res) => {
       return value;
     };
 
+    // Helper function to normalize date values for comparison
+    const normalizeDate = (dateValue) => {
+      if (!dateValue) return null;
+      if (dateValue instanceof Date) {
+        return dateValue.toISOString().split("T")[0];
+      }
+      if (typeof dateValue === "string" && dateValue.trim() === "") {
+        return null;
+      }
+      return dateValue;
+    };
+
+    // Helper function to check if two values are actually different
+    const valuesAreDifferent = (oldValue, newValue) => {
+      // Normalize empty values
+      const normalizeEmpty = (val) => {
+        if (val === null || val === undefined || val === "") return null;
+        if (typeof val === "string" && val.trim() === "") return null;
+        return val;
+      };
+
+      return normalizeEmpty(oldValue) !== normalizeEmpty(newValue);
+    };
+
     // Update project fields and track changes
     if (name !== undefined && name !== originalProject.name) {
       project.name = name;
@@ -363,7 +387,7 @@ const updateProject = async (req, res) => {
     }
     if (
       description !== undefined &&
-      description !== originalProject.description
+      valuesAreDifferent(originalProject.description, description)
     ) {
       project.description = description;
       changes.push(`description`);
@@ -374,7 +398,10 @@ const updateProject = async (req, res) => {
         newValue: formatValue(description),
       });
     }
-    if (clientName !== undefined && clientName !== originalProject.clientName) {
+    if (
+      clientName !== undefined &&
+      valuesAreDifferent(originalProject.clientName, clientName)
+    ) {
       project.clientName = clientName;
       changes.push(`client name to "${clientName}"`);
       changeDetails.push({
@@ -410,39 +437,39 @@ const updateProject = async (req, res) => {
         newValue: formatValue(projectStatus),
       });
     }
-    if (
-      startDate !== undefined &&
-      startDate !== originalProject.startDate?.toISOString().split("T")[0]
-    ) {
-      project.startDate = startDate;
-      changes.push(`start date to "${startDate}"`);
-      changeDetails.push({
-        field: "Start Date",
-        icon: "📅",
-        oldValue: formatValue(
-          originalProject.startDate?.toISOString().split("T")[0]
-        ),
-        newValue: formatValue(startDate),
-      });
+    if (startDate !== undefined) {
+      const normalizedOldStartDate = normalizeDate(originalProject.startDate);
+      const normalizedNewStartDate = normalizeDate(startDate);
+
+      if (normalizedOldStartDate !== normalizedNewStartDate) {
+        project.startDate = startDate;
+        changes.push(`start date to "${startDate}"`);
+        changeDetails.push({
+          field: "Start Date",
+          icon: "📅",
+          oldValue: formatValue(normalizedOldStartDate),
+          newValue: formatValue(normalizedNewStartDate),
+        });
+      }
     }
-    if (
-      endDate !== undefined &&
-      endDate !== originalProject.endDate?.toISOString().split("T")[0]
-    ) {
-      project.endDate = endDate;
-      changes.push(`end date to "${endDate}"`);
-      changeDetails.push({
-        field: "End Date",
-        icon: "📅",
-        oldValue: formatValue(
-          originalProject.endDate?.toISOString().split("T")[0]
-        ),
-        newValue: formatValue(endDate),
-      });
+    if (endDate !== undefined) {
+      const normalizedOldEndDate = normalizeDate(originalProject.endDate);
+      const normalizedNewEndDate = normalizeDate(endDate);
+
+      if (normalizedOldEndDate !== normalizedNewEndDate) {
+        project.endDate = endDate;
+        changes.push(`end date to "${endDate}"`);
+        changeDetails.push({
+          field: "End Date",
+          icon: "📅",
+          oldValue: formatValue(normalizedOldEndDate),
+          newValue: formatValue(normalizedNewEndDate),
+        });
+      }
     }
     if (
       liveSiteUrl !== undefined &&
-      liveSiteUrl !== originalProject.liveSiteUrl
+      valuesAreDifferent(originalProject.liveSiteUrl, liveSiteUrl)
     ) {
       project.liveSiteUrl = liveSiteUrl;
       changes.push(`live site URL`);
@@ -455,7 +482,7 @@ const updateProject = async (req, res) => {
     }
     if (
       demoSiteUrl !== undefined &&
-      demoSiteUrl !== originalProject.demoSiteUrl
+      valuesAreDifferent(originalProject.demoSiteUrl, demoSiteUrl)
     ) {
       project.demoSiteUrl = demoSiteUrl;
       changes.push(`demo site URL`);
@@ -466,7 +493,10 @@ const updateProject = async (req, res) => {
         newValue: formatValue(demoSiteUrl),
       });
     }
-    if (markupUrl !== undefined && markupUrl !== originalProject.markupUrl) {
+    if (
+      markupUrl !== undefined &&
+      valuesAreDifferent(originalProject.markupUrl, markupUrl)
+    ) {
       project.markupUrl = markupUrl;
       changes.push(`markup URL`);
       changeDetails.push({
@@ -481,18 +511,60 @@ const updateProject = async (req, res) => {
       JSON.stringify(attachments) !==
         JSON.stringify(originalProject.attachments)
     ) {
-      project.attachments = attachments;
-      changes.push(`attachments`);
-      changeDetails.push({
-        field: "Attachments",
-        icon: "📎",
-        oldValue:
-          originalProject.attachments?.length > 0
-            ? `${originalProject.attachments.length} files`
-            : "No files",
-        newValue:
-          attachments?.length > 0 ? `${attachments.length} files` : "No files",
-      });
+      // Track individual file changes
+      const oldFiles = originalProject.attachments || [];
+      const newFiles = attachments || [];
+
+      // Find added files (files in newFiles but not in oldFiles)
+      const addedFiles = newFiles.filter(
+        (newFile) =>
+          !oldFiles.some(
+            (oldFile) =>
+              oldFile.filename === newFile.filename ||
+              (oldFile.originalName === newFile.originalName &&
+                oldFile.size === newFile.size)
+          )
+      );
+
+      // Find removed files (files in oldFiles but not in newFiles)
+      const removedFiles = oldFiles.filter(
+        (oldFile) =>
+          !newFiles.some(
+            (newFile) =>
+              newFile.filename === oldFile.filename ||
+              (newFile.originalName === oldFile.originalName &&
+                newFile.size === oldFile.size)
+          )
+      );
+
+      // Only update attachments if there are actual file additions or removals
+      if (addedFiles.length > 0 || removedFiles.length > 0) {
+        project.attachments = attachments;
+
+        if (addedFiles.length > 0) {
+          changes.push(`added ${addedFiles.length} file(s)`);
+          addedFiles.forEach((file) => {
+            changeDetails.push({
+              field: "File Added",
+              icon: "➕",
+              oldValue: "N/A",
+              newValue: file.originalName,
+            });
+          });
+        }
+
+        if (removedFiles.length > 0) {
+          changes.push(`removed ${removedFiles.length} file(s)`);
+          removedFiles.forEach((file) => {
+            changeDetails.push({
+              field: "File Removed",
+              icon: "➖",
+              oldValue: file.originalName,
+              newValue: "N/A",
+            });
+          });
+        }
+      }
     }
     if (color !== undefined && color !== originalProject.color) {
       project.color = color;
@@ -505,7 +577,10 @@ const updateProject = async (req, res) => {
       });
     }
 
-    await project.save();
+    // Only save if there were actual changes
+    if (changes.length > 0) {
+      await project.save();
+    }
 
     // Create activity and send notifications only if there were actual changes
     if (changes.length > 0) {
@@ -558,7 +633,10 @@ const updateProject = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Project updated successfully",
+      message:
+        changes.length > 0
+          ? "Project updated successfully"
+          : "No changes to update",
       project,
     });
   } catch (error) {

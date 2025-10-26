@@ -107,6 +107,11 @@ export const projectAPI = {
   addMember: (id, memberData) =>
     api.post(`/projects/${id}/members`, memberData),
   removeMember: (id, userId) => api.delete(`/projects/${id}/members/${userId}`),
+  getProjectLabels: (id) => api.get(`/projects/${id}/labels`),
+  createLabel: (id, labelData) => api.post(`/projects/${id}/labels`, labelData),
+  updateLabel: (id, labelId, labelData) =>
+    api.put(`/projects/${id}/labels/${labelId}`, labelData),
+  deleteLabel: (id, labelId) => api.delete(`/projects/${id}/labels/${labelId}`),
 
   // Project file upload and attachment management
   uploadFiles: (projectId, formData) => {

@@ -217,6 +217,10 @@ router.post(
         "orange",
         "pink",
         "gray",
+        "light-green",
+        "dark-green",
+        "light-yellow",
+        "dark-yellow",
       ])
       .withMessage("Invalid color"),
   ],

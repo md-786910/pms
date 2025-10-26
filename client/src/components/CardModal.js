@@ -301,6 +301,20 @@ const CardModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card._id]);
 
+  // Sync formData when card prop changes (for real-time updates from other users)
+  useEffect(() => {
+    if (!isEditing) {
+      // Only update if user is not currently editing
+      setFormData({
+        title: card.title || "",
+        description: card.description || "",
+        dueDate: card.dueDate
+          ? new Date(card.dueDate).toISOString().slice(0, 10)
+          : "",
+      });
+    }
+  }, [card.title, card.description, card.dueDate, isEditing]);
+
   // Auto-save due date when it changes
   useEffect(() => {
     const autoSaveDueDate = async () => {
@@ -739,6 +753,12 @@ const CardModal = ({
     const handleCardUpdated = (data) => {
       console.log("Card updated event received in modal:", data);
       if (data.card && data.card._id === card._id) {
+        // Skip if this event is from the current user (already updated via API)
+        const currentUserId = user?._id || user?.id;
+        if (data.userId === currentUserId) {
+          console.log("Card updated by current user, skipping Socket event");
+          return;
+        }
         onCardUpdated(data.card);
       }
     };
