@@ -752,7 +752,24 @@ const CardModal = ({
 
     const handleCardLabelAdded = (data) => {
       console.log("Card label added event received:", data);
-      if (data.card && data.card._id === card._id) {
+      if (
+        data.card &&
+        data.card._id === card._id &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        onCardUpdated(data.card);
+      }
+    };
+
+    const handleCardLabelRemoved = (data) => {
+      console.log("Card label removed event received:", data);
+      if (
+        data.card &&
+        data.card._id === card._id &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
         onCardUpdated(data.card);
       }
     };
@@ -807,7 +824,7 @@ const CardModal = ({
     socket.on("card-comment-added", handleCardCommentAdded);
     socket.on("card-comment-updated", handleCardUpdated);
     socket.on("card-label-added", handleCardLabelAdded);
-    socket.on("card-label-removed", handleCardUpdated);
+    socket.on("card-label-removed", handleCardLabelRemoved);
     socket.on("card-user-assigned", handleCardUpdated);
     socket.on("card-user-unassigned", handleCardUpdated);
     socket.on("card-attachment-added", handleCardUpdated);
@@ -823,7 +840,7 @@ const CardModal = ({
       socket.off("card-comment-added", handleCardCommentAdded);
       socket.off("card-comment-updated", handleCardUpdated);
       socket.off("card-label-added", handleCardLabelAdded);
-      socket.off("card-label-removed", handleCardUpdated);
+      socket.off("card-label-removed", handleCardLabelRemoved);
       socket.off("card-user-assigned", handleCardUpdated);
       socket.off("card-user-unassigned", handleCardUpdated);
       socket.off("card-attachment-added", handleCardUpdated);
@@ -834,7 +851,7 @@ const CardModal = ({
       socket.off("card-item-deleted", handleCardItemDeleted);
       socket.off("card-items-reordered", handleCardItemsReordered);
     };
-  }, [socket, card._id, onCardUpdated, user]);
+  }, [socket, card._id, onCardUpdated, user?._id, user?.id]);
 
   // Add selection change listener for rich text editor
   React.useEffect(() => {
