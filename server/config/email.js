@@ -449,7 +449,7 @@ const sendEmail = async (to, subject, html) => {
     console.log(`📧 Subject: ${subject}`);
 
     const mailOptions = {
-      from: "mdashifreza7869101@gmail.com",
+      from: `PMS <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
       html,
