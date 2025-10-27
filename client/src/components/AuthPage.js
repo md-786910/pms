@@ -166,7 +166,7 @@ const AuthPage = () => {
   const handleDemoLogin = (role) => {
     if (role === "admin") {
       setFormData({
-        email: "admin@pms.com",
+        email: "administrator@bright-digital.de",
         password: "admin123",
       });
     } else {
@@ -270,7 +270,7 @@ const AuthPage = () => {
       </form>
 
       {/* Demo Accounts */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      {/* <div className="mt-8 pt-6 border-t border-gray-200">
         <p className="text-sm text-gray-600 text-center mb-4">
           Try these demo accounts:
         </p>
@@ -290,7 +290,7 @@ const AuthPage = () => {
             <span className="text-sm font-medium">Member Account</span>
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 
@@ -339,7 +339,7 @@ const AuthPage = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
         >
           {loading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -510,9 +510,7 @@ const AuthPage = () => {
 
         {/* Footer */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
-            Demo Project Management System
-          </p>
+          <p className="text-sm text-gray-500">Project Management System</p>
         </div>
       </div>
     </div>
