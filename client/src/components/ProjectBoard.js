@@ -712,7 +712,7 @@ const ProjectBoard = () => {
   return (
     <div className="h-full flex flex-col max-h-full">
       {/* Compact Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-[26px] text-white mb-4 flex-shrink-0">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-4 text-white mb-4 flex-shrink-0">
         <div className="flex items-center justify-between gap-3">
           {/* Left: Back + title + description */}
           <div className="flex items-center gap-3 min-w-0">
@@ -727,9 +727,9 @@ const ProjectBoard = () => {
               <h1 className="text-lg font-semibold truncate max-w-[40vw]">
                 {currentProject.name}
               </h1>
-              <p className="text-blue-100 text-sm truncate max-w-[50vw]">
+              {/* <p className="text-blue-100 text-sm truncate max-w-[50vw]">
                 {stripHtmlTags(currentProject.description)}
-              </p>
+              </p> */}
             </div>
           </div>
 

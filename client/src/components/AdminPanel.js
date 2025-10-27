@@ -91,30 +91,30 @@ const AdminPanel = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
               to="/"
               className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div>
-              <h1 className="text-2xl font-bold mb-2">Admin Panel</h1>
-              <p className="text-primary-100 text-lg">
+              <h1 className="text-xl font-bold mb-1">Admin Panel</h1>
+              <p className="text-primary-100 text-md">
                 Manage projects and team members
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="bg-white bg-opacity-20 rounded-xl p-3">
-              <Settings className="w-6 h-6" />
-            </div>
+            {/* <div className="bg-white bg-opacity-20 rounded-xl p-3">
+              <Settings className="w-4 h-4" />
+            </div> */}
             <div className="text-center">
-              <div className="text-2xl font-bold">{projects?.length || 0}</div>
+              <div className="text-xl font-bold">{projects?.length || 0}</div>
               <div className="text-primary-100 text-sm">Projects</div>
             </div>
           </div>

@@ -295,11 +295,11 @@ const UserManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">User Management</h1>
-            <p className="text-primary-100 text-lg">
+            <h1 className="text-xl font-bold mb-1">User Management</h1>
+            <p className="text-primary-100 text-md">
               Manage users and their access to the system
             </p>
           </div>

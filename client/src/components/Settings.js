@@ -34,19 +34,19 @@ const Settings = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
               to="/"
               className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div>
-              <h1 className="text-2xl font-bold mb-2">Settings</h1>
-              <p className="text-primary-100 text-lg">
+              <h1 className="text-xl font-bold mb-1">Settings</h1>
+              <p className="text-primary-100 text-md">
                 Manage your account and preferences
               </p>
             </div>
@@ -54,10 +54,10 @@ const Settings = () => {
 
           <div className="flex items-center space-x-3">
             <div className="bg-white bg-opacity-20 rounded-xl p-3">
-              <SettingsIcon className="w-6 h-6" />
+              <SettingsIcon className="w-4 h-4" />
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{user?.role || "User"}</div>
+              <div className="text-xl font-bold">{user?.role || "User"}</div>
               <div className="text-primary-100 text-sm">Account Type</div>
             </div>
           </div>

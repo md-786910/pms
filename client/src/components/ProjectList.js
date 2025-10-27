@@ -37,11 +37,11 @@ const ProjectList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Your Projects</h1>
-            <p className="text-primary-100 text-lg">
+            <h1 className="text-xl font-bold mb-1">Your Projects</h1>
+            <p className="text-primary-100 text-md">
               Manage your projects and collaborate with your team
             </p>
           </div>
@@ -50,7 +50,7 @@ const ProjectList = () => {
               onClick={() => setShowCreateModal(true)}
               className="bg-white text-primary-600 hover:bg-primary-50 font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               <span>Create Project</span>
             </button>
           )}
@@ -113,11 +113,11 @@ const ProjectCard = ({ project }) => {
             <h3 className="text-lg font-semibold group-hover:text-primary-100 transition-colors duration-200">
               {project.name}
             </h3>
-            {project.description && !isEmptyHtml(project.description) && (
+            {/* {project.description && !isEmptyHtml(project.description) && (
               <p className="text-primary-100 text-sm mt-1 line-clamp-2">
                 {getCleanTextPreview(project.description, 150)}
               </p>
-            )}
+            )} */}
           </div>
           <button
             onClick={(e) => e.preventDefault()}
@@ -129,7 +129,7 @@ const ProjectCard = ({ project }) => {
       </div>
 
       {/* Card Body */}
-      <div className="p-6">
+      <div className="py-4 px-6">
         {/* Status Badges */}
         {/* <div className="flex items-center space-x-2 mb-4">
           <span
@@ -158,9 +158,20 @@ const ProjectCard = ({ project }) => {
                 {project.members?.length || 0} members
               </span>
             </div>
-            <div className="flex items-center space-x-1">
-              <Calendar className="w-4 h-4" />
-              <span>{formatDate(project.createdAt)}</span>
+            <div className="flex -space-x-2">
+              {project.members?.slice(0, 4).map((member, index) => (
+                <div
+                  key={member.user?._id || member.user || index}
+                  className="border-2 border-white shadow-sm rounded-full"
+                >
+                  <Avatar user={member.user} size="sm" showTooltip={true} />
+                </div>
+              ))}
+              {project.members && project.members.length > 4 && (
+                <div className="w-8 h-8 bg-secondary-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-secondary-600 font-medium shadow-sm">
+                  +{project.members.length - 4}
+                </div>
+              )}
             </div>
           </div>
           <span
@@ -175,28 +186,21 @@ const ProjectCard = ({ project }) => {
 
         {/* Team Members */}
         <div className="flex items-center justify-between">
-          <div className="flex -space-x-2">
-            {project.members?.slice(0, 4).map((member, index) => (
-              <div
-                key={member.user?._id || member.user || index}
-                className="border-2 border-white shadow-sm rounded-full"
-              >
-                <Avatar user={member.user} size="sm" showTooltip={true} />
-              </div>
-            ))}
-            {project.members && project.members.length > 4 && (
-              <div className="w-8 h-8 bg-secondary-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-secondary-600 font-medium shadow-sm">
-                +{project.members.length - 4}
-              </div>
-            )}
-          </div>
-
-          <div className="text-right">
-            <div className="text-xs text-secondary-500">Created</div>
+          <div className="text-left">
+            <div className="text-xs text-secondary-500">start date</div>
             <div className="text-sm font-medium text-secondary-900">
-              {formatDate(project.createdAt)}
+              {formatDate(project.startDate)}
             </div>
           </div>
+
+          {project.endDate ? (
+            <div className="text-left">
+              <div className="text-xs text-secondary-500">End Date</div>
+              <div className="text-sm font-medium text-secondary-900">
+                {formatDate(project.endDate)}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
