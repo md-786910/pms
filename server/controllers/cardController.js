@@ -7,8 +7,11 @@ const { validationResult } = require("express-validator");
 const {
   sendCardAssignedEmail,
   sendCardUnassignedEmail,
+  sendCardStatusChangedEmail,
 } = require("../config/email");
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
+const { ensureArchiveColumn } = require("./columnController");
+const { getIO } = require("../config/socket");
 
 // Helper function to get status label from column
 const getStatusLabel = async (projectId, statusValue) => {
@@ -25,6 +28,21 @@ const getStatusLabel = async (projectId, statusValue) => {
   }
 };
 
+// Helper function to strip HTML tags for text comparison
+const stripHtmlTags = (html) => {
+  if (!html) return "";
+  // Remove HTML tags and decode HTML entities
+  return html
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/&nbsp;/g, " ") // Replace &nbsp; with space
+    .replace(/&amp;/g, "&") // Decode HTML entities
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+};
+
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
 // @access  Private
@@ -33,6 +51,7 @@ const getCards = async (req, res) => {
     const projectId = req.params.id || req.params.projectId;
     const userId = req.user._id;
     const userRole = req.user.role;
+    const includeArchived = req.query.includeArchived === "true";
 
     // Check if user has access to this project
     const project = await Project.findById(projectId);
@@ -55,11 +74,18 @@ const getCards = async (req, res) => {
       });
     }
 
-    const cards = await Card.find({ project: projectId })
+    // Build query based on whether to include archived cards
+    const query = { project: projectId };
+    if (!includeArchived) {
+      query.isArchived = false;
+    }
+
+    const cards = await Card.find(query)
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
-      .sort({ createdAt: -1 });
+      .populate("archivedBy", "name email avatar color")
+      .sort({ updatedAt: -1 });
 
     // Sort comments in each card with latest at top
     cards.forEach((card) => {
@@ -203,6 +229,25 @@ const createCard = async (req, res) => {
       createdBy: userId,
     });
 
+    // Get user information and status label for automatic comment
+    const creator = await User.findById(userId).select("name");
+    const statusLabel = await getStatusLabel(project, status);
+
+    // Add automatic comment for card creation
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${creator.name}</strong> created this card in <strong>${statusLabel}</strong></p>`,
+      timestamp: new Date(),
+    });
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "created",
+      user: userId,
+      timestamp: new Date(),
+      details: `Card created in ${statusLabel}`,
+    });
+
     await card.save();
 
     // Populate the card with user details
@@ -224,6 +269,17 @@ const createCard = async (req, res) => {
 
         await notification.save();
       }
+    }
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${project}`).emit("card-created", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
     }
 
     res.status(201).json({
@@ -282,12 +338,15 @@ const updateCard = async (req, res) => {
     }
 
     // Update card fields
-    const { title, description, status, priority, assignees, labels, dueDate } =
+    const { title, description, status, priority, assignees, labels } =
       req.body;
+    let dueDate = req.body?.dueDate || new Date();
 
     // Store previous values for comparison
     const previousStatus = card.status;
     const previousAssignees = [...card.assignees];
+    const previousDescription = card.description || "";
+    const previousTitle = card.title || "";
 
     if (title) card.title = title;
     if (description !== undefined) card.description = description;
@@ -295,12 +354,96 @@ const updateCard = async (req, res) => {
     if (priority) card.priority = priority;
     if (assignees) card.assignees = assignees;
     if (labels) card.labels = labels;
+    const previousDueDate = card.dueDate || new Date();
+
+    // Update due date
+
     if (dueDate !== undefined) {
       card.dueDate = dueDate ? new Date(dueDate) : null;
     }
 
+    // Fetch user
+    // const user = await User.findById(userId).select("name");
     // Get user information for activity comments
     const user = await User.findById(userId).select("name");
+
+    // Add comment if due date changed
+    if (
+      dueDate !== undefined &&
+      new Date(dueDate).toISOString().slice(0, 10) !==
+        (previousDueDate
+          ? new Date(previousDueDate).toISOString().slice(0, 10)
+          : null)
+    ) {
+      const formattedNewDate = new Date(dueDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+
+      const formattedOldDate = previousDueDate
+        ? new Date(previousDueDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "No due date";
+
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> changed the due date from <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedOldDate}</span> to <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedNewDate}</span></p>`,
+        timestamp: new Date(),
+      });
+    }
+
+    // Add automatic comments for description changes
+    if (description !== undefined) {
+      const hadDescription = previousDescription && previousDescription.trim();
+      const hasDescription = description && description.trim();
+
+      // Only add comment if there's an actual change
+      if (hasDescription && hadDescription) {
+        // Both exist - check if they're actually different (strip HTML for comparison)
+        const prevClean = stripHtmlTags(previousDescription).trim();
+        const newClean = stripHtmlTags(description).trim();
+        if (newClean !== prevClean) {
+          card.comments.push({
+            user: userId,
+            text: `<p><strong>${user.name}</strong> updated the description</p>`,
+            timestamp: new Date(),
+          });
+        }
+      } else if (hasDescription && !hadDescription) {
+        // Description was added
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> added a description</p>`,
+          timestamp: new Date(),
+        });
+      } else if (!hasDescription && hadDescription) {
+        // Description was removed
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> removed the description</p>`,
+          timestamp: new Date(),
+        });
+      }
+    }
+
+    // Add automatic comments for title changes
+    if (title) {
+      const prevTitleClean = previousTitle ? previousTitle.trim() : "";
+      const newTitleClean = title ? title.trim() : "";
+
+      // Only add comment if title actually changed
+      if (newTitleClean && prevTitleClean && newTitleClean !== prevTitleClean) {
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> renamed the card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousTitle}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${title}</span></p>`,
+          timestamp: new Date(),
+        });
+      }
+    }
 
     // Add automatic comments for status changes
     if (
@@ -319,6 +462,46 @@ const updateCard = async (req, res) => {
         text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
         timestamp: new Date(),
       });
+
+      // Send email notifications to all assigned members (async, non-blocking)
+      if (card.assignees && card.assignees.length > 0) {
+        setImmediate(async () => {
+          try {
+            const movedBy = await User.findById(userId);
+            const projectData = await Project.findById(card.project);
+
+            if (movedBy && projectData) {
+              // Get assignee details
+              const assigneesData = await User.find({
+                _id: { $in: card.assignees },
+              });
+
+              // Send email to each assignee (except the person who moved it)
+              for (const assignee of assigneesData) {
+                if (assignee._id.toString() !== userId.toString()) {
+                  await sendCardStatusChangedEmail(
+                    assignee,
+                    card,
+                    projectData,
+                    movedBy,
+                    previousStatusLabel,
+                    newStatusLabel
+                  );
+                  console.log(
+                    `Card status change email sent to ${assignee.email}`
+                  );
+                }
+              }
+            }
+          } catch (emailError) {
+            console.error(
+              "Error sending card status change emails:",
+              emailError
+            );
+            // Email failure doesn't affect the main request
+          }
+        });
+      }
     }
 
     // Add automatic comments for assignee changes
@@ -376,6 +559,17 @@ const updateCard = async (req, res) => {
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-updated", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Card updated successfully",
@@ -390,10 +584,10 @@ const updateCard = async (req, res) => {
   }
 };
 
-// @route   DELETE /api/cards/:id
-// @desc    Delete card
+// @route   PUT /api/cards/:id/archive
+// @desc    Archive card (soft delete)
 // @access  Private
-const deleteCard = async (req, res) => {
+const archiveCard = async (req, res) => {
   try {
     const cardId = req.params.id;
     const userId = req.user._id;
@@ -422,17 +616,161 @@ const deleteCard = async (req, res) => {
       });
     }
 
-    await Card.findByIdAndDelete(cardId);
+    // Ensure archive column exists
+    await ensureArchiveColumn(card.project, userId);
+
+    // Store original status before archiving
+    card.originalStatus = card.status;
+
+    // Archive the card
+    card.isArchived = true;
+    card.archivedAt = new Date();
+    card.archivedBy = userId;
+    card.status = "archive"; // Move to archive column
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for archiving
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${user.name}</strong> archived this card</p>`,
+      timestamp: new Date(),
+    });
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "archived",
+      user: userId,
+      timestamp: new Date(),
+      details: "Card was archived",
+    });
+
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-archived", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
-      message: "Card deleted successfully",
+      message: "Card archived successfully",
+      card,
     });
   } catch (error) {
-    console.error("Delete card error:", error);
+    console.error("Archive card error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while deleting card",
+      message: "Server error while archiving card",
+    });
+  }
+};
+
+// @route   PUT /api/cards/:id/restore
+// @desc    Restore archived card
+// @access  Private
+const restoreCard = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    if (!card.isArchived) {
+      return res.status(400).json({
+        success: false,
+        message: "Card is not archived",
+      });
+    }
+
+    // Restore the card to original status
+    card.isArchived = false;
+    card.archivedAt = null;
+    card.archivedBy = null;
+    card.status = card.originalStatus || "todo"; // Restore to original column
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for restoration
+    card.comments.push({
+      user: userId,
+      text: `<p><strong>${user.name}</strong> restored this card from archive</p>`,
+      timestamp: new Date(),
+    });
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: "restored",
+      user: userId,
+      timestamp: new Date(),
+      details: "Card was restored from archive",
+    });
+
+    await card.save();
+
+    // Update card's updatedAt to place it at the top of the column
+    card.updatedAt = new Date();
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-restored", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Card restored successfully",
+      card,
+    });
+  } catch (error) {
+    console.error("Restore card error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while restoring card",
     });
   }
 };
@@ -492,6 +830,46 @@ const updateStatus = async (req, res) => {
         text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
         timestamp: new Date(),
       });
+
+      // Send email notifications to all assigned members (async, non-blocking)
+      if (card.assignees && card.assignees.length > 0) {
+        setImmediate(async () => {
+          try {
+            const movedBy = await User.findById(userId);
+            const projectData = await Project.findById(card.project);
+
+            if (movedBy && projectData) {
+              // Get assignee details
+              const assignees = await User.find({
+                _id: { $in: card.assignees },
+              });
+
+              // Send email to each assignee (except the person who moved it)
+              for (const assignee of assignees) {
+                if (assignee._id.toString() !== userId.toString()) {
+                  await sendCardStatusChangedEmail(
+                    assignee,
+                    card,
+                    projectData,
+                    movedBy,
+                    previousStatusLabel,
+                    newStatusLabel
+                  );
+                  console.log(
+                    `Card status change email sent to ${assignee.email}`
+                  );
+                }
+              }
+            }
+          } catch (emailError) {
+            console.error(
+              "Error sending card status change emails:",
+              emailError
+            );
+            // Email failure doesn't affect the main request
+          }
+        });
+      }
     }
 
     // Add activity log entry
@@ -507,6 +885,17 @@ const updateStatus = async (req, res) => {
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-status-changed", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -624,6 +1013,17 @@ const assignUser = async (req, res) => {
       });
     }
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-user-assigned", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "User assigned successfully",
@@ -738,6 +1138,17 @@ const unassignUser = async (req, res) => {
           // Email failure doesn't affect the main request
         }
       });
+    }
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-user-unassigned", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
     }
 
     res.json({
@@ -922,6 +1333,17 @@ const addComment = async (req, res) => {
     await card.populate("createdBy", "name email avatar color");
     await card.populate("comments.user", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-comment-added", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Comment added successfully",
@@ -1009,6 +1431,17 @@ const updateComment = async (req, res) => {
     await card.populate("createdBy", "name email avatar color");
     await card.populate("comments.user", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-comment-updated", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Comment updated successfully",
@@ -1070,6 +1503,17 @@ const addLabel = async (req, res) => {
     card.labels.push({ name, color });
     await card.save();
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-label-added", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Label added successfully",
@@ -1120,6 +1564,17 @@ const removeLabel = async (req, res) => {
       (label) => label._id.toString() !== labelId
     );
     await card.save();
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-label-removed", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1178,6 +1633,17 @@ const addAttachment = async (req, res) => {
 
     card.attachments.push(attachment);
     await card.save();
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-attachment-added", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1252,11 +1718,47 @@ const uploadFiles = async (req, res) => {
       details: `Uploaded ${uploadedFiles.length} file(s)`,
     });
 
+    // Add comments per uploaded file
+    const user = await User.findById(userId).select("name");
+
+    uploadedFiles.forEach((file) => {
+      const isImage = file.mimeType && file.mimeType.startsWith("image/");
+      const commentText = isImage
+        ? `
+          <p><strong>${user.name}</strong> uploaded an image:</p>
+          <img src="${file.url}" alt="${file.originalName}" style="max-width: 300px; margin-top: 8px; border-radius: 6px;" />
+        `
+        : `
+          <p><strong>${user.name}</strong> uploaded an attachment: 
+            <a href="${file.url}" target="_blank" style="background-color: #e0f2fe; padding: 2px 6px; border-radius: 4px; font-weight: 500; text-decoration: none;">
+              ${file.originalName}
+            </a>
+          </p>
+        `;
+
+      card.comments.push({
+        user: userId,
+        text: commentText,
+        timestamp: new Date(),
+      });
+    });
+
     await card.save();
 
-    // Populate the card with user details
+    // Populate user info for frontend
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-files-uploaded", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1330,9 +1832,29 @@ const removeAttachment = async (req, res) => {
       details: `Removed attachment: ${attachmentToRemove.originalName}`,
     });
 
+    // Add comment with file or image preview
+    const user = await User.findById(userId).select("name");
+
+    const isImage =
+      attachmentToRemove.mimeType &&
+      attachmentToRemove.mimeType.startsWith("image/");
+    const commentText = isImage
+      ? `
+        <p><strong>${user.name}</strong> removed an image: ${attachmentToRemove.originalName}</p>
+      `
+      : `
+        <p><strong>${user.name}</strong> removed an attachment: ${attachmentToRemove.originalName} </p>
+      `;
+
+    card.comments.push({
+      user: userId,
+      text: commentText,
+      timestamp: new Date(),
+    });
+
     await card.save();
 
-    // Delete the physical file
+    // Delete the physical file (optional if handled externally)
     const filePath = getFilePathFromUrl(attachmentToRemove.url);
     const fileDeleted = deleteFile(filePath);
 
@@ -1343,6 +1865,17 @@ const removeAttachment = async (req, res) => {
     // Populate the card with user details
     await card.populate("assignees", "name email avatar color");
     await card.populate("createdBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-attachment-removed", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
 
     res.json({
       success: true,
@@ -1363,7 +1896,8 @@ module.exports = {
   getCard,
   createCard,
   updateCard,
-  deleteCard,
+  archiveCard,
+  restoreCard,
   updateStatus,
   assignUser,
   unassignUser,

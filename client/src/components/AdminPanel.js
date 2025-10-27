@@ -18,7 +18,13 @@ import EditProjectModal from "./EditProjectModal";
 import AssignUserModal from "./AssignUserModal";
 import InviteUserModal from "./InviteUserModal";
 import Avatar from "./Avatar";
+import { stripHtmlTags } from "../utils/htmlUtils";
 import ConfirmationModal from "./ConfirmationModal";
+import {
+  getProjectStatusColors,
+  getProjectTypeColors,
+  getStatusBadgeClasses,
+} from "../utils/statusColors";
 
 const AdminPanel = () => {
   const { projects, loading, deleteProject, fetchProjects } = useProject();
@@ -85,7 +91,7 @@ const AdminPanel = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
@@ -96,8 +102,8 @@ const AdminPanel = () => {
             </Link>
 
             <div>
-              <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
-              <p className="text-blue-100 text-lg">
+              <h1 className="text-2xl font-bold mb-2">Admin Panel</h1>
+              <p className="text-primary-100 text-lg">
                 Manage projects and team members
               </p>
             </div>
@@ -107,9 +113,9 @@ const AdminPanel = () => {
             <div className="bg-white bg-opacity-20 rounded-xl p-3">
               <Settings className="w-6 h-6" />
             </div>
-            <div className="text-right">
+            <div className="text-center">
               <div className="text-2xl font-bold">{projects?.length || 0}</div>
-              <div className="text-blue-100 text-sm">Projects</div>
+              <div className="text-primary-100 text-sm">Projects</div>
             </div>
           </div>
         </div>
@@ -221,11 +227,44 @@ const AdminPanel = () => {
                           <Settings className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">
-                            {project.name || "Unnamed Project"}
-                          </h3>
+                          <div className="flex items-center space-x-3 mb-1">
+                            <h3 className="font-medium text-gray-900">
+                              {project.name || "Unnamed Project"}
+                            </h3>
+                            {/* Status Badges */}
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={getStatusBadgeClasses(
+                                  "projectStatus",
+                                  project.projectStatus
+                                )}
+                              >
+                                {
+                                  getProjectStatusColors(project.projectStatus)
+                                    .label
+                                }
+                              </span>
+                              <span
+                                className={getStatusBadgeClasses(
+                                  "projectType",
+                                  project.projectType
+                                )}
+                              >
+                                {
+                                  getProjectTypeColors(project.projectType)
+                                    .label
+                                }
+                              </span>
+                            </div>
+                          </div>
                           <p className="text-sm text-gray-600">
-                            {project.description || "No description"}
+                            {stripHtmlTags(project.description)?.length > 150
+                              ? stripHtmlTags(project.description).substring(
+                                  0,
+                                  150
+                                ) + "..."
+                              : stripHtmlTags(project.description) ||
+                                "No description"}
                           </p>
                           <div className="flex items-center space-x-4 mt-1">
                             <div className="flex items-center space-x-2">
@@ -320,7 +359,14 @@ const AdminPanel = () => {
 
       {/* Modals */}
       {showCreateModal && (
-        <CreateProjectModal onClose={() => setShowCreateModal(false)} />
+        <CreateProjectModal
+          onClose={() => {
+            setShowCreateModal(false);
+            // Force refresh projects after modal closes to ensure latest data
+            console.log("🔄 AdminPanel: Refreshing projects after modal close");
+            fetchProjects();
+          }}
+        />
       )}
 
       {showEditModal && selectedProject && (

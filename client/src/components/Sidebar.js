@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  Menu,
   Home,
   Settings,
   Users,
@@ -15,13 +16,21 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import Avatar from "./Avatar";
+import { useState } from "react";
 
-const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
+const Sidebar = ({
+  isOpen,
+  onClose,
+  onToggleCollapse,
+  onMenuClick,
+  sidebarOpen,
+}) => {
   const location = useLocation();
   const { user } = useUser();
   const { notifications } = useNotification();
 
   const unreadNotifications = notifications.filter((n) => !n.read).length;
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
     {
@@ -57,6 +66,10 @@ const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
     },
   ];
 
+  const onToggleSidebar = () => {
+    setIsCollapsed((prev) => !prev);
+  };
+
   return (
     <>
       {/* Mobile overlay */}
@@ -73,10 +86,21 @@ const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
           isCollapsed ? "w-16" : "w-72"
         } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-6 border-b border-gray-200">
           {!isCollapsed && (
             <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
           )}
+          <button
+            onClick={onToggleSidebar}
+            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-5 h-5 text-gray-600" />
+            ) : (
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
+            )}
+          </button>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
@@ -90,7 +114,10 @@ const Sidebar = ({ isOpen, isCollapsed, onClose, onToggleCollapse }) => {
             if (!item.show) return null;
 
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
+            const isActive =
+              location.pathname === item.href ||
+              (location.pathname.includes("project") &&
+                item.name === "Dashboard");
 
             return (
               <Link

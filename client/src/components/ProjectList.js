@@ -5,11 +5,26 @@ import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
 import CreateProjectModal from "./CreateProjectModal";
 import Avatar from "./Avatar";
+import { isEmptyHtml, getCleanTextPreview } from "../utils/htmlUtils";
+import {
+  getProjectStatusColors,
+  getProjectTypeColors,
+  getStatusBadgeClasses,
+} from "../utils/statusColors";
 
 const ProjectList = () => {
-  const { projects, loading } = useProject();
+  const { projects, loading, fetchProjects } = useProject();
   const { user } = useUser();
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Debug logging
+
+  const handleModalClose = () => {
+    setShowCreateModal(false);
+    // Force refresh projects after modal closes
+    console.log("🔄 ProjectList: Refreshing projects after modal close");
+    fetchProjects();
+  };
 
   if (loading) {
     return (
@@ -22,10 +37,10 @@ const ProjectList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-8 text-white mb-8">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
+            <h1 className="text-2xl font-bold mb-2">Your Projects</h1>
             <p className="text-primary-100 text-lg">
               Manage your projects and collaborate with your team
             </p>
@@ -72,9 +87,7 @@ const ProjectList = () => {
       )}
 
       {/* Create Project Modal */}
-      {showCreateModal && (
-        <CreateProjectModal onClose={() => setShowCreateModal(false)} />
-      )}
+      {showCreateModal && <CreateProjectModal onClose={handleModalClose} />}
     </div>
   );
 };
@@ -100,14 +113,11 @@ const ProjectCard = ({ project }) => {
             <h3 className="text-lg font-semibold group-hover:text-primary-100 transition-colors duration-200">
               {project.name}
             </h3>
-            {project.description &&
-              project.description.trim() &&
-              project.description !== "<p><br></p>" &&
-              project.description !== "<p></p>" && (
-                <p className="text-primary-100 text-sm mt-1 line-clamp-2">
-                  {project.description.replace(/<[^>]*>/g, "")}
-                </p>
-              )}
+            {project.description && !isEmptyHtml(project.description) && (
+              <p className="text-primary-100 text-sm mt-1 line-clamp-2">
+                {getCleanTextPreview(project.description, 150)}
+              </p>
+            )}
           </div>
           <button
             onClick={(e) => e.preventDefault()}
@@ -120,6 +130,26 @@ const ProjectCard = ({ project }) => {
 
       {/* Card Body */}
       <div className="p-6">
+        {/* Status Badges */}
+        {/* <div className="flex items-center space-x-2 mb-4">
+          <span
+            className={getStatusBadgeClasses(
+              "projectStatus",
+              project.projectStatus
+            )}
+          >
+            {getProjectStatusColors(project.projectStatus).label}
+          </span>
+          <span
+            className={getStatusBadgeClasses(
+              "projectType",
+              project.projectType
+            )}
+          >
+            {getProjectTypeColors(project.projectType).label}
+          </span>
+        </div> */}
+
         <div className="flex items-center justify-between text-sm text-secondary-500 mb-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
@@ -133,6 +163,14 @@ const ProjectCard = ({ project }) => {
               <span>{formatDate(project.createdAt)}</span>
             </div>
           </div>
+          <span
+            className={getStatusBadgeClasses(
+              "projectStatus",
+              project.projectStatus
+            )}
+          >
+            {getProjectStatusColors(project.projectStatus).label}
+          </span>
         </div>
 
         {/* Team Members */}
@@ -165,9 +203,11 @@ const ProjectCard = ({ project }) => {
       {/* Card Footer */}
       <div className="px-6 py-3 bg-secondary-50 border-t border-secondary-100">
         <div className="flex items-center justify-between text-xs text-secondary-500">
-          <span>Click to open project</span>
+          <span className="font-medium">
+            {project.clientName || "No client"}
+          </span>
           <span className="text-primary-600 font-medium group-hover:text-primary-700">
-            View Details →
+            View Project
           </span>
         </div>
       </div>

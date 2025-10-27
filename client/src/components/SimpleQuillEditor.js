@@ -6,6 +6,7 @@ const SimpleQuillEditor = ({
   value = "",
   onChange,
   placeholder = "Type something...",
+  height = "120px",
 }) => {
   const [editorValue, setEditorValue] = useState(value);
 
@@ -41,6 +42,7 @@ const SimpleQuillEditor = ({
         placeholder={placeholder}
         modules={modules}
         formats={formats}
+        style={{ height: height }}
       />
     </div>
   );

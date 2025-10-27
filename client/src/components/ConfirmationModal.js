@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 const ConfirmationModal = ({
@@ -12,6 +12,26 @@ const ConfirmationModal = ({
   type = "warning", // warning, danger, info
   isLoading = false,
 }) => {
+  const modalRef = useRef(null);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        if (!isLoading) {
+          onClose();
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, isLoading, onClose]);
+
   if (!isOpen) return null;
 
   const getTypeStyles = () => {
@@ -39,11 +59,13 @@ const ConfirmationModal = ({
 
   const styles = getTypeStyles();
 
-  const handleConfirm = () => {
+  const handleConfirm = (e) => {
+    e.stopPropagation();
     onConfirm();
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e) => {
+    e.stopPropagation();
     if (!isLoading) {
       onClose();
     }
@@ -52,11 +74,23 @@ const ConfirmationModal = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isLoading) {
+            onClose();
+          }
+        }}
+      />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+        <div
+          ref={modalRef}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all"
+        >
           {/* Header */}
           <div className={`px-6 py-4 border-b ${styles.border}`}>
             <div className="flex items-center justify-between">
@@ -65,7 +99,10 @@ const ConfirmationModal = ({
                 <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
               </div>
               <button
-                onClick={handleCancel}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancel(e);
+                }}
                 disabled={isLoading}
                 className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >

@@ -4,8 +4,8 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "mdashifreza7869101@gmail.com",
-    pass: "",
+    user: process.env.SMTP_EMAIL,
+    pass: process.env.SMTP_PASSWORD,
   },
 });
 
@@ -269,23 +269,197 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  projectUpdate: (
+    memberName,
+    projectName,
+    updatedByName,
+    changes,
+    projectUrl,
+    detailedChanges = null
+  ) => ({
+    subject: `Project "${projectName}" has been updated - Project Management System`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">📝 Project Update</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${memberName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            <strong>${updatedByName}</strong> has updated the project 
+            <strong>"${projectName}"</strong> that you're a member of.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px;">📋 Changes Made</h3>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #6f42c1;">
+              ${
+                detailedChanges
+                  ? detailedChanges
+                      .map(
+                        (change) =>
+                          `<div style="margin-bottom: 8px; line-height: 1.6;">${change}</div>`
+                      )
+                      .join("")
+                  : `<p style="color: #495057; margin: 0; line-height: 1.5; font-weight: 500;">${changes}</p>`
+              }
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${projectUrl}" style="background: #6f42c1; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Updated Project
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            Click the button above to view the updated project details and see all the changes that were made.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
+
+  cardStatusChanged: (
+    assigneeName,
+    cardTitle,
+    projectName,
+    movedByName,
+    oldStatus,
+    newStatus,
+    cardUrl,
+    dateTime
+  ) => ({
+    subject: `Card status updated: "${cardTitle}" - ${projectName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">🔄 Card Status Update</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${assigneeName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            <strong>${movedByName}</strong> has moved a card that you're assigned to in the project 
+            <strong>"${projectName}"</strong>.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px;">📌 Card Details</h3>
+            <p style="color: #6c757d; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">${cardTitle}</p>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 15px;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="color: #6c757d; font-size: 14px; font-weight: 500;">Status Change:</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                <span style="background-color: #f3f4f6; color: #374151; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                  ${oldStatus}
+                </span>
+                <span style="color: #17a2b8; font-size: 18px;">→</span>
+                <span style="background-color: #d1ecf1; color: #0c5460; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                  ${newStatus}
+                </span>
+              </div>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">
+              <p style="color: #6c757d; margin: 0; font-size: 13px;">
+                <strong>Moved by:</strong> ${movedByName}
+              </p>
+              <p style="color: #6c757d; margin: 5px 0 0 0; font-size: 13px;">
+                <strong>Project:</strong> ${projectName}
+              </p>
+              <p style="color: #6c757d; margin: 5px 0 0 0; font-size: 13px;">
+                <strong>Time:</strong> ${dateTime}
+              </p>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cardUrl}" style="background: #17a2b8; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Card
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            Click the button above to view the card and see all its details. Stay updated with the latest changes to your assigned tasks.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
+
+  memberRemoved: (memberName, projectName, removedByName, projectUrl) => ({
+    subject: `You've been removed from project "${projectName}" - Project Management System`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">👋 Member Removal</h1>
+        </div>
+        <div style="padding: 30px; background: #f8f9fa;">
+          <h2 style="color: #333; margin-bottom: 20px;">Hello ${memberName},</h2>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+            We wanted to inform you that <strong>${removedByName}</strong> has removed you from the project 
+            <strong>"${projectName}"</strong>.
+          </p>
+          
+          <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="color: #495057; margin: 0 0 10px 0; font-size: 18px;">📋 Project Details</h3>
+            <p style="color: #6c757d; margin: 0; font-size: 16px; font-weight: 500;">${projectName}</p>
+            <p style="color: #6c757d; margin: 5px 0 0 0; font-size: 14px;">Removed by: ${removedByName}</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${
+              process.env.CLIENT_URL || "http://localhost:3000"
+            }" style="background: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              View Dashboard
+            </a>
+          </div>
+          
+          <p style="color: #666; line-height: 1.6; font-size: 14px;">
+            You no longer have access to this project. If you have any questions, please contact the project owner.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            Project Management System
+          </p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 // Email sending functions
 const sendEmail = async (to, subject, html) => {
   try {
+    console.log(`📧 Attempting to send email to: ${to}`);
+    console.log(`📧 Subject: ${subject}`);
+
     const mailOptions = {
-      from: `Leanport PMS <mdashifreza7869101@gmail.com>`,
+      from: `PMS <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
       html,
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", result.messageId);
+    console.log("✅ Email sent successfully:", result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error("Email sending error:", error);
+    console.error("❌ Email sending error:", error);
     return { success: false, error: error.message };
   }
 };
@@ -395,6 +569,174 @@ const sendMentionEmail = async (
   return await sendEmail(mentionedUser.email, template.subject, template.html);
 };
 
+const sendProjectUpdateEmail = async (
+  member,
+  project,
+  updatedBy,
+  changes,
+  detailedChanges = null
+) => {
+  try {
+    console.log(`📧 Preparing to send project update email to ${member.email}`);
+
+    const projectUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}`;
+
+    const template = emailTemplates.projectUpdate(
+      member.name,
+      project.name,
+      updatedBy.name,
+      changes,
+      projectUrl,
+      detailedChanges
+    );
+
+    console.log(
+      `📧 Sending email to ${member.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      member.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Project update email sent successfully to ${member.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send project update email to ${member.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending project update email to ${member.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
+const sendCardStatusChangedEmail = async (
+  assignee,
+  card,
+  project,
+  movedBy,
+  oldStatus,
+  newStatus
+) => {
+  try {
+    console.log(
+      `📧 Preparing to send card status change email to ${assignee.email}`
+    );
+
+    const cardUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}/card/${card._id}`;
+
+    // Format date and time
+    const now = new Date();
+    const dateTime = now.toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+
+    const template = emailTemplates.cardStatusChanged(
+      assignee.name,
+      card.title,
+      project.name,
+      movedBy.name,
+      oldStatus,
+      newStatus,
+      cardUrl,
+      dateTime
+    );
+
+    console.log(
+      `📧 Sending card status change email to ${assignee.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      assignee.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Card status change email sent successfully to ${assignee.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send card status change email to ${assignee.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending card status change email to ${assignee.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
+const sendMemberRemovedEmail = async (member, project, removedBy) => {
+  try {
+    console.log(`📧 Preparing to send member removal email to ${member.email}`);
+
+    const projectUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}`;
+
+    const template = emailTemplates.memberRemoved(
+      member.name,
+      project.name,
+      removedBy.name,
+      projectUrl
+    );
+
+    console.log(
+      `📧 Sending member removal email to ${member.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      member.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Member removal email sent successfully to ${member.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send member removal email to ${member.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending member removal email to ${member.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -404,4 +746,7 @@ module.exports = {
   sendCardAssignedEmail,
   sendCardUnassignedEmail,
   sendMentionEmail,
+  sendProjectUpdateEmail,
+  sendCardStatusChangedEmail,
+  sendMemberRemovedEmail,
 };

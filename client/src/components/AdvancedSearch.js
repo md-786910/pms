@@ -1,28 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, Filter, Calendar, User, Tag, Hash } from "lucide-react";
+import {
+  Search,
+  X,
+  Filter,
+  Calendar,
+  User,
+  Tag,
+  Hash,
+  Settings,
+  Type,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
 import { cardAPI } from "../utils/api";
+import { stripHtmlTags } from "../utils/htmlUtils";
 
 const AdvancedSearch = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilter] = useState("all");
+  const [projectStatusFilter] = useState("all");
+  const [projectTypeFilter] = useState("all");
   const searchRef = useRef(null);
   const navigate = useNavigate();
   const { projects } = useProject();
   const { user } = useUser();
-
-  const filterOptions = [
-    { id: "all", label: "All", icon: Search },
-    { id: "projects", label: "Projects", icon: Calendar },
-    { id: "cards", label: "Cards", icon: Tag },
-    { id: "users", label: "Users", icon: User },
-  ];
 
   // Close search when clicking outside
   useEffect(() => {
@@ -53,24 +58,55 @@ const AdvancedSearch = () => {
       if (filter === "all" || filter === "projects") {
         const projectResults =
           projects
-            ?.filter(
-              (project) =>
+            ?.filter((project) => {
+              // Text search - if no query, match all projects (for filter-only searches)
+              const matchesText =
+                !query.trim() ||
                 project.name?.toLowerCase().includes(query.toLowerCase()) ||
-                project.description?.toLowerCase().includes(query.toLowerCase())
-            )
-            .map((project) => ({
-              id: project._id,
-              type: "project",
-              title: project.name,
-              subtitle: project.description || "No description",
-              status: project.status,
-              icon: Calendar,
-              url: `/project/${project._id}`,
-              metadata: {
-                members: project.members?.length || 0,
-                createdAt: project.createdAt,
-              },
-            })) || [];
+                project.description
+                  ?.toLowerCase()
+                  .includes(query.toLowerCase()) ||
+                project.projectType
+                  ?.toLowerCase()
+                  .includes(query.toLowerCase()) ||
+                project.projectStatus
+                  ?.toLowerCase()
+                  .includes(query.toLowerCase());
+
+              // Status filter
+              const matchesStatus =
+                projectStatusFilter === "all" ||
+                project.projectStatus === projectStatusFilter;
+
+              // Type filter
+              const matchesType =
+                projectTypeFilter === "all" ||
+                project.projectType === projectTypeFilter;
+
+              return matchesText && matchesStatus && matchesType;
+            })
+            .map((project) => {
+              // Strip HTML tags from description for clean display
+              const cleanDescription = project.description
+                ? stripHtmlTags(project.description)
+                : "No description";
+
+              return {
+                id: project._id,
+                type: "project",
+                title: project.name,
+                subtitle: cleanDescription,
+                status: project.projectStatus,
+                icon: Calendar,
+                url: `/project/${project._id}`,
+                metadata: {
+                  members: project.members?.length || 0,
+                  createdAt: project.createdAt,
+                  projectType: project.projectType,
+                  projectStatus: project.projectStatus,
+                },
+              };
+            }) || [];
 
         results.push(...projectResults);
       }
@@ -92,9 +128,8 @@ const AdvancedSearch = () => {
                   ?.filter(
                     (card) =>
                       card.title?.toLowerCase().includes(query.toLowerCase()) ||
-                      card.description
-                        ?.toLowerCase()
-                        .replace(/<[^>]*>/g, "") // Strip HTML tags for search
+                      stripHtmlTags(card.description || "")
+                        .toLowerCase()
                         .includes(query.toLowerCase()) ||
                       card.status?.toLowerCase().includes(query.toLowerCase())
                   )
@@ -107,7 +142,7 @@ const AdvancedSearch = () => {
 
                     // Strip HTML tags from description for display
                     const cleanDescription = card.description
-                      ? card.description.replace(/<[^>]*>/g, "").trim()
+                      ? stripHtmlTags(card.description)
                       : "No description";
 
                     return {
@@ -175,7 +210,18 @@ const AdvancedSearch = () => {
 
   const getStatusColor = (status, type) => {
     if (type === "project") {
-      return "bg-blue-100 text-blue-800";
+      switch (status?.toLowerCase()) {
+        case "new":
+          return "bg-blue-100 text-blue-800";
+        case "ongoing":
+          return "bg-yellow-100 text-yellow-800";
+        case "completed":
+          return "bg-green-100 text-green-800";
+        case "cancelled":
+          return "bg-red-100 text-red-800";
+        default:
+          return "bg-gray-100 text-gray-800";
+      }
     }
 
     switch (status?.toLowerCase()) {
@@ -224,46 +270,7 @@ const AdvancedSearch = () => {
               </button>
             )}
           </div>
-
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg transition-colors duration-200 ${
-              showFilters
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-400 hover:bg-gray-100"
-            }`}
-            title="Filter results"
-          >
-            <Filter className="w-4 h-4" />
-          </button>
         </div>
-
-        {/* Filter Options */}
-        {showFilters && (
-          <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 min-w-48">
-            {filterOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => {
-                    setActiveFilter(option.id);
-                    setShowFilters(false);
-                  }}
-                  className={`w-full flex items-center space-x-3 px-4 py-2 text-left hover:bg-gray-50 ${
-                    activeFilter === option.id
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{option.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* Search Results */}
@@ -332,6 +339,11 @@ const AdvancedSearch = () => {
                           {result.metadata.dueDate && (
                             <span className="text-xs text-gray-400">
                               Due: {formatDate(result.metadata.dueDate)}
+                            </span>
+                          )}
+                          {result.metadata.projectType && (
+                            <span className="text-xs text-gray-400">
+                              Type: {result.metadata.projectType}
                             </span>
                           )}
                         </div>

@@ -14,12 +14,17 @@ const cardItemRoutes = require("./routes/cardItems");
 const columnRoutes = require("./routes/columns");
 const notificationRoutes = require("./routes/notifications");
 const invitationRoutes = require("./routes/invitations");
+const activityRoutes = require("./routes/activities");
+const labelRoutes = require("./routes/labels");
 
 const app = express();
 const PORT = config.PORT;
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize Socket.IO
+const { initializeSocket } = require("./config/socket");
 
 // Middleware
 app.use(
@@ -37,12 +42,28 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+// IMPORTANT: Label routes must be registered BEFORE projectRoutes to avoid conflicts
+// Use a middleware to ensure params.id is available
+app.use(
+  "/api/projects/:id/labels",
+  (req, res, next) => {
+    // Store the project ID from URL params
+    req.projectIdFromUrl = req.params.id;
+    console.log(
+      "Label route middleware - setting projectIdFromUrl to:",
+      req.params.id
+    );
+    next();
+  },
+  labelRoutes
+);
 app.use("/api/projects", projectRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/card-items", cardItemRoutes);
 app.use("/api/columns", columnRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/invitations", invitationRoutes);
+app.use("/api/activities", activityRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -103,6 +124,9 @@ const server = app.listen(PORT, () => {
   console.log(`Database: ${config.MONGODB_URI}`);
   console.log(`Client URL: ${config.CLIENT_URL}`);
 });
+
+// Initialize Socket.IO
+initializeSocket(server);
 
 // Handle server errors gracefully
 server.on("error", (err) => {

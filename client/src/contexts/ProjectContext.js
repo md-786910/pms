@@ -63,11 +63,43 @@ export const ProjectProvider = ({ children }) => {
 
   const createProject = async (projectData) => {
     try {
+      console.log(
+        "🔄 ProjectContext: Creating project with data:",
+        projectData
+      );
       const response = await projectAPI.createProject(projectData);
-      setAllProjects((prev) => [...prev, response.data.project]);
-      return response.data.project;
+      console.log(
+        "✅ ProjectContext: Project created successfully:",
+        response.data.project
+      );
+
+      const newProject = response.data.project;
+      console.log(
+        "📝 ProjectContext: Adding project to state. Current projects count:",
+        allProjects.length
+      );
+
+      // Ensure the new project has all required fields
+      const projectWithDefaults = {
+        ...newProject,
+        status: newProject.status || "active",
+        projectStatus: newProject.projectStatus || "new",
+        members: newProject.members || [],
+      };
+
+      setAllProjects((prev) => {
+        const updated = [...prev, projectWithDefaults];
+        console.log(
+          "📝 ProjectContext: Updated projects count:",
+          updated.length
+        );
+        return updated;
+      });
+
+      console.log("✅ ProjectContext: Project added to state successfully");
+      return projectWithDefaults;
     } catch (error) {
-      console.error("Error creating project:", error);
+      console.error("❌ ProjectContext: Error creating project:", error);
       throw error;
     }
   };

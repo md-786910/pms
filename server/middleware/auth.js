@@ -79,20 +79,58 @@ const adminAuth = async (req, res, next) => {
 
 const projectMemberAuth = async (req, res, next) => {
   try {
+    console.log("projectMemberAuth - Starting");
+    console.log("projectMemberAuth - req.params:", req.params);
+    console.log("projectMemberAuth - req.params.id:", req.params.id);
+    console.log(
+      "projectMemberAuth - req.params.projectId:",
+      req.params.projectId
+    );
+
     await auth(req, res, async () => {
       const Project = require("../models/Project");
-      const projectId = req.params.projectId || req.params.id;
+      // Try multiple sources for the project ID
+      const projectId =
+        req.projectId ||
+        req.projectIdFromUrl ||
+        req.params.id ||
+        req.params.projectId;
 
-      if (!projectId) {
+      console.log("Inside auth callback - projectId:", projectId);
+
+      console.log("ProjectMemberAuth - Raw projectId:", projectId);
+      console.log("ProjectMemberAuth - Type:", typeof projectId);
+      console.log("ProjectMemberAuth - Params:", req.params);
+
+      // Check if projectId is valid
+      if (
+        !projectId ||
+        projectId === "undefined" ||
+        projectId === "null" ||
+        (typeof projectId === "string" && projectId.trim() === "")
+      ) {
+        console.log("ProjectMemberAuth - Invalid projectId:", projectId);
         return res.status(400).json({
           success: false,
           message: "Project ID is required.",
         });
       }
 
+      // Validate ObjectId format
+      const mongoose = require("mongoose");
+      if (!mongoose.Types.ObjectId.isValid(projectId)) {
+        console.log("ProjectMemberAuth - Invalid ObjectId format:", projectId);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Project ID format.",
+        });
+      }
+
+      console.log("ProjectMemberAuth - Looking for project:", projectId);
       const project = await Project.findById(projectId);
 
       if (!project) {
+        console.log("ProjectMemberAuth - Project not found:", projectId);
         return res.status(404).json({
           success: false,
           message: "Project not found.",

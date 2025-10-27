@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   Shield,
@@ -33,6 +33,9 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const addUserModalRef = useRef(null);
+  const editUserModalRef = useRef(null);
+  const resetPasswordModalRef = useRef(null);
 
   // Form states
   const [userForm, setUserForm] = useState({
@@ -53,6 +56,63 @@ const UserManagement = () => {
   useEffect(() => {
     filterUsers();
   }, [users, searchTerm, roleFilter]);
+
+  // Handle click outside to close add user modal
+  useEffect(() => {
+    if (!showAddUser) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        addUserModalRef.current &&
+        !addUserModalRef.current.contains(event.target)
+      ) {
+        setShowAddUser(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAddUser]);
+
+  // Handle click outside to close edit user modal
+  useEffect(() => {
+    if (!showEditUser) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        editUserModalRef.current &&
+        !editUserModalRef.current.contains(event.target)
+      ) {
+        setShowEditUser(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEditUser]);
+
+  // Handle click outside to close reset password modal
+  useEffect(() => {
+    if (!showResetPassword) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        resetPasswordModalRef.current &&
+        !resetPasswordModalRef.current.contains(event.target)
+      ) {
+        setShowResetPassword(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showResetPassword]);
 
   // Check if user is admin
   if (!currentUser || currentUser.role !== "admin") {
@@ -238,8 +298,8 @@ const UserManagement = () => {
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">User Management</h1>
-            <p className="text-blue-100 mt-1">
+            <h1 className="text-2xl font-bold mb-2">User Management</h1>
+            <p className="text-primary-100 text-lg">
               Manage users and their access to the system
             </p>
           </div>
@@ -378,7 +438,10 @@ const UserManagement = () => {
       {/* Add User Modal */}
       {showAddUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div
+            ref={addUserModalRef}
+            className="bg-white rounded-lg p-6 w-full max-w-md"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Add New User
             </h3>
@@ -464,7 +527,10 @@ const UserManagement = () => {
       {/* Edit User Modal */}
       {showEditUser && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div
+            ref={editUserModalRef}
+            className="bg-white rounded-lg p-6 w-full max-w-md"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Edit User
             </h3>
@@ -536,12 +602,18 @@ const UserManagement = () => {
       {/* Reset Password Modal */}
       {showResetPassword && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div
+            ref={resetPasswordModalRef}
+            className="bg-white rounded-lg p-6 w-full max-w-md"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Reset Password
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Reset password for <strong>{selectedUser.name}</strong>
+              Reset password for{" "}
+              <strong className="font-semibold text-blue-600">
+                {selectedUser.name}
+              </strong>
             </p>
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
@@ -550,6 +622,7 @@ const UserManagement = () => {
                 </label>
                 <input
                   type="password"
+                  placeholder="New Password"
                   value={resetPasswordForm.newPassword}
                   onChange={(e) =>
                     setResetPasswordForm({
@@ -567,6 +640,7 @@ const UserManagement = () => {
                 </label>
                 <input
                   type="password"
+                  placeholder="Confirm Password"
                   value={resetPasswordForm.confirmPassword}
                   onChange={(e) =>
                     setResetPasswordForm({
@@ -589,7 +663,7 @@ const UserManagement = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                   {loading ? "Resetting..." : "Reset Password"}
                 </button>

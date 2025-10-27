@@ -2,6 +2,7 @@ const CardItem = require("../models/CardItem");
 const Card = require("../models/Card");
 const Project = require("../models/Project");
 const { validationResult } = require("express-validator");
+const { getIO } = require("../config/socket");
 
 // @route   GET /api/cards/:cardId/items
 // @desc    Get all items for a card
@@ -109,6 +110,18 @@ const createCardItem = async (req, res) => {
     // Populate the createdBy field
     await item.populate("createdBy", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${project._id}`).emit("card-item-created", {
+        item,
+        cardId,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.status(201).json({
       success: true,
       message: "Card item created successfully",
@@ -188,6 +201,18 @@ const updateCardItem = async (req, res) => {
     // Populate the createdBy field
     await item.populate("createdBy", "name email avatar color");
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${project._id}`).emit("card-item-updated", {
+        item,
+        cardId,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Card item updated successfully",
@@ -246,6 +271,18 @@ const deleteCardItem = async (req, res) => {
       });
     }
 
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${project._id}`).emit("card-item-deleted", {
+        itemId,
+        cardId,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
     res.json({
       success: true,
       message: "Card item deleted successfully",
@@ -297,6 +334,23 @@ const reorderCardItems = async (req, res) => {
         { _id: itemId, card: cardId },
         { position: i }
       );
+    }
+
+    // Fetch updated items
+    const updatedItems = await CardItem.find({ card: cardId })
+      .populate("createdBy", "name email avatar color")
+      .sort({ position: 1 });
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${project._id}`).emit("card-items-reordered", {
+        items: updatedItems,
+        cardId,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
     }
 
     res.json({

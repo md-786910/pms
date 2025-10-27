@@ -1,19 +1,41 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, MoreVertical, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  MoreVertical,
+  ChevronRight,
+  Settings,
+  Calendar,
+  Filter,
+  X,
+} from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
-import { cardAPI, columnAPI } from "../utils/api";
+import { useSocket } from "../contexts/SocketContext";
+import { useUser } from "../contexts/UserContext";
+import { cardAPI, columnAPI, projectAPI } from "../utils/api";
 import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
+import EditProjectModal from "./EditProjectModal";
+import FilterPanel from "./FilterPanel";
+import { stripHtmlTags } from "../utils/htmlUtils";
+import {
+  getProjectStatusColors,
+  getProjectTypeColors,
+  getStatusBadgeClasses,
+  getCardStatusColors,
+} from "../utils/statusColors";
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
   const navigate = useNavigate();
   const { currentProject, fetchProject, loading } = useProject();
   const { showToast } = useNotification();
+  const { socket, joinProject, leaveProject } = useSocket();
+  const { user } = useUser();
   const [cards, setCards] = useState([]);
   const [columns, setColumns] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -22,15 +44,44 @@ const ProjectBoard = () => {
   const [selectedStatus, setSelectedStatus] = useState("todo");
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollContainerRef = useRef(null);
+  const addColumnModalRef = useRef(null);
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingColumns, setLoadingColumns] = useState(true);
   const [showAddColumnModal, setShowAddColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnColor, setNewColumnColor] = useState("gray");
+  const [showEditProjectModal, setShowEditProjectModal] = useState(false);
 
   // Card modal state
   const [selectedCard, setSelectedCard] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [projectData, setProjectData] = useState([]);
+  const [draggingColumnId, setDraggingColumnId] = useState(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState(null);
+
+  // Filter state
+  const [filteredCards, setFilteredCards] = useState([]);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchProjectData = async () => {
+      try {
+        const response = await projectAPI.getProject(id);
+        setProjectData(response.data);
+      } catch (error) {
+        console.error("Error fetching project data:", error);
+      }
+    };
+
+    fetchProjectData();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
 
   // Determine the actual project ID
   const actualProjectId = projectId || id;
@@ -42,6 +93,187 @@ const ProjectBoard = () => {
       fetchColumns();
     }
   }, [actualProjectId]);
+
+  // Join/leave project room on mount/unmount
+  useEffect(() => {
+    if (actualProjectId && socket) {
+      joinProject(actualProjectId);
+      return () => {
+        leaveProject(actualProjectId);
+      };
+    }
+  }, [actualProjectId, socket, joinProject, leaveProject]);
+
+  // Listen for Socket.IO events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCardCreated = (data) => {
+      console.log("Card created event received:", data);
+      // Only update if not created by current user
+      if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
+        setCards((prev) => [...prev, data.card]);
+        setFilteredCards((prev) => [...prev, data.card]);
+        showToast(`New card "${data.card.title}" created!`, "success");
+      }
+    };
+
+    const handleCardUpdated = (data) => {
+      console.log("Card updated event received:", data);
+      // Only update if not updated by current user
+      if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
+        setCards((prev) =>
+          prev.map((card) => (card._id === data.card._id ? data.card : card))
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) => (card._id === data.card._id ? data.card : card))
+        );
+        // Update selected card if it's the one being updated
+        if (selectedCard && selectedCard._id === data.card._id) {
+          setSelectedCard(data.card);
+        }
+      }
+    };
+
+    const handleCardArchived = (data) => {
+      console.log("Card archived event received:", data);
+      if (data.card) {
+        setCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, isArchived: true, status: "archive" }
+              : card
+          )
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, isArchived: true, status: "archive" }
+              : card
+          )
+        );
+        // Close modal if the archived card was selected
+        if (selectedCard && selectedCard._id === data.card._id) {
+          setShowCardModal(false);
+          setSelectedCard(null);
+        }
+      }
+    };
+
+    const handleCardRestored = (data) => {
+      console.log("Card restored event received:", data);
+      if (data.card) {
+        // Use the function directly instead of calling fetchCards
+        cardAPI
+          .getCards(actualProjectId, true)
+          .then((response) => {
+            const fetchedCards = response.data.cards || [];
+            setCards(fetchedCards);
+            setFilteredCards(fetchedCards);
+          })
+          .catch((error) => {
+            console.error("Error fetching cards:", error);
+          });
+      }
+    };
+
+    const handleCardStatusChanged = (data) => {
+      console.log("Card status changed event received:", data);
+      if (data.card) {
+        setCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, status: data.card.status }
+              : card
+          )
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) =>
+            card._id === data.card._id
+              ? { ...card, status: data.card.status }
+              : card
+          )
+        );
+        // Update selected card if it's the one being updated
+        if (selectedCard && selectedCard._id === data.card._id) {
+          setSelectedCard((prev) => ({ ...prev, status: data.card.status }));
+        }
+      }
+    };
+
+    const handleColumnCreated = (data) => {
+      console.log("Column created event received:", data);
+      // Only update if not created by current user
+      if (
+        data.column &&
+        data.userId !== user?._id &&
+        data.userId !== user?.id
+      ) {
+        setColumns((prev) => [...prev, data.column]);
+        showToast(`New column "${data.column.name}" created!`, "success");
+      }
+    };
+
+    const handleColumnUpdated = (data) => {
+      console.log("Column updated event received:", data);
+      if (data.column) {
+        setColumns((prev) =>
+          prev.map((col) => (col._id === data.column._id ? data.column : col))
+        );
+      }
+    };
+
+    socket.on("card-created", handleCardCreated);
+    socket.on("card-updated", handleCardUpdated);
+    socket.on("card-archived", handleCardArchived);
+    socket.on("card-restored", handleCardRestored);
+    socket.on("card-status-changed", handleCardStatusChanged);
+    socket.on("card-user-assigned", handleCardUpdated);
+    socket.on("card-user-unassigned", handleCardUpdated);
+    socket.on("card-label-added", handleCardUpdated);
+    socket.on("card-label-removed", handleCardUpdated);
+    socket.on("card-attachment-added", handleCardUpdated);
+    socket.on("card-attachment-removed", handleCardUpdated);
+    socket.on("card-files-uploaded", handleCardUpdated);
+    socket.on("column-created", handleColumnCreated);
+    socket.on("column-updated", handleColumnUpdated);
+
+    return () => {
+      socket.off("card-created", handleCardCreated);
+      socket.off("card-updated", handleCardUpdated);
+      socket.off("card-archived", handleCardArchived);
+      socket.off("card-restored", handleCardRestored);
+      socket.off("card-status-changed", handleCardStatusChanged);
+      socket.off("card-user-assigned", handleCardUpdated);
+      socket.off("card-user-unassigned", handleCardUpdated);
+      socket.off("card-label-added", handleCardUpdated);
+      socket.off("card-label-removed", handleCardUpdated);
+      socket.off("card-attachment-added", handleCardUpdated);
+      socket.off("card-attachment-removed", handleCardUpdated);
+      socket.off("card-files-uploaded", handleCardUpdated);
+      socket.off("column-created", handleColumnCreated);
+      socket.off("column-updated", handleColumnUpdated);
+    };
+  }, [socket, selectedCard, showToast, user]);
+
+  // Handle click outside to close add column modal
+  useEffect(() => {
+    if (!showAddColumnModal) return;
+
+    const handleClickOutside = (event) => {
+      if (
+        addColumnModalRef.current &&
+        !addColumnModalRef.current.contains(event.target)
+      ) {
+        setShowAddColumnModal(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAddColumnModal]);
 
   // Handle card modal opening from URL
   useEffect(() => {
@@ -83,9 +315,11 @@ const ProjectBoard = () => {
   const fetchCards = async () => {
     try {
       console.log("Fetching cards for project:", actualProjectId);
-      const response = await cardAPI.getCards(actualProjectId);
+      const response = await cardAPI.getCards(actualProjectId, true); // Include archived cards
       console.log("Cards response:", response);
-      setCards(response.data.cards || []);
+      const fetchedCards = response.data.cards || [];
+      setCards(fetchedCards);
+      setFilteredCards(fetchedCards); // Initialize filtered cards
     } catch (error) {
       console.error("Error fetching cards:", error);
       console.error("Error details:", error.response?.data);
@@ -112,11 +346,21 @@ const ProjectBoard = () => {
 
   const handleCardCreated = (newCard) => {
     setCards((prev) => [...prev, newCard]);
+    setFilteredCards((prev) => [...prev, newCard]);
     showToast("Card created successfully!", "success");
+  };
+
+  const handleCancelFilter = () => {
+    setFilteredCards(cards);
+    setHasActiveFilters(false);
+    showToast("Filters cleared", "success");
   };
 
   const handleCardUpdated = (updatedCard) => {
     setCards((prev) =>
+      prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
+    );
+    setFilteredCards((prev) =>
       prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
     );
     // Update selected card if it's the one being updated
@@ -126,9 +370,23 @@ const ProjectBoard = () => {
   };
 
   const handleCardDeleted = (cardId) => {
-    setCards((prev) => prev.filter((card) => card._id !== cardId));
-    showToast("Card deleted successfully!", "success");
-    // Close modal if the deleted card was selected
+    // Update the card to be archived instead of removing it
+    setCards((prev) =>
+      prev.map((card) =>
+        card._id === cardId
+          ? { ...card, isArchived: true, status: "archive" }
+          : card
+      )
+    );
+    setFilteredCards((prev) =>
+      prev.map((card) =>
+        card._id === cardId
+          ? { ...card, isArchived: true, status: "archive" }
+          : card
+      )
+    );
+    showToast("Card archived successfully!", "success");
+    // Close modal if the archived card was selected
     if (selectedCard && selectedCard._id === cardId) {
       setShowCardModal(false);
       setSelectedCard(null);
@@ -137,10 +395,40 @@ const ProjectBoard = () => {
     }
   };
 
+  const handleCardRestored = async (cardId) => {
+    try {
+      const response = await cardAPI.restoreCard(cardId);
+      if (response.data.success) {
+        // Refresh cards to get updated data
+        await fetchCards();
+        showToast("Card restored successfully!", "success");
+
+        // Update selected card if it's the one being restored
+        if (selectedCard && selectedCard._id === cardId) {
+          setSelectedCard((prev) => ({
+            ...prev,
+            isArchived: false,
+            archivedAt: null,
+            archivedBy: null,
+            status: response.data.card.status,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error restoring card:", error);
+      showToast("Failed to restore card", "error");
+    }
+  };
+
   const handleStatusChange = async (cardId, newStatus) => {
     try {
       await cardAPI.updateStatus(cardId, { status: newStatus });
       setCards((prev) =>
+        prev.map((card) =>
+          card._id === cardId ? { ...card, status: newStatus } : card
+        )
+      );
+      setFilteredCards((prev) =>
         prev.map((card) =>
           card._id === cardId ? { ...card, status: newStatus } : card
         )
@@ -171,29 +459,92 @@ const ProjectBoard = () => {
   };
 
   const getCardsByStatus = (status) => {
-    return cards.filter((card) => card.status === status);
+    if (status === "archive") {
+      // For archive column, show only archived cards
+      return filteredCards.filter((card) => card.isArchived === true);
+    } else {
+      // For other columns, show only non-archived cards with matching status
+      return filteredCards.filter(
+        (card) => card.status === status && card.isArchived !== true
+      );
+    }
   };
 
   const getColumnConfig = (column) => {
-    const colorMap = {
-      blue: { textColor: "text-blue-600", bgColor: "bg-blue-50" },
-      green: { textColor: "text-green-600", bgColor: "bg-green-50" },
-      yellow: { textColor: "text-yellow-600", bgColor: "bg-yellow-50" },
-      red: { textColor: "text-red-600", bgColor: "bg-red-50" },
-      purple: { textColor: "text-purple-600", bgColor: "bg-purple-50" },
-      pink: { textColor: "text-pink-600", bgColor: "bg-pink-50" },
-      indigo: { textColor: "text-indigo-600", bgColor: "bg-indigo-50" },
-      gray: { textColor: "text-gray-600", bgColor: "bg-gray-50" },
-    };
+    // Use card status colors for better design consistency
+    const cardStatusColors = getCardStatusColors(column.status);
 
-    const config = colorMap[column.color] || colorMap.gray;
     return {
-      title: column.name,
-      color: column.color,
-      bgColor: config.bgColor,
-      borderColor: "border-gray-200",
-      textColor: config.textColor,
+      title: column?.name,
+      color: column?.color,
+      bgColor: cardStatusColors?.bgColor,
+      borderColor: cardStatusColors?.borderColor,
+      textColor: cardStatusColors?.textColor,
     };
+  };
+
+  // Drag and Drop for columns
+  const handleColumnDragStart = (columnId) => {
+    setDraggingColumnId(columnId);
+    // Improve UX cursor on drag
+    try {
+      if (window?.event?.dataTransfer) {
+        window.event.dataTransfer.effectAllowed = "move";
+      }
+    } catch (_) {}
+  };
+
+  const handleColumnDragOver = (e) => {
+    // Allow dropping by preventing default
+    e.preventDefault();
+  };
+
+  const handleColumnDrop = async (targetColumnId) => {
+    if (!draggingColumnId || draggingColumnId === targetColumnId) return;
+
+    // Compute new order locally for instant UI feedback
+    const nonArchiveColumns = columns.filter((c) => c.status !== "archive");
+    const archiveColumn = columns.find((c) => c.status === "archive");
+
+    const currentIndex = nonArchiveColumns.findIndex(
+      (c) => (c._id || c.status) === draggingColumnId
+    );
+    const targetIndex = nonArchiveColumns.findIndex(
+      (c) => (c._id || c.status) === targetColumnId
+    );
+
+    if (currentIndex === -1 || targetIndex === -1) {
+      setDraggingColumnId(null);
+      return;
+    }
+
+    const reordered = [...nonArchiveColumns];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const nextColumns = archiveColumn
+      ? [...reordered, archiveColumn]
+      : reordered;
+    setColumns(nextColumns);
+
+    // Persist order (send only non-archive column ids)
+    try {
+      const orderedIds = reordered.map((c) => c._id);
+      await columnAPI.reorderColumns(actualProjectId, orderedIds);
+    } catch (error) {
+      console.error("Failed to persist column order:", error);
+      showToast("Failed to save column order", "error");
+      // Refetch to resync with server state
+      fetchColumns();
+    } finally {
+      setDraggingColumnId(null);
+      setDragOverColumnId(null);
+    }
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggingColumnId(null);
+    setDragOverColumnId(null);
   };
 
   const handleColumnRename = async (status, newTitle) => {
@@ -232,6 +583,11 @@ const ProjectBoard = () => {
 
         // Update cards with the old status to use the new status
         setCards((prev) =>
+          prev.map((card) =>
+            card.status === status ? { ...card, status: newStatus } : card
+          )
+        );
+        setFilteredCards((prev) =>
           prev.map((card) =>
             card.status === status ? { ...card, status: newStatus } : card
           )
@@ -325,6 +681,10 @@ const ProjectBoard = () => {
     }
   };
 
+  const handleEditProject = () => {
+    setShowEditProjectModal(true);
+  };
+
   if (loading || loadingCards) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -351,35 +711,109 @@ const ProjectBoard = () => {
 
   return (
     <div className="h-full flex flex-col max-h-full">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white mb-8 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      {/* Compact Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-[26px] text-white mb-4 flex-shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: Back + title + description */}
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               to="/"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
+              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+              title="Back"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{currentProject.name}</h1>
-              <p className="text-blue-100 text-lg">
-                {currentProject.description}
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold truncate max-w-[40vw]">
+                {currentProject.name}
+              </h1>
+              <p className="text-blue-100 text-sm truncate max-w-[50vw]">
+                {stripHtmlTags(currentProject.description)}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              setSelectedStatus("todo");
-              setShowCreateModal(true);
-            }}
-            className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Card</span>
-          </button>
+          {/* Right: Status pills + Date pill + Filter + Settings */}
+          <div className="flex items-center gap-3">
+            {/* Status pills */}
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
+                  getProjectStatusColors(currentProject.projectStatus).bgColor
+                } ${
+                  getProjectStatusColors(currentProject.projectStatus).textColor
+                } ${
+                  getProjectStatusColors(currentProject.projectStatus)
+                    .borderColor
+                }`}
+                title="Project status"
+              >
+                {getProjectStatusColors(currentProject.projectStatus).label}
+              </span>
+              {/* <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
+                  getProjectTypeColors(currentProject.projectType).bgColor
+                } ${
+                  getProjectTypeColors(currentProject.projectType).textColor
+                } ${
+                  getProjectTypeColors(currentProject.projectType).borderColor
+                }`}
+                title="Project type"
+              >
+                {getProjectTypeColors(currentProject.projectType).label}
+              </span> */}
+            </div>
+            {/* Date pill */}
+            <div className="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5">
+              <div className="w-7 h-7 bg-white/25 rounded-full flex items-center justify-center">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">
+                  {formatDate(projectData.project?.startDate)}
+                </span>
+                {projectData.project?.endDate && (
+                  <>
+                    <span className="opacity-70 mx-1">→</span>
+                    <span className="font-medium">
+                      {formatDate(projectData.project?.endDate)}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Filter button and Cancel Filter button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors relative"
+                title="Filter cards"
+              >
+                <Filter className="w-5 h-5" />
+                {hasActiveFilters && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700"></span>
+                )}
+              </button>
+              {hasActiveFilters && (
+                <button
+                  onClick={handleCancelFilter}
+                  className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5 px-3"
+                  title="Cancel all filters"
+                >
+                  <X className="w-4 h-4" />
+                  <span className="text-sm font-medium">Cancel Filter</span>
+                </button>
+              )}
+            </div>
+            {/* Settings button */}
+            <button
+              onClick={handleEditProject}
+              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+              title="Project Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -393,10 +827,26 @@ const ProjectBoard = () => {
           <div className="flex gap-4 lg:gap-6 min-w-max h-full">
             {columns.map((column) => {
               const config = getColumnConfig(column);
+              const colKey = column._id || column.status;
               return (
                 <div
-                  key={column._id || column.status}
-                  className="w-80 flex-shrink-0"
+                  key={colKey}
+                  className={`w-80 flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                    draggingColumnId === colKey
+                      ? "opacity-40 scale-[0.98]"
+                      : "opacity-100"
+                  } ${
+                    dragOverColumnId === colKey
+                      ? "ring-4 ring-blue-500 rounded-lg bg-blue-50 shadow-xl border-2 border-blue-300"
+                      : ""
+                  }`}
+                  draggable={column.status !== "archive"}
+                  onDragStart={() => handleColumnDragStart(colKey)}
+                  onDragEnter={() => setDragOverColumnId(colKey)}
+                  onDragOver={handleColumnDragOver}
+                  onDragLeave={() => setDragOverColumnId(null)}
+                  onDrop={() => handleColumnDrop(colKey)}
+                  onDragEnd={handleColumnDragEnd}
                 >
                   <ListColumn
                     title={config.title}
@@ -408,6 +858,7 @@ const ProjectBoard = () => {
                     textColor={config.textColor}
                     onCardUpdated={handleCardUpdated}
                     onCardDeleted={handleCardDeleted}
+                    onCardRestored={handleCardRestored}
                     onStatusChange={handleStatusChange}
                     onCardClick={handleCardClick}
                     projectId={actualProjectId}
@@ -470,7 +921,10 @@ const ProjectBoard = () => {
       {/* Add Column Modal */}
       {showAddColumnModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+          <div
+            ref={addColumnModalRef}
+            className="bg-white rounded-lg p-6 w-96 max-w-md mx-4"
+          >
             <h3 className="text-lg font-semibold mb-4">Add New Column</h3>
 
             <div className="space-y-4">
@@ -493,16 +947,7 @@ const ProjectBoard = () => {
                   Color
                 </label>
                 <div className="flex space-x-2">
-                  {[
-                    "blue",
-                    "green",
-                    "yellow",
-                    "red",
-                    "purple",
-                    "pink",
-                    "indigo",
-                    "gray",
-                  ].map((color) => (
+                  {["blue", "green", "red", "gray", "yellow"].map((color) => (
                     <button
                       key={color}
                       onClick={() => setNewColumnColor(color)}
@@ -566,9 +1011,31 @@ const ProjectBoard = () => {
           onClose={handleCardModalClose}
           onCardUpdated={handleCardUpdated}
           onCardDeleted={handleCardDeleted}
+          onCardRestored={handleCardRestored}
           onStatusChange={handleStatusChange}
         />
       )}
+
+      {/* Edit Project Modal */}
+      {showEditProjectModal && currentProject && (
+        <EditProjectModal
+          project={currentProject}
+          onClose={() => setShowEditProjectModal(false)}
+        />
+      )}
+
+      {/* Filter Panel */}
+      <FilterPanel
+        isOpen={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        cards={cards}
+        onFilterChange={(filtered) => {
+          setFilteredCards(filtered);
+          setHasActiveFilters(filtered.length !== cards.length);
+        }}
+        columns={columns}
+        project={currentProject}
+      />
     </div>
   );
 };

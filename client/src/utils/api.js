@@ -107,14 +107,62 @@ export const projectAPI = {
   addMember: (id, memberData) =>
     api.post(`/projects/${id}/members`, memberData),
   removeMember: (id, userId) => api.delete(`/projects/${id}/members/${userId}`),
+  getProjectLabels: (id) => api.get(`/projects/${id}/labels`),
+  createLabel: (id, labelData) => api.post(`/projects/${id}/labels`, labelData),
+  updateLabel: (id, labelId, labelData) =>
+    api.put(`/projects/${id}/labels/${labelId}`, labelData),
+  deleteLabel: (id, labelId) => api.delete(`/projects/${id}/labels/${labelId}`),
+
+  // Project file upload and attachment management
+  uploadFiles: (projectId, formData) => {
+    const uploadApi = axios.create({
+      baseURL: `${API_URL}/api`,
+      timeout: 30000, // 30 seconds for file uploads
+      withCredentials: true,
+    });
+
+    // Add auth token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      uploadApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return uploadApi.post(`/projects/${projectId}/upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  deleteAttachment: (projectId, attachmentId) => {
+    const deleteApi = axios.create({
+      baseURL: `${API_URL}/api`,
+      timeout: 10000,
+      withCredentials: true,
+    });
+
+    // Add auth token
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      deleteApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return deleteApi.delete(
+      `/projects/${projectId}/attachments/${attachmentId}`
+    );
+  },
 };
 
 export const cardAPI = {
-  getCards: (projectId) => api.get(`/projects/${projectId}/cards`),
+  getCards: (projectId, includeArchived = false) => {
+    const params = includeArchived ? "?includeArchived=true" : "";
+    return api.get(`/projects/${projectId}/cards${params}`);
+  },
   getCard: (id) => api.get(`/cards/${id}`),
   createCard: (cardData) => api.post("/cards", cardData),
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
-  deleteCard: (id) => api.delete(`/cards/${id}`),
+  archiveCard: (id) => api.put(`/cards/${id}/archive`),
+  restoreCard: (id) => api.put(`/cards/${id}/restore`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),
@@ -180,6 +228,15 @@ export const notificationAPI = {
   deleteNotification: (id) => api.delete(`/notifications/${id}`),
   createNotification: (notificationData) =>
     api.post("/notifications", notificationData),
+};
+
+export const activityAPI = {
+  getProjectActivities: (projectId, page = 1, limit = 50) =>
+    api.get(`/activities/project/${projectId}?page=${page}&limit=${limit}`),
+  getUserActivities: (userId, page = 1, limit = 50) =>
+    api.get(`/activities/user/${userId}?page=${page}&limit=${limit}`),
+  getRecentActivities: (limit = 20) =>
+    api.get(`/activities/recent?limit=${limit}`),
 };
 
 export default api;

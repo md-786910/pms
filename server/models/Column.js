@@ -16,7 +16,7 @@ const columnSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      unique: true, // This will be the unique identifier for the column
+      // Removed global unique constraint - using compound index instead
     },
     color: {
       type: String,

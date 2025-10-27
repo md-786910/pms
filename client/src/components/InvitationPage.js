@@ -257,7 +257,7 @@ const InvitationPage = () => {
                 {invitation.project.name}
               </h2>
               <p className="text-gray-600 mb-4">
-                {invitation.project.description || "No description provided"}
+                {/* {invitation.project.description || "No description provided"} */}
               </p>
 
               <div className="space-y-2">

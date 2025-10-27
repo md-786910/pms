@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, "../uploads/cards");
+const uploadDir = path.join(__dirname, "../uploads/projects");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -17,7 +17,7 @@ const formidableOptions = {
   maxFieldsSize: 20 * 1024 * 1024, // 20MB total
   maxFiles: 5, // Maximum 5 files per upload
   filter: function ({ name, originalFilename, mimetype }) {
-    // Allow images and documents
+    // Allow images, documents, certificates, and other common file types
     const allowedMimeTypes = [
       // Image types
       "image/jpeg",
@@ -51,11 +51,68 @@ const formidableOptions = {
       "application/vnd.oasis.opendocument.text",
       "application/vnd.oasis.opendocument.spreadsheet",
       "application/vnd.oasis.opendocument.presentation",
+      // Certificate and key files
+      "application/x-x509-ca-cert",
+      "application/x-x509-user-cert",
+      "application/x-x509-server-cert",
+      "application/pkix-cert",
+      "application/x-pem-file",
+      "application/x-pkcs12",
+      "application/pkcs10",
+      "application/pkcs7-mime",
+      "application/x-pkcs7-certificates",
+      "application/x-pkcs8",
+      "application/x-private-key",
+      // Text and code files
+      "text/html",
+      "text/css",
+      "text/javascript",
+      "text/x-markdown",
+      "text/markdown",
+      "application/javascript",
+      "application/x-javascript",
+      "text/x-java",
+      "text/x-python",
+      "text/x-shellscript",
+      "application/x-sh",
+      "application/x-bash",
+      // Data and database files
+      "application/x-sqlite3",
+      "application/sql",
+      "application/x-latex",
+      "application/x-tex",
+      // Additional archive formats
+      "application/x-tar",
+      "application/gzip",
+      "application/x-gzip",
+      "application/x-compress",
+      "application/x-compressed",
+      // Video files
+      "video/mp4",
+      "video/x-msvideo",
+      "video/x-ms-wmv",
+      "video/quicktime",
+      "video/x-matroska",
+      "video/webm",
+      // Audio files
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/x-wav",
+      "audio/ogg",
+      "audio/webm",
+      "audio/flac",
+      "audio/aac",
+      // Other common types
+      "application/octet-stream",
+      "application/x-msdownload",
+      "application/x-executable",
+      "application/x-binary",
     ];
 
     if (!allowedMimeTypes.includes(mimetype)) {
       throw new Error(
-        `File type ${mimetype} is not allowed. Only images and documents are permitted.`
+        `File type ${mimetype} is not allowed. Supported types include images, documents, certificates, videos, audio, archives, and code files.`
       );
     }
 
@@ -110,7 +167,7 @@ const uploadMiddleware = (req, res, next) => {
             mimeType: singleFile.mimetype,
             size: singleFile.size,
             filepath: singleFile.filepath,
-            url: `/uploads/cards/${path.basename(singleFile.filepath)}`,
+            url: `/uploads/projects/${path.basename(singleFile.filepath)}`,
           };
           uploadedFiles.push(fileInfo);
         }
@@ -153,7 +210,7 @@ const uploadSingleMiddleware = (req, res, next) => {
           mimeType: singleFile.mimetype,
           size: singleFile.size,
           filepath: singleFile.filepath,
-          url: `/uploads/cards/${path.basename(singleFile.filepath)}`,
+          url: `/uploads/projects/${path.basename(singleFile.filepath)}`,
         };
       }
     }

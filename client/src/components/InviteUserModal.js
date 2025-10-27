@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { X, Mail, UserPlus, Send } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -17,6 +17,21 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteType, setInviteType] = useState("email"); // "email" or "existing"
+  const modalRef = useRef(null);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,17 +137,15 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div ref={modalRef} className="modal-content max-w-2xl">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-4">
           <div>
-            <h2 className="text-xl font-semibold text-secondary-900">
-              Invite Users to Project
-            </h2>
-            <p className="text-sm text-secondary-600 mt-1">{project.name}</p>
+            <h2 className="text-xl font-bold">Invite Users to Project</h2>
+            <p className="text-primary-100 text-lg">{project.name}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 transition-colors duration-200"
+            className="p-2 rounded-lg hover:bg-secondary-100 bg-primary-100 transition-colors duration-200 hover:scale-105"
           >
             <X className="w-5 h-5 text-secondary-600" />
           </button>

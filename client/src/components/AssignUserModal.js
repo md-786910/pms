@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { X, UserPlus, UserMinus } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -17,6 +17,21 @@ const AssignUserModal = ({
   const { showToast } = useNotification();
   const [loading, setLoading] = useState({});
   const [localProject, setLocalProject] = useState(project);
+  const modalRef = useRef(null);
+
+  // Handle click outside to close modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleAssignUser = async (user) => {
     setLoading((prev) => ({ ...prev, [user._id]: true }));
@@ -123,27 +138,27 @@ const AssignUserModal = ({
     const currentProject = localProject || project;
     return currentProject.members?.some((member) => {
       if (typeof member === "object") {
-        return member.user?._id === user._id || member.user === user._id;
+        return member?.user?._id === user?._id || member?.user === user?._id;
       }
-      return member === user._id;
+      return member === user?._id;
     });
   };
-
+  console.log({ project, users });
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
+      <div ref={modalRef} className="modal-content max-w-2xl">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-4">
           <div>
-            <h2 className="text-xl font-semibold text-secondary-900">
+            <h2 className="text-xl font-bold">
               {card ? "Assign Users to Card" : "Manage Project Members"}
             </h2>
-            <p className="text-sm text-secondary-600 mt-1">
+            <p className="text-primary-100 text-lg">
               {card ? card.title : (localProject || project).name}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 transition-colors duration-200"
+            className="p-2 rounded-lg hover:bg-secondary-100 bg-primary-100 transition-colors duration-200 hover:scale-105"
           >
             <X className="w-5 h-5 text-secondary-600" />
           </button>
@@ -157,45 +172,46 @@ const AssignUserModal = ({
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {(card
-                ? users.filter((user) => {
-                    const currentProject = localProject || project;
-                    return currentProject.members?.some((member) => {
-                      if (typeof member === "object") {
-                        return (
-                          member.user?._id === user._id ||
-                          member.user === user._id
-                        );
-                      }
-                      return member === user._id;
-                    });
+                ? project?.members?.filter((user) => {
+                    if (typeof user === "object") {
+                      return user?.user;
+                      // return (
+                      //   member.user?._id === user._id ||
+                      //   member.user === user._id
+                      // );
+                    }
+                    // return member === user._id;
                   })
                 : users
-              ).map((user) => {
+              ).map((projectUser) => {
+                const user = card ? projectUser?.user : projectUser;
+                const role = card ? projectUser?.role : projectUser?.role;
+
                 const isAssignedUser = isAssigned(user);
-                const isLoading = loading[user._id];
+                const isLoading = loading[user?._id];
 
                 return (
                   <div
-                    key={user._id}
+                    key={user?._id}
                     className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg"
                   >
                     <div className="flex items-center space-x-3">
                       <Avatar user={user} size="sm" />
                       <div>
                         <p className="font-medium text-secondary-900">
-                          {user.name}
+                          {user?.name}
                         </p>
                         <p className="text-sm text-secondary-600">
-                          {user.email}
+                          {user?.email}
                         </p>
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            user.role === "admin"
+                            role === "admin"
                               ? "bg-red-100 text-red-800"
                               : "bg-blue-100 text-blue-800"
                           }`}
                         >
-                          {user.role}
+                          {role}
                         </span>
                       </div>
                     </div>
