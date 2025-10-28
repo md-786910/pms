@@ -25,7 +25,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-6 py-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Mobile Search */}
@@ -34,7 +34,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">P</span>
             </div>
             <h1 className="text-xl font-bold text-gray-900">
