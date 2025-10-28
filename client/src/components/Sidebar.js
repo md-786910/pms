@@ -58,7 +58,7 @@ const Sidebar = ({
           isCollapsed ? "w-16" : "w-72"
         } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center justify-between px-4 py-6 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           {!isCollapsed && (
             <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
           )}

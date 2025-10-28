@@ -763,13 +763,13 @@ const ProjectBoard = () => {
         <div className="flex items-center justify-between gap-3">
           {/* Left: Back + title + description */}
           <div className="flex items-center gap-3 min-w-0">
-            <Link
+            {/* <Link
               to="/"
               className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
               title="Back"
             >
               <ArrowLeft className="w-5 h-5" />
-            </Link>
+            </Link> */}
             <div className="min-w-0">
               <h1 className="text-lg font-semibold truncate max-w-[40vw]">
                 {currentProject.name}
