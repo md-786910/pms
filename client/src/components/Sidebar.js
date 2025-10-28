@@ -1,22 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Menu,
   Home,
   Settings,
-  Users,
-  FolderOpen,
   X,
-  UserPlus,
-  Bell,
-  Shield,
   ChevronLeft,
   ChevronRight,
+  FolderOpen,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
-import { useNotification } from "../contexts/NotificationContext";
-import Avatar from "./Avatar";
-import { useState } from "react";
+import { useProject } from "../contexts/ProjectContext";
+import SettingsModal from "./SettingsModal";
 
 const Sidebar = ({
   isOpen,
@@ -27,48 +23,24 @@ const Sidebar = ({
 }) => {
   const location = useLocation();
   const { user } = useUser();
-  const { notifications } = useNotification();
+  const { projects } = useProject();
 
-  const unreadNotifications = notifications.filter((n) => !n.read).length;
   const [isCollapsed, setIsCollapsed] = useState(false);
-
-  const menuItems = [
-    {
-      name: "Dashboard",
-      href: "/",
-      icon: Home,
-      show: true,
-    },
-    {
-      name: "Admin Panel",
-      href: "/admin",
-      icon: Shield,
-      show: user?.role === "admin",
-    },
-    {
-      name: "User Management",
-      href: "/users",
-      icon: Users,
-      show: user?.role === "admin",
-    },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: Settings,
-      show: true,
-    },
-    {
-      name: "Notifications",
-      href: "/notifications",
-      icon: Bell,
-      show: true,
-      badge: unreadNotifications > 0 ? unreadNotifications : null,
-    },
-  ];
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showProjectsSubmenu, setShowProjectsSubmenu] = useState(true);
 
   const onToggleSidebar = () => {
     setIsCollapsed((prev) => !prev);
   };
+
+  useEffect(() => {
+    if (isCollapsed) {
+      setShowSettingsModal(false);
+      setShowProjectsSubmenu(false);
+    }
+  }, [isCollapsed]);
+
+  const isOnProjectPage = location.pathname.includes("/project/");
 
   return (
     <>
@@ -109,70 +81,116 @@ const Sidebar = ({
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map((item) => {
-            if (!item.show) return null;
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {/* Dashboard */}
+          <Link
+            to="/"
+            onClick={onClose}
+            className={`flex items-center ${
+              isCollapsed
+                ? "justify-center px-2 py-3"
+                : "justify-between px-3 py-3"
+            } rounded-lg transition-colors duration-200 ${
+              !isOnProjectPage && location.pathname === "/"
+                ? "bg-blue-100 text-blue-700 border border-blue-200"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+            title={isCollapsed ? "Dashboard" : ""}
+          >
+            <div className="flex items-center space-x-3">
+              <Home className="w-5 h-5" />
+              {!isCollapsed && <span className="font-medium">Dashboard</span>}
+            </div>
+          </Link>
 
-            const Icon = item.icon;
-            const isActive =
-              location.pathname === item.href ||
-              (location.pathname.includes("project") &&
-                item.name === "Dashboard");
-
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={onClose}
-                className={`flex items-center ${
+          {/* Projects - Expandable */}
+          {["admin", "member"].includes(user?.role) && (
+            <div>
+              <button
+                onClick={() => {
+                  if (!isCollapsed)
+                    setShowProjectsSubmenu(!showProjectsSubmenu);
+                }}
+                className={`w-full flex items-center ${
                   isCollapsed
                     ? "justify-center px-2 py-3"
                     : "justify-between px-3 py-3"
                 } rounded-lg transition-colors duration-200 ${
-                  isActive
+                  isOnProjectPage
                     ? "bg-blue-100 text-blue-700 border border-blue-200"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
-                title={isCollapsed ? item.name : ""}
+                title={isCollapsed ? "Projects" : ""}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className="w-5 h-5" />
+                  <FolderOpen className="w-5 h-5" />
                   {!isCollapsed && (
-                    <span className="font-medium">{item.name}</span>
+                    <span className="font-medium">Projects</span>
                   )}
                 </div>
-                {!isCollapsed && item.badge && (
-                  <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {item.badge}
-                  </span>
+                {!isCollapsed &&
+                  (showProjectsSubmenu ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  ))}
+              </button>
+
+              {/* Projects Submenu */}
+              {!isCollapsed &&
+                showProjectsSubmenu &&
+                projects &&
+                projects.length > 0 && (
+                  <div className="mt-2 ml-2 pl-3 border-l-2 border-gray-200 space-y-1">
+                    {projects.map((project) => {
+                      const isProjectActive =
+                        location.pathname === `/project/${project._id}`;
+                      return (
+                        <Link
+                          key={project._id}
+                          to={`/project/${project._id}`}
+                          onClick={onClose}
+                          className={`block px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                            isProjectActive
+                              ? "bg-blue-600 text-white font-semibold shadow-sm"
+                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          }`}
+                        >
+                          <span className="text-sm truncate block">
+                            {project.name}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-                {isCollapsed && item.badge && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+            </div>
+          )}
         </nav>
 
         {/* User info */}
-        <div className="p-4 border-t border-gray-200 mt-auto">
+        <div className="relative border-t border-gray-200 mt-auto">
           <div
-            className={`flex items-center ${
-              isCollapsed ? "justify-center" : "space-x-3"
-            }`}
+            className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+            onClick={() => setShowSettingsModal(true)}
           >
-            <Avatar user={user} size="sm" />
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.name}
-                </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-              </div>
-            )}
+            <div
+              className={`flex items-center ${
+                isCollapsed ? "justify-center" : "space-x-3"
+              }`}
+            >
+              <Settings className="w-5 h-5 text-gray-600" />
+              {!isCollapsed && (
+                <p className="text-sm font-medium text-gray-900">Settings</p>
+              )}
+            </div>
           </div>
+
+          {/* Settings Modal */}
+          <SettingsModal
+            isOpen={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+          />
         </div>
       </div>
     </>
