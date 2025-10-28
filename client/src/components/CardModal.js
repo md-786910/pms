@@ -27,6 +27,7 @@ import SimpleQuillEditor from "./SimpleQuillEditor";
 import SimpleCommentEditor from "./SimpleCommentEditor";
 import LabelsModal from "./LabelsModal";
 import { API_URL } from "../utils/endpoints";
+import { getCardStatusColors } from "../utils/statusColors";
 
 const CardModal = ({
   card,
@@ -181,6 +182,8 @@ const CardModal = ({
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItemTitle, setNewItemTitle] = useState("");
   const [loadingItems, setLoadingItems] = useState(false);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingItemTitle, setEditingItemTitle] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -687,6 +690,45 @@ const CardModal = ({
     } catch (error) {
       console.error("Error deleting item:", error);
       showToast("Failed to delete item", "error");
+    }
+  };
+
+  const handleStartEditItem = (item) => {
+    setEditingItemId(item._id);
+    setEditingItemTitle(item.title);
+  };
+
+  const handleCancelEditItem = () => {
+    setEditingItemId(null);
+    setEditingItemTitle("");
+  };
+
+  const handleSaveEditItem = async (itemId) => {
+    if (!editingItemTitle.trim()) {
+      showToast("Item title cannot be empty", "error");
+      return;
+    }
+
+    try {
+      const response = await cardItemAPI.updateCardItem(card._id, itemId, {
+        title: editingItemTitle.trim(),
+      });
+
+      if (response.data.success) {
+        setItems((prev) =>
+          prev.map((item) =>
+            item._id === itemId
+              ? { ...item, title: editingItemTitle.trim() }
+              : item
+          )
+        );
+        setEditingItemId(null);
+        setEditingItemTitle("");
+        showToast("Item updated successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error updating item:", error);
+      showToast("Failed to update item", "error");
     }
   };
 
@@ -1300,7 +1342,7 @@ const CardModal = ({
           className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
         >
           {/* Modal Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
@@ -1352,27 +1394,7 @@ const CardModal = ({
                     </button>
                   </>
                 ) : (
-                  <>
-                    {card.isArchived ? (
-                      <button
-                        onClick={handleRestore}
-                        disabled={loading}
-                        className="bg-green-500 text-white hover:bg-green-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm disabled:opacity-50"
-                        title="Restore card"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        <span>Restore</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleArchive}
-                        className="bg-orange-500 text-white hover:bg-orange-600 font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center space-x-1 text-sm"
-                        title="Archive card"
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
-                    )}
-                  </>
+                  <></>
                 )}
                 <button
                   onClick={onClose}
@@ -1388,7 +1410,50 @@ const CardModal = ({
           <div className="p-8 max-h-[calc(95vh-200px)] ">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="lg:col-span-2 space-y-4 max-h-[70vh] overflow-y-auto">
+                {/* Status and Due Date Display */}
+
+                <div className="rounded-md ">
+                  {/* Status/Due Row */}
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const colors = getCardStatusColors(card.status);
+                      const label =
+                        allStatusOptions.find((s) => s.value === card.status)
+                          ?.label ||
+                        colors.label ||
+                        card.status;
+                      return (
+                        <button
+                          className={`btn btn-lg px-3 py-1.5 font-bold bg-[#fc5c65] rounded-md text-black ${colors.borderColor}`}
+                          title="Current status"
+                        >
+                          <span
+                            className={`mr-1.5 w-1.5 h-1.5 rounded-full`}
+                          ></span>
+                          {label}
+                        </button>
+                      );
+                    })()}
+                    <button
+                      className={`btn btn-lg px-3 py-1.5 rounded-md font-bold ${
+                        card.dueDate
+                          ? "bg-[#2bcbba]  border-yellow-200"
+                          : "bg-gray-200  border-gray-200"
+                      }`}
+                      title="Due date"
+                    >
+                      {card.dueDate
+                        ? new Date(card.dueDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "No due date"}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Description */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -1409,7 +1474,7 @@ const CardModal = ({
                   {/* Description Content */}
                   <div className="relative">
                     {isEditing ? (
-                      <div className="simple-quill-editor description-editor">
+                      <div className="simple-quill-editor description-editor ">
                         <SimpleQuillEditor
                           value={formData.description || ""}
                           onChange={(content) => {
@@ -1419,6 +1484,7 @@ const CardModal = ({
                             });
                           }}
                           placeholder="Add a description..."
+                          height={200}
                         />
                       </div>
                     ) : (
@@ -1473,6 +1539,163 @@ const CardModal = ({
                         Cancel
                       </button>
                     </div>
+                  )}
+                </div>
+
+                {/* Card Items Section */}
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Items ({items.length})
+                    </label>
+                  </div>
+
+                  {/* Items List - Scrollable area */}
+                  <div className="space-y-2 mb-3 max-h-64 overflow-y-auto">
+                    {loadingItems ? (
+                      <div className="text-center py-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                      </div>
+                    ) : items.length > 0 ? (
+                      items.map((item) => (
+                        <div key={item._id}>
+                          {editingItemId === item._id ? (
+                            /* Edit Mode */
+                            <div className="p-2 bg-white border-2 border-blue-300 rounded-lg">
+                              <input
+                                type="text"
+                                value={editingItemTitle}
+                                onChange={(e) =>
+                                  setEditingItemTitle(e.target.value)
+                                }
+                                onKeyPress={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleSaveEditItem(item._id);
+                                  } else if (e.key === "Escape") {
+                                    handleCancelEditItem();
+                                  }
+                                }}
+                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
+                                autoFocus
+                              />
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleSaveEditItem(item._id)}
+                                  disabled={!editingItemTitle.trim()}
+                                  className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-3 rounded-lg transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={handleCancelEditItem}
+                                  className="flex-1 bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-1.5 px-3 rounded-lg transition-colors text-xs"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* View Mode */
+                            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
+                              <button
+                                onClick={() =>
+                                  handleToggleItem(item._id, item.completed)
+                                }
+                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                  item.completed
+                                    ? "bg-green-500 border-green-500 text-white"
+                                    : "border-gray-300 hover:border-gray-400"
+                                }`}
+                              >
+                                {item.completed && (
+                                  <CheckSquare className="w-3 h-3" />
+                                )}
+                              </button>
+                              <button
+                                onDoubleClick={() => handleStartEditItem(item)}
+                                className={`flex-1 text-left text-sm ${
+                                  item.completed
+                                    ? "line-through text-gray-400"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                {item.title}
+                              </button>
+                              <div className="flex items-center space-x-1">
+                                <button
+                                  onClick={() => handleStartEditItem(item)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all"
+                                  title="Edit item"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteItem(item._id)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all"
+                                  title="Delete item"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 italic text-sm text-center py-2">
+                        No items yet
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Add Item Box - Fixed at bottom */}
+                  {showAddItem ? (
+                    <div className="bg-white border-2 border-blue-300 rounded-lg p-3">
+                      <input
+                        type="text"
+                        value={newItemTitle}
+                        onChange={(e) => setNewItemTitle(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            handleAddItem();
+                          } else if (e.key === "Escape") {
+                            setShowAddItem(false);
+                            setNewItemTitle("");
+                          }
+                        }}
+                        placeholder="Enter item title..."
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
+                        autoFocus
+                      />
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleAddItem}
+                          disabled={!newItemTitle.trim()}
+                          className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Add
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowAddItem(false);
+                            setNewItemTitle("");
+                          }}
+                          className="bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowAddItem(!showAddItem)}
+                      className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex items-center justify-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-600">
+                        Add Item
+                      </span>
+                    </button>
                   )}
                 </div>
 
@@ -2020,109 +2243,27 @@ const CardModal = ({
                   </div>
                 </div>
 
-                {/* Card Items Section */}
+                {/* Archive Card Button */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Items ({items.length})
-                    </label>
+                  {card.isArchived ? (
                     <button
-                      onClick={() => setShowAddItem(!showAddItem)}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
+                      onClick={handleRestore}
+                      disabled={loading}
+                      className="w-full bg-green-600 text-white hover:bg-green-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm disabled:opacity-50"
+                      title="Restore card"
                     >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Item</span>
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Restore Card</span>
                     </button>
-                  </div>
-
-                  {/* Items List */}
-                  <div className="space-y-2">
-                    {loadingItems ? (
-                      <div className="text-center py-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
-                      </div>
-                    ) : items.length > 0 ? (
-                      items.map((item) => (
-                        <div
-                          key={item._id}
-                          className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors"
-                        >
-                          <button
-                            onClick={() =>
-                              handleToggleItem(item._id, item.completed)
-                            }
-                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                              item.completed
-                                ? "bg-green-500 border-green-500 text-white"
-                                : "border-gray-300 hover:border-gray-400"
-                            }`}
-                          >
-                            {item.completed && (
-                              <CheckSquare className="w-3 h-3" />
-                            )}
-                          </button>
-                          <span
-                            className={`flex-1 text-sm ${
-                              item.completed
-                                ? "line-through text-gray-400"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {item.title}
-                          </span>
-                          <button
-                            onClick={() => handleDeleteItem(item._id)}
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 italic text-sm text-center py-2">
-                        No items yet
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Add Item Form */}
-                  {showAddItem && (
-                    <div className="mt-3 space-y-2">
-                      <input
-                        type="text"
-                        value={newItemTitle}
-                        onChange={(e) => setNewItemTitle(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            handleAddItem();
-                          } else if (e.key === "Escape") {
-                            setShowAddItem(false);
-                            setNewItemTitle("");
-                          }
-                        }}
-                        placeholder="Enter item title..."
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                        autoFocus
-                      />
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={handleAddItem}
-                          disabled={!newItemTitle.trim()}
-                          className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-3 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Add Item
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowAddItem(false);
-                            setNewItemTitle("");
-                          }}
-                          className="bg-gray-300 text-gray-700 hover:bg-gray-400 font-medium py-1.5 px-3 rounded-lg transition-colors text-sm"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
+                  ) : (
+                    <button
+                      onClick={handleArchive}
+                      className="w-full bg-orange-500 text-white hover:bg-orange-600 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                      title="Archive card"
+                    >
+                      <Archive className="w-4 h-4" />
+                      <span>Archive Card</span>
+                    </button>
                   )}
                 </div>
               </div>

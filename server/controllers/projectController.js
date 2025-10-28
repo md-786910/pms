@@ -9,18 +9,7 @@ const {
   sendProjectUpdateEmail,
   sendMemberRemovedEmail,
 } = require("../config/email");
-const COLOR_PALETTE = [
-  "#FF5733",
-  "#55efc4",
-  "#0984e3",
-  "#d63031",
-  "#fdcb6e",
-  "#8D33FF",
-  "#e84393",
-  "#20bf6b",
-  "#fa8231",
-  "#2bcbba",
-];
+const { COLOR_PALETTE } = require("../../client/src/utils/color");
 
 const assignColor = async () => {
   // Fetch all used colors from DB
@@ -169,6 +158,17 @@ const getProjects = async (req, res) => {
         .populate("members.user", "name email avatar color")
         .sort({ createdAt: -1 });
     }
+
+    // manipulate project
+    // projects = projects.map((project, index) => {
+    //   const projectColor = project.bgColor
+    //     ? project.bgColor
+    //     : COLOR_PALETTE[(index % COLOR_PALETTE.length) - 1];
+    //   return {
+    //     ...project.toJSON(),
+    //     bgColor: projectColor,
+    //   };
+    // });
 
     res.json({
       success: true,

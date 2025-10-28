@@ -107,10 +107,7 @@ const ProjectCard = ({ project }) => {
       className="group block bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
     >
       {/* Card Header with Gradient */}
-      <div
-        className="p-4 text-white"
-        style={{ backgroundColor: project.bgColor }}
-      >
+      <div className="p-4 text-white bg-gradient-to-r from-blue-600 to-blue-700">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h3 className="text-lg font-semibold group-hover:text-primary-100 transition-colors duration-200">

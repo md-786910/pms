@@ -3,13 +3,17 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Plus,
-  MoreVertical,
   ChevronRight,
   Settings,
   Calendar,
   Filter,
   X,
+  Users,
+  UserPlus,
+  UserMinus,
 } from "lucide-react";
+import Avatar from "./Avatar";
+import InviteUserModal from "./InviteUserModal";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useSocket } from "../contexts/SocketContext";
@@ -21,18 +25,17 @@ import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
 import EditProjectModal from "./EditProjectModal";
 import FilterPanel from "./FilterPanel";
-import { stripHtmlTags } from "../utils/htmlUtils";
+// import { stripHtmlTags } from "../utils/htmlUtils";
 import {
   getProjectStatusColors,
-  getProjectTypeColors,
-  getStatusBadgeClasses,
   getCardStatusColors,
 } from "../utils/statusColors";
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
   const navigate = useNavigate();
-  const { currentProject, fetchProject, loading } = useProject();
+  const { currentProject, fetchProject, loading, removeProjectMember } =
+    useProject();
   const { showToast } = useNotification();
   const { socket, joinProject, leaveProject } = useSocket();
   const { user } = useUser();
@@ -63,6 +66,11 @@ const ProjectBoard = () => {
   const [filteredCards, setFilteredCards] = useState([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  const [showMembersPopover, setShowMembersPopover] = useState(false);
+  const membersBtnRef = useRef(null);
+  const membersPopoverRef = useRef(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState(null);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -75,7 +83,44 @@ const ProjectBoard = () => {
     };
 
     fetchProjectData();
-  }, []);
+  }, [id]);
+
+  // Close members popover on outside click
+  useEffect(() => {
+    if (!showMembersPopover) return;
+    const handleClickOutside = (e) => {
+      // Check if click is outside both the button AND the popover content
+      const isOutsideButton =
+        membersBtnRef.current && !membersBtnRef.current.contains(e.target);
+      const isOutsidePopover =
+        membersPopoverRef.current &&
+        !membersPopoverRef.current.contains(e.target);
+
+      if (isOutsideButton && isOutsidePopover) {
+        setShowMembersPopover(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMembersPopover]);
+
+  const handleRemoveMember = async (memberUserId) => {
+    if (!currentProject?._id) return;
+    try {
+      setRemovingMemberId(memberUserId);
+      await removeProjectMember(currentProject._id, memberUserId);
+      await fetchProject(currentProject._id);
+      showToast("Member removed from project", "success");
+    } catch (error) {
+      console.error("Error removing member:", error);
+      showToast(
+        error.response?.data?.message || "Failed to remove member",
+        "error"
+      );
+    } finally {
+      setRemovingMemberId(null);
+    }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -92,6 +137,7 @@ const ProjectBoard = () => {
       fetchCards();
       fetchColumns();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actualProjectId]);
 
   // Join/leave project room on mount/unmount
@@ -254,7 +300,7 @@ const ProjectBoard = () => {
       socket.off("column-created", handleColumnCreated);
       socket.off("column-updated", handleColumnUpdated);
     };
-  }, [socket, selectedCard, showToast, user]);
+  }, [socket, selectedCard, showToast, user, actualProjectId]);
 
   // Handle click outside to close add column modal
   useEffect(() => {
@@ -273,6 +319,7 @@ const ProjectBoard = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAddColumnModal]);
 
   // Handle card modal opening from URL
@@ -685,7 +732,7 @@ const ProjectBoard = () => {
     setShowEditProjectModal(true);
   };
 
-  if (loading || loadingCards) {
+  if (loading || loadingCards || loadingColumns) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -733,8 +780,130 @@ const ProjectBoard = () => {
             </div>
           </div>
 
-          {/* Right: Status pills + Date pill + Filter + Settings */}
-          <div className="flex items-center gap-3">
+          {/* Right: Members + Status pills + Date pill + Filter + Settings */}
+          <div className="flex items-center gap-3 relative">
+            {/* Members avatar group */}
+            {Array.isArray(currentProject.members) && (
+              <div className="flex items-center gap-2 relative z-50">
+                <button
+                  ref={membersBtnRef}
+                  onClick={() => setShowMembersPopover((s) => !s)}
+                  className="flex items-center -space-x-2 group"
+                  title="Project members"
+                >
+                  {currentProject.members.slice(0, 3).map((m, idx) => (
+                    <div
+                      key={(m.user && (m.user._id || m.user.id)) || idx}
+                      className="relative inline-flex border-2 border-white/40 rounded-full shadow-sm transition-transform group-hover:scale-[1.02] bg-white/0"
+                      style={{ zIndex: 10 - idx }}
+                    >
+                      <Avatar user={m.user} size="sm" />
+                    </div>
+                  ))}
+                  {currentProject.members.length > 3 && (
+                    <div className="inline-flex w-8 h-8 items-center justify-center rounded-full bg-white/20 text-white text-[11px] font-semibold border-2 border-white/40 shadow-sm">
+                      +{currentProject.members.length - 3}
+                    </div>
+                  )}
+                </button>
+
+                {/* Popover listing all members */}
+                {showMembersPopover && (
+                  <div
+                    ref={membersPopoverRef}
+                    className="absolute left-0 top-full mt-2 w-80 bg-white text-secondary-900 rounded-xl shadow-lg ring-1 ring-black/5 overflow-hidden animate-[fadeIn_120ms_ease-out] z-[100]"
+                  >
+                    <div className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm font-semibold">
+                          {currentProject.members.length} members
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowInviteModal(true);
+                          setShowMembersPopover(false);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        title="Add members"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="max-h-64 overflow-auto divide-y divide-secondary-100">
+                      {currentProject.members.map((m, idx) => (
+                        <div
+                          key={(m.user && (m.user._id || m.user.id)) || idx}
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-secondary-50 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Avatar user={m.user} size="sm" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {m.user?.name || m.user?.email || "Unknown"}
+                            </div>
+                            <div className="text-xs text-secondary-500 capitalize truncate">
+                              {m.role || "member"}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const userId = m.user?._id || m.user?.id;
+                              console.log(
+                                "Clicked remove for user:",
+                                userId,
+                                "member:",
+                                m
+                              );
+                              if (userId) {
+                                handleRemoveMember(userId);
+                              } else {
+                                console.error(
+                                  "No user ID found for member:",
+                                  m
+                                );
+                                showToast("Unable to identify member", "error");
+                              }
+                            }}
+                            className="p-1.5 rounded-md hover:bg-secondary-100 text-secondary-500 hover:text-red-600 transition-colors"
+                            title="Remove member"
+                            disabled={
+                              removingMemberId === (m.user?._id || m.user?.id)
+                            }
+                          >
+                            {removingMemberId ===
+                            (m.user?._id || m.user?.id) ? (
+                              <svg
+                                className="w-4 h-4 animate-spin"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v4l3.5-3.5L12 20v4a8 8 0 01-8-8z"
+                                ></path>
+                              </svg>
+                            ) : (
+                              <UserMinus className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {/* Status pills */}
             <div className="flex items-center gap-2">
               <span
@@ -763,25 +932,44 @@ const ProjectBoard = () => {
                 {getProjectTypeColors(currentProject.projectType).label}
               </span> */}
             </div>
-            {/* Date pill */}
-            <div className="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5">
-              <div className="w-7 h-7 bg-white/25 rounded-full flex items-center justify-center">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div className="text-xs">
-                <span className="font-medium">
-                  {formatDate(projectData.project?.startDate)}
-                </span>
+            {/* Date pills */}
+            {(projectData.project?.startDate ||
+              projectData.project?.endDate) && (
+              <div className="flex items-center gap-1.5">
+                {/* Start Date */}
+                {projectData.project?.startDate && (
+                  <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-white/60 font-medium text-[10px] leading-none">
+                        Start Date
+                      </div>
+                      <div className="text-white font-semibold leading-tight">
+                        {formatDate(projectData.project.startDate)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* End Date */}
                 {projectData.project?.endDate && (
-                  <>
-                    <span className="opacity-70 mx-1">→</span>
-                    <span className="font-medium">
-                      {formatDate(projectData.project?.endDate)}
-                    </span>
-                  </>
+                  <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-white/60 font-medium text-[10px] leading-none">
+                        End Date
+                      </div>
+                      <div className="text-white font-semibold leading-tight">
+                        {formatDate(projectData.project.endDate)}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            )}
             {/* Filter button and Cancel Filter button */}
             <div className="flex items-center gap-2">
               <button
@@ -1021,6 +1209,15 @@ const ProjectBoard = () => {
         <EditProjectModal
           project={currentProject}
           onClose={() => setShowEditProjectModal(false)}
+        />
+      )}
+
+      {/* Invite/Add Members Modal */}
+      {showInviteModal && currentProject && (
+        <InviteUserModal
+          project={currentProject}
+          onClose={() => setShowInviteModal(false)}
+          onUserInvited={() => fetchProject(currentProject._id)}
         />
       )}
 
