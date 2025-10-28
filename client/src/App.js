@@ -57,7 +57,7 @@ function AppContent() {
                     sidebarCollapsed={sidebarCollapsed}
                   />
 
-                  <main className="flex-1 p-6 overflow-auto transition-all duration-300">
+                  <main className="flex-1 p-6 overflow-auto transition-all duration-300 bg-slate-200">
                     <Routes>
                       <Route path="/" element={<ProjectList />} />
                       <Route path="/admin" element={<AdminPanel />} />

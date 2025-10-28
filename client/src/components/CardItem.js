@@ -315,8 +315,8 @@ const CardItem = ({
                   </h4>
                   {/* Issue Number and Priority */}
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">
-                      #{card._id?.slice(-4) || "0000"}
+                    <span className="bg-gray-200  text-black font-medium px-2 py-0.5 rounded">
+                      {card.cardNumber || card._id?.slice(-4) || "0000"}
                     </span>
                     {card.priority && (
                       <span

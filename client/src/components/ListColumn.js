@@ -79,7 +79,7 @@ const ListColumn = ({
 
   return (
     <div
-      className={`bg-gray-50 rounded-lg border border-gray-200 h-[600px] transition-all duration-200 ${
+      className={`bg-gray-50 rounded-lg border border-gray-200 h-[644px] transition-all duration-200 ${
         isHovered ? "shadow-lg" : "shadow-sm"
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -186,7 +186,7 @@ const ListColumn = ({
       </div>
 
       {/* Cards List */}
-      <div className="p-3 space-y-3 h-[540px] overflow-y-auto">
+      <div className="p-3 space-y-3 h-[580px] overflow-y-auto">
         {cards.map((card) => (
           <CardItem
             key={card._id || card.id}
@@ -216,7 +216,7 @@ const ListColumn = ({
         <div className="p-3 border-t border-gray-100">
           <button
             onClick={() => onAddCard(status)}
-            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400"
+            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-white hover:text-white  rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400 bg-[#4338ca]  font-medium"
           >
             <Plus className="w-4 h-4" />
             <span>Add a card</span>

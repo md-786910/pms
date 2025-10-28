@@ -217,9 +217,14 @@ const createCard = async (req, res) => {
       });
     }
 
+    // Calculate the next card number for this project
+    const cardCount = await Card.countDocuments({ project });
+    const cardNumber = cardCount + 1;
+
     const card = new Card({
       title,
       description,
+      cardNumber,
       project,
       status,
       priority,

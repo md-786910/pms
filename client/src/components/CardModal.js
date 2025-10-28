@@ -1369,7 +1369,7 @@ const CardModal = ({
                     )}
                   </h2>
                   <p className="text-blue-100 text-sm">
-                    {isEditing ? "Click to edit" : "Card Details"}
+                    {!isEditing && "Click to edit"}
                   </p>
                 </div>
               </div>
@@ -1416,6 +1416,16 @@ const CardModal = ({
                 <div className="rounded-md ">
                   {/* Status/Due Row */}
                   <div className="flex items-center gap-1">
+                    <button
+                      className={`btn btn-lg px-3 py-1.5 rounded-md font-bold ${
+                        card.cardNumber || card._id?.slice(-4) || "0000"
+                          ? "bg-[#26de81]  border-yellow-200"
+                          : "bg-gray-200  border-gray-200"
+                      }`}
+                      title="Due date"
+                    >
+                      {card.cardNumber || card._id?.slice(-4) || "0000"}
+                    </button>
                     {(() => {
                       const colors = getCardStatusColors(card.status);
                       const label =
@@ -1450,7 +1460,7 @@ const CardModal = ({
                             day: "numeric",
                           })
                         : "No due date"}
-                    </button>
+                    </button>{" "}
                   </div>
                 </div>
 
