@@ -266,21 +266,21 @@ const CreateProjectModal = ({ onClose }) => {
         {/* Sticky Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-10 right-6 z-10 p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
+          className="absolute top-5 right-6 z-10 p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
           title="Close modal"
         >
           <X className="w-4 h-4 text-gray-600" />
         </button>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex-shrink-0">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-white/20 rounded-xl">
               <Plus className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Create New Project</h2>
-              <p className="text-primary-100 text-lg">
+              <h2 className="text-xl font-bold">Create New Project</h2>
+              <p className="text-primary-100 text-md">
                 Set up a comprehensive project with all necessary details
               </p>
             </div>

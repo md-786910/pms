@@ -138,16 +138,16 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
   return (
     <div className="modal-overlay">
       <div ref={modalRef} className="modal-content max-w-2xl">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-4">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-3">
           <div>
             <h2 className="text-xl font-bold">Invite Users to Project</h2>
-            <p className="text-primary-100 text-lg">{project.name}</p>
+            <p className="text-primary-100 text-md">{project.name}</p>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-secondary-100 bg-primary-100 transition-colors duration-200 hover:scale-105"
           >
-            <X className="w-5 h-5 text-secondary-600" />
+            <X className="w-4 h-4 text-secondary-600" />
           </button>
         </div>
 
@@ -255,7 +255,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                             (selectedUser) => selectedUser._id === user._id
                           )}
                           onChange={() => handleUserToggle(user)}
-                          className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
+                          className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500 cursor-pointer"
                         />
                         <Avatar user={user} size="sm" />
                         <div className="flex-1">

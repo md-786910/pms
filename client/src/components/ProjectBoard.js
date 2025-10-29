@@ -71,6 +71,7 @@ const ProjectBoard = () => {
   const membersPopoverRef = useRef(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
+  const [confirmingUserId, setConfirmingUserId] = useState(null);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -858,7 +859,8 @@ const ProjectBoard = () => {
                                 m
                               );
                               if (userId) {
-                                handleRemoveMember(userId);
+                                // handleRemoveMember(userId);
+                                setConfirmingUserId(userId);
                               } else {
                                 console.error(
                                   "No user ID found for member:",
@@ -1192,6 +1194,19 @@ const ProjectBoard = () => {
         cancelText="Cancel"
         type="danger"
         isLoading={false}
+      />
+      <ConfirmationModal
+        isOpen={!!confirmingUserId}
+        title="Remove Member"
+        message="Are you sure you want to Delete user"
+        onCancel={() => setConfirmingUserId(null)}
+        onConfirm={() => {
+          handleRemoveMember(confirmingUserId);
+          setConfirmingUserId(null);
+        }}
+        onClose={() => {
+          setConfirmingUserId(false);
+        }}
       />
 
       {/* Card Modal */}

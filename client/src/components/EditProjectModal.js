@@ -359,21 +359,21 @@ const EditProjectModal = ({ project, onClose }) => {
         {/* Sticky Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-10 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+          className="absolute top-6 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
           title="Close modal"
         >
           <X className="w-4 h-4 text-gray-600" />
         </button>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex-shrink-0">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-white/20 rounded-xl">
               <Save className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Edit Project</h2>
-              <p className="text-primary-100 text-lg">
+              <h2 className="text-xl font-bold">Edit Project</h2>
+              <p className="text-primary-100 text-md">
                 Update project details and manage attachments
               </p>
             </div>
@@ -807,14 +807,14 @@ const EditProjectModal = ({ project, onClose }) => {
             <button
               type="submit"
               form="edit-project-form"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-8 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
               disabled={loading}
             >
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 <>
-                  <Save className="w-5 h-5" />
+                  <Save className="w-4 h-4" />
                   <span>Save Changes</span>
                 </>
               )}

@@ -1342,15 +1342,15 @@ const CardModal = ({
           className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
         >
           {/* Modal Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">📋</span>
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <span className="text-xl">📋</span>
                 </div>
                 <div>
                   <h2
-                    className="text-2xl font-bold cursor-pointer"
+                    className="text-xl font-bold cursor-pointer"
                     onClick={() => setIsEditing(true)}
                   >
                     {isEditing ? (
@@ -1360,7 +1360,7 @@ const CardModal = ({
                         onChange={(e) =>
                           setFormData({ ...formData, title: e.target.value })
                         }
-                        className="bg-transparent border-none outline-none focus:outline-none text-2xl font-bold text-white placeholder-white placeholder-opacity-70"
+                        className="bg-transparent border-none outline-none focus:outline-none text-xl font-bold text-white placeholder-white placeholder-opacity-70"
                         placeholder="Card title..."
                         autoFocus
                       />
@@ -1398,7 +1398,7 @@ const CardModal = ({
                 )}
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+                  className="p-2 hover:bg-white hover:bg-opacity-20 transition-colors duration-200 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
                 >
                   <X className="w-5 h-5" />
                 </button>
