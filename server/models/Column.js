@@ -21,7 +21,16 @@ const columnSchema = new mongoose.Schema(
     color: {
       type: String,
       default: "gray",
-      enum: ["blue", "green", "yellow", "red", "purple", "pink", "indigo"],
+      enum: [
+        "blue",
+        "green",
+        "yellow",
+        "red",
+        "purple",
+        "pink",
+        "indigo",
+        "gray",
+      ],
     },
     position: {
       type: Number,

@@ -277,7 +277,7 @@ const AdminPanel = () => {
                                       key={
                                         member.user?._id || member.user || index
                                       }
-                                      className="border-2 border-white shadow-sm rounded-full"
+                                      className="border-2 text-white border-white  shadow-sm rounded-full"
                                     >
                                       <Avatar
                                         user={member.user}
@@ -289,7 +289,7 @@ const AdminPanel = () => {
                                 {project.members?.filter(
                                   (member) => member && member.user
                                 )?.length > 3 && (
-                                  <div className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-gray-600 font-medium shadow-sm">
+                                  <div className="w-6 h-6  rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm">
                                     +
                                     {project.members.filter(
                                       (member) => member && member.user
