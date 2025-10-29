@@ -1415,11 +1415,11 @@ const CardModal = ({
 
                 <div className="sticky top-0 z-50 bg-white pb-4">
                   {/* Status/Due Row */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <button
-                      className={`btn btn-lg px-3 py-1.5 rounded-md ${
+                      className={`btn px-5 py-0.5 rounded-md ${
                         card.cardNumber || card._id?.slice(-4) || "0000"
-                          ? "bg-[#26de81]  border-yellow-200"
+                          ? "bg-[#2bcbba]  "
                           : "bg-gray-200  border-gray-200"
                       }`}
                       title="Due date"
@@ -1435,7 +1435,7 @@ const CardModal = ({
                         card.status;
                       return (
                         <button
-                          className={`btn btn-lg px-3 py-1.5 bg-[#fc5c65] rounded-md text-black ${colors.borderColor}`}
+                          className={`btn px-5 py-0.5 text-[15px] bg-[tomato] rounded-md text-black ${colors.borderColor}`}
                           title="Current status"
                         >
                           <span
@@ -1446,7 +1446,7 @@ const CardModal = ({
                       );
                     })()}
                     <button
-                      className={`btn btn-lg px-3 py-1.5 rounded-md ${
+                      className={`btn px-5 py-0.5 rounded-md ${
                         card.dueDate
                           ? "bg-[#2bcbba]  border-yellow-200"
                           : "bg-gray-200  border-gray-200"
