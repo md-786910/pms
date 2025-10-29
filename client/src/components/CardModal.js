@@ -1407,17 +1407,17 @@ const CardModal = ({
           </div>
 
           {/* Modal Content */}
-          <div className="p-8 max-h-[calc(95vh-200px)] ">
+          <div className="pt-2 pb-8 px-8 max-h-[calc(95vh-200px)] ">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Content */}
               <div className="lg:col-span-2 space-y-4 max-h-[70vh] overflow-y-auto">
                 {/* Status and Due Date Display */}
 
-                <div className="rounded-md ">
+                <div className="sticky top-0 z-50 bg-white pb-4">
                   {/* Status/Due Row */}
                   <div className="flex items-center gap-1">
                     <button
-                      className={`btn btn-lg px-3 py-1.5 rounded-md font-bold ${
+                      className={`btn btn-lg px-3 py-1.5 rounded-md ${
                         card.cardNumber || card._id?.slice(-4) || "0000"
                           ? "bg-[#26de81]  border-yellow-200"
                           : "bg-gray-200  border-gray-200"
@@ -1435,7 +1435,7 @@ const CardModal = ({
                         card.status;
                       return (
                         <button
-                          className={`btn btn-lg px-3 py-1.5 font-bold bg-[#fc5c65] rounded-md text-black ${colors.borderColor}`}
+                          className={`btn btn-lg px-3 py-1.5 bg-[#fc5c65] rounded-md text-black ${colors.borderColor}`}
                           title="Current status"
                         >
                           <span
@@ -1446,7 +1446,7 @@ const CardModal = ({
                       );
                     })()}
                     <button
-                      className={`btn btn-lg px-3 py-1.5 rounded-md font-bold ${
+                      className={`btn btn-lg px-3 py-1.5 rounded-md ${
                         card.dueDate
                           ? "bg-[#2bcbba]  border-yellow-200"
                           : "bg-gray-200  border-gray-200"
@@ -1556,7 +1556,7 @@ const CardModal = ({
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      Items ({items.length})
+                      Checklist ({items.length})
                     </label>
                   </div>
 
@@ -1653,7 +1653,7 @@ const CardModal = ({
                       ))
                     ) : (
                       <p className="text-gray-500 italic text-sm text-center py-2">
-                        No items yet
+                        No checklist yet
                       </p>
                     )}
                   </div>
@@ -1703,7 +1703,7 @@ const CardModal = ({
                     >
                       <Plus className="w-4 h-4 text-gray-400" />
                       <span className="text-sm font-medium text-gray-600">
-                        Add Item
+                        Add Checklist
                       </span>
                     </button>
                   )}
@@ -1924,7 +1924,7 @@ const CardModal = ({
               <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto">
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 pt-4">
                     Status
                     {isArchived && (
                       <span className="text-xs text-gray-500 ml-2 font-normal">
@@ -2259,7 +2259,7 @@ const CardModal = ({
                     <button
                       onClick={handleRestore}
                       disabled={loading}
-                      className="w-full bg-green-600 text-white hover:bg-green-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm disabled:opacity-50"
+                      className="w-full bg-green-600 text-white hover:bg-green-700 font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm disabled:opacity-50"
                       title="Restore card"
                     >
                       <RotateCcw className="w-4 h-4" />
@@ -2268,7 +2268,7 @@ const CardModal = ({
                   ) : (
                     <button
                       onClick={handleArchive}
-                      className="w-full bg-orange-500 text-white hover:bg-orange-600 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                      className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
                       title="Archive card"
                     >
                       <Archive className="w-4 h-4" />

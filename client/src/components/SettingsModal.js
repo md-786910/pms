@@ -14,6 +14,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
       icon: Shield,
       show: user?.role === "admin",
       key: "admin",
+      title: "Admin Panel",
     },
     {
       name: "User Management",
@@ -21,6 +22,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
       icon: Users,
       show: user?.role === "admin",
       key: "users",
+      title: "User Management",
     },
     {
       name: "Preferences",
@@ -28,6 +30,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
       icon: Settings,
       show: true,
       key: "settings",
+      title: "Preferences",
     },
   ];
 
@@ -44,7 +47,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-white bg-opacity-20">
+              <div className="p-1 rounded-lg bg-white bg-opacity-20">
                 <Settings className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -60,7 +63,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
           </div>
 
           {/* Content */}
-          <div className="py-2 max-h-[400px] overflow-y-auto">
+          <div className="py-2 max-h-[400px]">
             {settingMenu.map((item) => {
               if (!item.show) return null;
 
@@ -71,7 +74,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 <Link
                   key={item.key}
                   to={item.href}
-                  className={`flex items-center space-x-3 px-4 py-3 mx-2 rounded-lg transition-all duration-200 ${
+                  title={item.title}
+                  className={`flex items-center space-x-3 px-1 py-3 mx-2 rounded-lg transition-all duration-200 ${
                     isActive
                       ? "bg-blue-50 text-blue-700 border border-blue-200"
                       : "text-gray-700 hover:bg-gray-50"
