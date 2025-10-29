@@ -347,3 +347,14 @@
     @apply text-sm;
   }
 }
+
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #d3d3d3;
+  color: #000000;
+}

@@ -7,6 +7,7 @@ const SimpleQuillEditor = ({
   onChange,
   placeholder = "Type something...",
   height = "120px",
+  readOnly = false,
 }) => {
   const [editorValue, setEditorValue] = useState(value);
 
