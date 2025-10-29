@@ -38,14 +38,14 @@ const Avatar = ({
   })();
 
   // Clean color class (remove bg- prefix if it exists)
-  const cleanColor = color.startsWith("bg-") ? color : `bg-${color}-900`;
-
+  console.log({ color });
   const avatarElement = (
     <div
-      className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-white font-medium ${cleanColor} ${className}`}
+      className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-white font-medium ${className}`}
       title={showTooltip ? name : undefined}
       style={{
         color: "white",
+        background: color,
       }}
     >
       {initials}

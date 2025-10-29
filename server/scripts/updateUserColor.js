@@ -1,70 +1,56 @@
-/*
-"bg-blue-400",
-"bg-green-400",
-"bg-purple-400",
-"bg-orange-400",
-"bg-pink-400",
-"bg-red-400",
-"bg-indigo-400",
-"bg-yellow-400",
-"bg-cyan-400",
-"bg-emerald-400",
-"bg-violet-400",
-"bg-rose-400",
-"bg-sky-400",
-"bg-lime-400"
- */
-
-const connectDB = require("../config/database");
+require("dotenv").config();
 const User = require("../models/User");
-
+const mongoose = require("mongoose");
 const colors = [
-  "bg-teal-400",
-  "bg-green-400",
-  "bg-purple-400",
-  "bg-orange-400",
-  "bg-pink-400",
-  "bg-red-400",
-  "bg-indigo-400",
-  "bg-yellow-400",
-  "bg-cyan-400",
-  "bg-emerald-400",
-  "bg-violet-400",
-  "bg-rose-400",
-  "bg-sky-400",
-  "bg-lime-400",
+  "teal",
+  "green",
+  "purple",
+  "orange",
+  "pink",
+  "red",
+  "indigo",
+  "yellow",
+  "cyan",
+  "emerald",
+  "violet",
+  "rose",
+  "sky",
+  "lime",
 ];
 
 const updateUserColor = async () => {
   try {
-    await connectDB();
+    try {
+      const conn = await mongoose.connect(process.env.MONGODB_URI);
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+      console.error("Database connection error:", error.message);
+      process.exit(1);
+    }
+    console.log("🔄 Updating User Colors...");
 
-    console.log("🔄 Starting user color update process...");
-
-    // Get all users
     const users = await User.find({});
-    console.log(`📊 Found ${users.length} users to update`);
-
     let updatedCount = 0;
 
     for (const user of users) {
-      // Generate new color based on name
-      let newColor = colors[user.name.charCodeAt(0) % colors.length];
-      // Update user if color changed
-      if (user.color !== newColor) {
-        await User.findByIdAndUpdate(user._id, { color: newColor });
-        console.log(`✅ Updated ${user.name}: ${user.color} → ${newColor}`);
-        updatedCount++;
-      } else {
-        console.log(`⏭️  Skipped ${user.name}: color already correct`);
+      // Pick random color
+      let newColor = colors[Math.floor(Math.random() * colors.length)];
+
+      // If the random color = current user's color, re-randomize until different
+      while (newColor === user.color) {
+        newColor = colors[Math.floor(Math.random() * colors.length)];
       }
+
+      // Update only if changed
+      await User.findByIdAndUpdate(user._id, { color: newColor });
+      console.log(`✅ ${user.name}: ${user.color} → ${newColor}`);
+      updatedCount++;
     }
 
-    console.log(
-      `🎉 User color update completed! Updated ${updatedCount} users.`
-    );
+    console.log(`🎯 Completed — Updated ${updatedCount} users.`);
+    process.exit();
   } catch (error) {
-    console.error("❌ Error updating user color:", error);
+    console.error("❌ Error:", error);
     process.exit(1);
   }
 };
