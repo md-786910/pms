@@ -44,7 +44,7 @@ const projectSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    bgColor: { type: String, required: true },
+    bgColor: { type: String },
     liveSiteUrl: {
       type: String,
       trim: true,
