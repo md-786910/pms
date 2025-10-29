@@ -4,6 +4,8 @@ const connectDB = require("../config/database");
 
 const migrateCardNumbers = async () => {
   try {
+    // loading db
+
     // Connect to database
     await connectDB();
 

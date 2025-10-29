@@ -1135,17 +1135,19 @@ const ProjectBoard = () => {
                   Color
                 </label>
                 <div className="flex space-x-2">
-                  {["blue", "green", "red", "gray", "yellow"].map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setNewColumnColor(color)}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        newColumnColor === color
-                          ? "border-gray-800"
-                          : "border-gray-300"
-                      } bg-${color}-500 hover:opacity-80 transition-opacity`}
-                    />
-                  ))}
+                  {["blue", "green", "yellow", "red", "purple", "pink"].map(
+                    (color) => (
+                      <button
+                        key={color}
+                        onClick={() => setNewColumnColor(color)}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          newColumnColor === color
+                            ? "border-gray-800"
+                            : "border-gray-300"
+                        } bg-${color}-500 hover:opacity-80 transition-opacity`}
+                      />
+                    )
+                  )}
                 </div>
               </div>
             </div>
