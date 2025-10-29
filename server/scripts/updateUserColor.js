@@ -9,13 +9,13 @@ const colors = [
   "pink",
   "red",
   "indigo",
-  "yellow",
-  "cyan",
-  "emerald",
+  "#eb3b5a",
+  "#4b7bec",
+  "#26de81",
   "violet",
-  "rose",
-  "sky",
-  "lime",
+  "#2bcbba",
+  "#8854d0",
+  "#3867d6",
 ];
 
 const updateUserColor = async () => {
