@@ -7,7 +7,16 @@ const migrateCardNumbers = async () => {
     // loading db
 
     // Connect to database
-    await connectDB();
+    try {
+      const conn = await mongoose.connect(
+        process.env.MONGODB_URI || "mongodb://localhost:27017/pms"
+      );
+
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+      console.error("Database connection error:", error.message);
+      process.exit(1);
+    }
 
     console.log("🔄 Starting card number migration...");
 
@@ -46,9 +55,4 @@ const migrateCardNumbers = async () => {
   }
 };
 
-// Run migration if called directly
-if (require.main === module) {
-  migrateCardNumbers();
-}
-
-module.exports = migrateCardNumbers;
+migrateCardNumbers();
