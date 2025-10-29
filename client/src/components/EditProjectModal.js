@@ -368,11 +368,18 @@ const EditProjectModal = ({ project, onClose }) => {
             <X className="w-4 h-4 text-gray-600" />
           </button>
           <button
-            className="absolute top-6 right-20 z-10 px-4 bg-primary-500 hover:bg-primary-400 text-white font-semibold py-2 transition-colors duration-200 rounded-md"
+            className="absolute top-6 right-20 z-10 px-4 py-2 bg-primary-500 hover:bg-primary-400 text-white font-semibold text-base transition-colors duration-200 rounded-md flex items-center justify-center gap-2"
             title="Edit mode"
             onClick={() => setEditMode(!editMode)}
           >
-            {editMode ? <Pencil /> : "Cancel edit"}
+            {editMode ? (
+              <>
+                <Pencil className="w-4 h-4" />
+                <span>Edit mode</span>
+              </>
+            ) : (
+              "Cancel edit"
+            )}
           </button>
         </div>
 

@@ -8,6 +8,7 @@ import {
   Calendar,
   Filter,
   X,
+  ExternalLink,
   Users,
   UserPlus,
   UserMinus,
@@ -782,7 +783,69 @@ const ProjectBoard = () => {
           </div>
 
           {/* Right: Members + Status pills + Date pill + Filter + Settings */}
-          <div className="flex items-center gap-3 relative">
+          <div className="flex items-center gap-2 relative">
+            <div className="flex flex-wrap items-center justify-center gap-2 mr-6">
+              {/* Live URL */}
+              {currentProject.liveSiteUrl && (
+                <a
+                  href={currentProject.liveSiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+        group relative flex items-center gap-2
+        px-2 py-2 rounded-lg text-xs font-medium
+        text-white shadow-md transition-all duration-300
+        bg-gradient-to-r from-emerald-500/80 to-teal-500/80
+        hover:from-emerald-400 hover:to-teal-400
+        hover:scale-105 hover:shadow-emerald-500/40
+      "
+                >
+                  <span>Live Site</span>
+                  <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </a>
+              )}
+
+              {/* Demo URL */}
+              {currentProject.demoSiteUrl && (
+                <a
+                  href={currentProject.demoSiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+        group relative flex items-center gap-2
+        px-2 py-2 rounded-lg text-xs font-medium
+        text-white shadow-md transition-all duration-300
+        bg-gradient-to-r from-blue-500/80 to-indigo-500/80
+        hover:from-blue-400 hover:to-indigo-400
+        hover:scale-105 hover:shadow-blue-500/40
+      "
+                >
+                  <span>Demo Site</span>
+                  <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </a>
+              )}
+
+              {/* Markup URL */}
+              {currentProject.markupUrl && (
+                <a
+                  href={currentProject.markupUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+        group relative flex items-center gap-2
+        px-2 py-2 rounded-lg text-xs font-medium
+        text-white shadow-md transition-all duration-300
+        bg-gradient-to-r from-pink-500/80 to-rose-500/80
+        hover:from-pink-400 hover:to-rose-400
+        hover:scale-105 hover:shadow-pink-500/40
+      "
+                >
+                  <span>Markup</span>
+                  <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </a>
+              )}
+            </div>
+
             {/* Members avatar group */}
             {Array.isArray(currentProject.members) && (
               <div className="flex items-center gap-2 relative z-50">
