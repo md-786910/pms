@@ -1424,7 +1424,7 @@ const CardModal = ({
                       }`}
                       title="Due date"
                     >
-                      {card.cardNumber || card._id?.slice(-4) || "0000"}
+                      #{card.cardNumber || card._id?.slice(-4) || "0000"}
                     </button>
                     {(() => {
                       const colors = getCardStatusColors(card.status);
@@ -1448,8 +1448,8 @@ const CardModal = ({
                     <button
                       className={`btn px-5 py-0.5 rounded-md ${
                         card.dueDate
-                          ? "bg-[#2bcbba]  border-yellow-200"
-                          : "bg-gray-200  border-gray-200"
+                          ? "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
+                          : "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
                       }`}
                       title="Due date"
                     >
@@ -1499,15 +1499,16 @@ const CardModal = ({
                       </div>
                     ) : (
                       <div
-                        className="w-full p-4 min-h-[80px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                        className="w-full p-4 min-h-[120px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                         onClick={() => setIsEditing(true)}
                       >
                         {formData.description && formData.description.trim() ? (
                           <div
                             className="prose prose-sm max-w-none"
                             style={{
-                              fontSize: "14px",
+                              fontSize: "16px",
                               lineHeight: "1.5",
+                              letterSpacing: "0.3px",
                               color: "#374151",
                             }}
                             dangerouslySetInnerHTML={{

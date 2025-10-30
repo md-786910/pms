@@ -18,14 +18,26 @@ const SimpleQuillEditor = ({
 
   const modules = {
     toolbar: [
-      ["bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      ["clean"],
+      [{ header: [1, 2, 3, 4, 5, false] }], // Header dropdown
+      ["bold", "italic", "underline"], // Text formatting
+      [{ color: [] }, { background: [] }],
+      [{ list: "ordered" }, { list: "bullet" }], // Lists
+      ["link"], // Links
+      ["clean"], // Clear formatting
     ],
   };
 
-  const formats = ["bold", "italic", "underline", "list", "bullet", "link"];
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "color",
+    "background",
+    "list",
+    "bullet",
+    "link",
+  ];
 
   const handleChange = (content) => {
     setEditorValue(content);

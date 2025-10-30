@@ -216,7 +216,8 @@ const ListColumn = ({
         <div className="p-3 border-t border-gray-100">
           <button
             onClick={() => onAddCard(status)}
-            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-white hover:text-white  rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400 bg-[#4338ca]  font-medium"
+            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-white hover:text-white  rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400 bg-[#4338ca] font-medium transition-all duration-300 hover:from-blue-400 hover:to-indigo-400
+        hover:scale-105 hover:shadow-blue-500/40"
           >
             <Plus className="w-4 h-4" />
             <span>Add a card</span>
