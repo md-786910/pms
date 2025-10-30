@@ -84,7 +84,9 @@ const ProjectBoard = () => {
       }
     };
 
-    fetchProjectData();
+    if (!selectedCard) {
+      fetchProjectData();
+    }
   }, [id]);
 
   // Close members popover on outside click
@@ -157,7 +159,6 @@ const ProjectBoard = () => {
     if (!socket) return;
 
     const handleCardCreated = (data) => {
-      console.log("Card created event received:", data);
       // Only update if not created by current user
       if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
         setCards((prev) => [...prev, data.card]);
@@ -167,7 +168,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardUpdated = (data) => {
-      console.log("Card updated event received:", data);
       // Only update if not updated by current user
       if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
         setCards((prev) =>
@@ -184,7 +184,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardArchived = (data) => {
-      console.log("Card archived event received:", data);
       if (data.card) {
         setCards((prev) =>
           prev.map((card) =>
@@ -209,7 +208,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardRestored = (data) => {
-      console.log("Card restored event received:", data);
       if (data.card) {
         // Use the function directly instead of calling fetchCards
         cardAPI
@@ -226,7 +224,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardStatusChanged = (data) => {
-      console.log("Card status changed event received:", data);
       if (data.card) {
         setCards((prev) =>
           prev.map((card) =>
@@ -250,7 +247,6 @@ const ProjectBoard = () => {
     };
 
     const handleColumnCreated = (data) => {
-      console.log("Column created event received:", data);
       // Only update if not created by current user
       if (
         data.column &&
@@ -263,7 +259,6 @@ const ProjectBoard = () => {
     };
 
     const handleColumnUpdated = (data) => {
-      console.log("Column updated event received:", data);
       if (data.column) {
         setColumns((prev) =>
           prev.map((col) => (col._id === data.column._id ? data.column : col))
@@ -363,9 +358,7 @@ const ProjectBoard = () => {
 
   const fetchCards = async () => {
     try {
-      console.log("Fetching cards for project:", actualProjectId);
       const response = await cardAPI.getCards(actualProjectId, true); // Include archived cards
-      console.log("Cards response:", response);
       const fetchedCards = response.data.cards || [];
       setCards(fetchedCards);
       setFilteredCards(fetchedCards); // Initialize filtered cards
@@ -380,9 +373,7 @@ const ProjectBoard = () => {
 
   const fetchColumns = async () => {
     try {
-      console.log("Fetching columns for project:", actualProjectId);
       const response = await columnAPI.getColumns(actualProjectId);
-      console.log("Columns response:", response);
       setColumns(response.data.columns || []);
     } catch (error) {
       console.error("Error fetching columns:", error);
@@ -708,7 +699,6 @@ const ProjectBoard = () => {
   };
 
   const handleAddCardToColumn = (status) => {
-    console.log("Add card button clicked for status:", status);
     setSelectedStatus(status);
     setShowCreateModal(true);
   };
@@ -915,12 +905,7 @@ const ProjectBoard = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               const userId = m.user?._id || m.user?.id;
-                              console.log(
-                                "Clicked remove for user:",
-                                userId,
-                                "member:",
-                                m
-                              );
+
                               if (userId) {
                                 // handleRemoveMember(userId);
                                 setConfirmingUserId(userId);

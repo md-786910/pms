@@ -38,7 +38,6 @@ const Avatar = ({
   })();
 
   // Clean color class (remove bg- prefix if it exists)
-  console.log({ color });
   const avatarElement = (
     <div
       className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-white font-medium ${className}`}

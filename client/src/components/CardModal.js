@@ -770,9 +770,6 @@ const CardModal = ({
     );
 
     if (hasIncompleteUserData) {
-      console.log(
-        "Detected incomplete user data in comments, refetching card..."
-      );
       // Refetch the card to get properly populated user data
       const refetchCard = async () => {
         try {
@@ -793,12 +790,10 @@ const CardModal = ({
     if (!socket) return;
 
     const handleCardUpdated = (data) => {
-      console.log("Card updated event received in modal:", data);
       if (data.card && data.card._id === card._id) {
         // Skip if this event is from the current user (already updated via API)
         const currentUserId = user?._id || user?.id;
         if (data.userId === currentUserId) {
-          console.log("Card updated by current user, skipping Socket event");
           return;
         }
         onCardUpdated(data.card);
@@ -806,14 +801,12 @@ const CardModal = ({
     };
 
     const handleCardCommentAdded = (data) => {
-      console.log("Card comment added event received:", data);
       if (data.card && data.card._id === card._id) {
         onCardUpdated(data.card);
       }
     };
 
     const handleCardLabelAdded = (data) => {
-      console.log("Card label added event received:", data);
       if (
         data.card &&
         data.card._id === card._id &&
@@ -825,7 +818,6 @@ const CardModal = ({
     };
 
     const handleCardLabelRemoved = (data) => {
-      console.log("Card label removed event received:", data);
       if (
         data.card &&
         data.card._id === card._id &&
@@ -837,7 +829,6 @@ const CardModal = ({
     };
 
     const handleCardItemCreated = (data) => {
-      console.log("Card item created event received:", data);
       if (
         data.cardId === card._id &&
         data.userId !== user?._id &&
@@ -848,7 +839,6 @@ const CardModal = ({
     };
 
     const handleCardItemUpdated = (data) => {
-      console.log("Card item updated event received:", data);
       if (
         data.cardId === card._id &&
         data.userId !== user?._id &&
@@ -861,7 +851,6 @@ const CardModal = ({
     };
 
     const handleCardItemDeleted = (data) => {
-      console.log("Card item deleted event received:", data);
       if (
         data.cardId === card._id &&
         data.userId !== user?._id &&
@@ -872,7 +861,6 @@ const CardModal = ({
     };
 
     const handleCardItemsReordered = (data) => {
-      console.log("Card items reordered event received:", data);
       if (
         data.cardId === card._id &&
         data.userId !== user?._id &&
@@ -1083,16 +1071,11 @@ const CardModal = ({
     if (!commentText.trim()) return;
 
     try {
-      console.log("Adding comment:", commentText);
-      console.log("Mentions:", mentions);
-
       const response = await cardAPI.addComment(
         card._id,
         commentText,
         mentions
       );
-      console.log("Comment response:", response.data);
-      console.log("Updated card comments:", response.data.card.comments);
 
       if (response.data.success) {
         onCardUpdated(response.data.card);
@@ -1449,7 +1432,7 @@ const CardModal = ({
                       className={`btn px-5 py-0.5 rounded-md ${
                         card.dueDate
                           ? "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
-                          : "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
+                          : "bg-gray-200"
                       }`}
                       title="Due date"
                     >
@@ -1770,22 +1753,18 @@ const CardModal = ({
                     <SimpleCommentEditor
                       value={commentText || ""}
                       onChange={(content) => {
-                        console.log("SimpleCommentEditor onChange:", content);
                         setCommentText(content);
                       }}
                       onMentionSelect={(mention) => {
-                        console.log("Mention selected:", mention);
                         setMentions((prev) => [...prev, mention]);
                       }}
                       onSend={(content) => {
-                        console.log("Sending comment:", content);
                         setCommentText(content);
                         handleAddComment();
                       }}
                       placeholder="Add a comment... (use @ to mention someone)"
                       projectMembers={(() => {
                         const members = currentProject?.members || [];
-                        console.log("Project members for mentions:", members);
                         return members;
                       })()}
                       currentUser={user}
