@@ -93,6 +93,7 @@ const Settings = () => {
                   Email Address
                 </label>
                 <input
+                  disabled
                   type="email"
                   value={profileData.email}
                   onChange={(e) =>

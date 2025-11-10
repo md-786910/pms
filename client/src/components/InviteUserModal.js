@@ -137,7 +137,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
 
   return (
     <div className="modal-overlay">
-      <div ref={modalRef} className="modal-content max-w-2xl">
+      <div ref={modalRef} className="modal-content max-w-5xl">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-3">
           <div>
             <h2 className="text-xl font-bold">Invite Users to Project</h2>
@@ -236,38 +236,47 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {availableUsers.map((user) => (
-                      <div
-                        key={user._id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-colors duration-200 cursor-pointer ${
-                          selectedUsers.some(
-                            (selectedUser) => selectedUser._id === user._id
-                          )
-                            ? "border-primary-200 bg-primary-50"
-                            : "border-secondary-200 hover:border-secondary-300"
-                        }`}
-                        onClick={() => handleUserToggle(user)}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedUsers.some(
-                            (selectedUser) => selectedUser._id === user._id
-                          )}
-                          onChange={() => handleUserToggle(user)}
-                          className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500 cursor-pointer"
-                        />
-                        <Avatar user={user} size="sm" />
-                        <div className="flex-1">
-                          <p className="font-medium text-secondary-900">
-                            {user.name}
-                          </p>
-                          <p className="text-sm text-secondary-600">
-                            {user.email}
-                          </p>
+                  <div
+                    className={`grid gap-2 max-h-60 overflow-y-auto ${
+                      availableUsers.length === 1
+                        ? "grid-cols-1"
+                        : "grid-cols-2"
+                    }`}
+                  >
+                    {availableUsers
+                      .slice() // copy to avoid mutating
+                      .sort((a, b) => a.name.localeCompare(b.name)) // sort alphabetically
+                      .map((user) => (
+                        <div
+                          key={user._id}
+                          className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-colors duration-200 cursor-pointer ${
+                            selectedUsers.some(
+                              (selectedUser) => selectedUser._id === user._id
+                            )
+                              ? "border-primary-200 bg-primary-50"
+                              : "border-secondary-200 hover:border-secondary-300"
+                          }`}
+                          onClick={() => handleUserToggle(user)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.some(
+                              (selectedUser) => selectedUser._id === user._id
+                            )}
+                            onChange={() => handleUserToggle(user)}
+                            className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500 cursor-pointer"
+                          />
+                          <Avatar user={user} size="sm" />
+                          <div className="flex-1">
+                            <p className="font-medium text-secondary-900">
+                              {user.name}
+                            </p>
+                            <p className="text-sm text-secondary-600 truncate">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </div>

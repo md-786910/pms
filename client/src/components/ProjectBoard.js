@@ -838,7 +838,7 @@ const ProjectBoard = () => {
 
             {/* Members avatar group */}
             {Array.isArray(currentProject.members) && (
-              <div className="flex items-center gap-2 relative z-50">
+              <div className="flex items-center gap-2 relative">
                 <button
                   ref={membersBtnRef}
                   onClick={() => setShowMembersPopover((s) => !s)}
@@ -865,7 +865,7 @@ const ProjectBoard = () => {
                 {showMembersPopover && (
                   <div
                     ref={membersPopoverRef}
-                    className="absolute left-0 top-full mt-2 w-80 bg-white text-secondary-900 rounded-xl shadow-lg ring-1 ring-black/5 overflow-hidden animate-[fadeIn_120ms_ease-out] z-[100]"
+                    className="absolute left-0 top-full mt-2 w-80 bg-white text-secondary-900 rounded-xl shadow-lg ring-1 ring-black/5 overflow-hidden animate-[fadeIn_120ms_ease-out]"
                   >
                     <div className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -885,7 +885,7 @@ const ProjectBoard = () => {
                         <UserPlus className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="max-h-64 overflow-auto divide-y divide-secondary-100">
+                    <div className="max-h-64 overflow-auto divide-y divide-secondary-100 cursor-pinter">
                       {currentProject.members.map((m, idx) => (
                         <div
                           key={(m.user && (m.user._id || m.user.id)) || idx}
@@ -917,7 +917,7 @@ const ProjectBoard = () => {
                                 showToast("Unable to identify member", "error");
                               }
                             }}
-                            className="p-1.5 rounded-md hover:bg-secondary-100 text-secondary-500 hover:text-red-600 transition-colors"
+                            className="p-1.5 rounded-md hover:bg-secondary-100 text-secondary-500 hover:text-red-600 transition-colors cursor-pointer"
                             title="Remove member"
                             disabled={
                               removingMemberId === (m.user?._id || m.user?.id)
@@ -957,7 +957,7 @@ const ProjectBoard = () => {
             {/* Status pills */}
             <div className="flex items-center gap-2">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm cursor-pointer ${
                   getProjectStatusColors(currentProject.projectStatus).bgColor
                 } ${
                   getProjectStatusColors(currentProject.projectStatus).textColor

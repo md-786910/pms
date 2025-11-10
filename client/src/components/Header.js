@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
   Bell,
   User,
+  Check,
   LogOut,
+  X,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -14,15 +16,40 @@ import Avatar from "./Avatar";
 
 const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const { user, logout } = useUser();
-  const { notifications } = useNotification();
+  const dropdownRef = useRef(null);
+  const bellRef = useRef(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const { notifications, markAsRead, markAllAsRead } = useNotification();
   const [showUserMenu, setShowUserMenu] = useState(false);
-
+  const [open, setOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
   };
+  // Sort by most recent
+  const sortedNotifications = [...notifications].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+
+  // Show top 4 unless "View all" clicked
+  const displayNotifications = showAll
+    ? sortedNotifications
+    : sortedNotifications.slice(0, 4);
+
+  // ✅ Close dropdown on outside click + reset view
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (bellRef.current && !bellRef.current.contains(event.target)) {
+        setOpen(false);
+        setShowAll(false); // reset when closed
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-2">
@@ -50,8 +77,12 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
           </div>
 
           {/* Notifications */}
-          <div className="relative">
-            <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+          <div className="relative" ref={bellRef}>
+            {/* Bell Button */}
+            <button
+              onClick={() => setOpen(!open)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 relative"
+            >
               <Bell className="w-5 h-5 text-gray-600" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -59,6 +90,68 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                 </span>
               )}
             </button>
+
+            {/* Dropdown */}
+            {open && (
+              <div className="absolute right-0 mt-2 w-80 bg-white shadow-xl border border-gray-200 rounded-xl p-3 z-[100]">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    Notifications
+                  </h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="flex items-center text-xs text-blue-600 hover:text-blue-700 font-medium space-x-1"
+                    >
+                      <Check className="w-3 h-3" />
+                      <span>Mark all read</span>
+                    </button>
+                  )}
+                </div>
+
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No notifications yet
+                  </p>
+                ) : (
+                  <>
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {displayNotifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-2 rounded-lg ${
+                            !n.read ? "bg-gray-50" : ""
+                          } hover:bg-gray-100 cursor-pointer flex justify-between items-start`}
+                          onClick={() => markAsRead(n.id)}
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {n.title}
+                            </p>
+                            <p className="text-xs text-gray-500">{n.message}</p>
+                          </div>
+                          {!n.read && (
+                            <span className="w-2 h-2 rounded-full bg-blue-500 mt-1"></span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Toggle View All / View Less */}
+                    {notifications.length > 4 && (
+                      <div className="mt-3 text-center border-t border-gray-200 pt-2">
+                        <button
+                          onClick={() => setShowAll(!showAll)}
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          {showAll ? "View less ↑" : "View all ↓"}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* User Profile */}
