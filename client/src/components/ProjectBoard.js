@@ -838,7 +838,7 @@ const ProjectBoard = () => {
 
             {/* Members avatar group */}
             {Array.isArray(currentProject.members) && (
-              <div className="flex items-center gap-2 relative">
+              <div className="flex items-center gap-2 relative z-[20]">
                 <button
                   ref={membersBtnRef}
                   onClick={() => setShowMembersPopover((s) => !s)}
