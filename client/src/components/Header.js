@@ -148,39 +148,34 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                           }`}
                         >
                           {/* Header: Notification Title */}
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex gap-5 items-start">
-                              <div className="flex items-center space-x-2">
-                                <div
-                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-sm"
-                                  style={{
-                                    backgroundColor:
-                                      n.sender?.color || "#6b7280",
-                                  }}
-                                >
-                                  {n.sender?.avatar || "U"}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-900">
-                                    {n.sender?.name || "Unknown User"}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {timeAgo(n.createdAt)}
-                                  </p>
-                                </div>
+                          <div className="flex items-start justify-between gap-y-1">
+                            {/* Sender info (left) */}
+                            <div className="flex items-center space-x-2">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-sm"
+                                style={{
+                                  backgroundColor: n.sender?.color || "#6b7280",
+                                }}
+                              >
+                                {n.sender?.avatar || "U"}
                               </div>
-                              <div className="">
-                                {n.relatedProject && (
-                                  <p className="text-xs font-medium text-gray-500">
-                                    {n.relatedProject?.name}
-                                  </p>
-                                )}
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {n.sender?.name || "Unknown User"}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {timeAgo(n.createdAt)}
+                                </p>
                               </div>
                             </div>
 
-                            {/* Blue dot for unread */}
-                            {!n.read && (
-                              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                            {/* Project name (right, top-aligned + wraps if needed) */}
+                            {n.relatedProject && (
+                              <div className="text-right flex-wrap">
+                                <p className="text-xs font-medium text-gray-600 leading-tight">
+                                  {n.relatedProject?.name}
+                                </p>
+                              </div>
                             )}
                           </div>
 
