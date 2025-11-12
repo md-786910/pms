@@ -1,24 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  Menu,
-  Bell,
-  User,
-  Check,
-  LogOut,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Bell, Check, LogOut } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import AdvancedSearch from "./AdvancedSearch";
 import Avatar from "./Avatar";
 
+const timeAgo = (dateString) => {
+  const now = new Date();
+  const past = new Date(dateString);
+  const diff = (now - past) / 1000; // seconds
+
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} day ago`;
+  return past.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
 const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const { user, logout } = useUser();
-  const dropdownRef = useRef(null);
   const bellRef = useRef(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const { notifications, markAsRead, markAllAsRead } = useNotification();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -29,22 +31,24 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
     logout();
     setShowUserMenu(false);
   };
-  // Sort by most recent
   const sortedNotifications = [...notifications].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
-  // Show top 4 unless "View all" clicked
-  const displayNotifications = showAll
-    ? sortedNotifications
-    : sortedNotifications.slice(0, 4);
+  const filteredNotifications = showUnreadOnly
+    ? sortedNotifications.filter((n) => !n.read)
+    : sortedNotifications;
 
-  // ✅ Close dropdown on outside click + reset view
+  const displayNotifications = showAll
+    ? filteredNotifications
+    : filteredNotifications.slice(0, 4);
+
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (bellRef.current && !bellRef.current.contains(event.target)) {
         setOpen(false);
-        setShowAll(false); // reset when closed
+        setShowAll(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -78,10 +82,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
           {/* Notifications */}
           <div className="relative" ref={bellRef}>
-            {/* Bell Button */}
+            {/* Bell Icon */}
             <button
               onClick={() => setOpen(!open)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 relative"
+              className="p-2 rounded-lg hover:bg-gray-100 relative"
             >
               <Bell className="w-5 h-5 text-gray-600" />
               {unreadCount > 0 && (
@@ -93,52 +97,110 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
             {/* Dropdown */}
             {open && (
-              <div className="absolute right-0 mt-2 w-80 bg-white shadow-xl border border-gray-200 rounded-xl p-3 z-[100]">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-gray-700">
+              <div className="absolute right-0 mt-2 w-96 bg-white shadow-2xl border border-gray-200 rounded-xl p-3 z-[100]">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold text-gray-700">
                     Notifications
                   </h3>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="flex items-center text-xs text-blue-600 hover:text-blue-700 font-medium space-x-1"
-                    >
-                      <Check className="w-3 h-3" />
-                      <span>Mark all read</span>
-                    </button>
-                  )}
+
+                  <div className="flex items-center space-x-2">
+                    <label className="flex items-center text-xs text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showUnreadOnly}
+                        onChange={() => setShowUnreadOnly(!showUnreadOnly)}
+                        className="mr-1 accent-blue-600"
+                      />
+                      Only unread
+                    </label>
+
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="flex items-center text-xs text-blue-600 hover:text-blue-700 font-medium space-x-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>Mark all as read</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
+                {/* Notifications */}
                 {notifications.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">
                     No notifications yet
                   </p>
                 ) : (
                   <>
-                    <div className="max-h-64 overflow-y-auto space-y-2">
+                    <div className="max-h-80 overflow-y-auto space-y-3">
                       {displayNotifications.map((n) => (
                         <div
-                          key={n.id}
-                          className={`p-2 rounded-lg ${
-                            !n.read ? "bg-gray-50" : ""
-                          } hover:bg-gray-100 cursor-pointer flex justify-between items-start`}
-                          onClick={() => markAsRead(n.id)}
+                          key={n._id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(n._id);
+                            window.location.href = `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`;
+                          }}
+                          className={`relative border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${
+                            !n.read ? "bg-blue-50" : "bg-white"
+                          }`}
                         >
-                          <div>
-                            <p className="text-sm font-medium text-gray-800">
-                              {n.title}
-                            </p>
-                            <p className="text-xs text-gray-500">{n.message}</p>
+                          {/* Header: Notification Title */}
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex gap-5 items-start">
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-sm"
+                                  style={{
+                                    backgroundColor:
+                                      n.sender?.color || "#6b7280",
+                                  }}
+                                >
+                                  {n.sender?.avatar || "U"}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {n.sender?.name || "Unknown User"}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {timeAgo(n.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="">
+                                {n.relatedProject && (
+                                  <p className="text-xs font-medium text-gray-500">
+                                    {n.relatedProject?.name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Blue dot for unread */}
+                            {!n.read && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                            )}
                           </div>
-                          {!n.read && (
-                            <span className="w-2 h-2 rounded-full bg-blue-500 mt-1"></span>
-                          )}
+
+                          {/* Title */}
+                          <div className="text-sm font-bold rounded-lg py-1.5 shadow-sm">
+                            {n?.title}
+                          </div>
+
+                          {/* Message + Project Info */}
+                          <div className="pl-1">
+                            <p className="text-sm text-gray-700 leading-snug">
+                              {n?.message}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
 
-                    {/* Toggle View All / View Less */}
-                    {notifications.length > 4 && (
+                    {/* View All / Less */}
+                    {filteredNotifications.length > 4 && (
                       <div className="mt-3 text-center border-t border-gray-200 pt-2">
                         <button
                           onClick={() => setShowAll(!showAll)}

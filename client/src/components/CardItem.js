@@ -307,7 +307,7 @@ const CardItem = ({
               ) : (
                 <div>
                   <h4
-                    className="font-medium text-gray-900 text-sm leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1"
+                    className="font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1"
                     onClick={handleTitleEdit}
                     title="Click to edit title"
                   >

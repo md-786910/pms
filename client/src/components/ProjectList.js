@@ -187,7 +187,7 @@ const ProjectCard = ({ project }) => {
         {/* Team Members */}
         <div className="flex items-center justify-between">
           <div className="text-left">
-            <div className="text-xs text-secondary-500">start date</div>
+            <div className="text-xs text-secondary-500">Start Date</div>
             <div className="text-sm font-medium text-secondary-900">
               {formatDate(project.startDate)}
             </div>

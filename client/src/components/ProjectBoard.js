@@ -957,7 +957,7 @@ const ProjectBoard = () => {
             {/* Status pills */}
             <div className="flex items-center gap-2">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm cursor-pointer ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm cursor-default ${
                   getProjectStatusColors(currentProject.projectStatus).bgColor
                 } ${
                   getProjectStatusColors(currentProject.projectStatus).textColor

@@ -79,7 +79,7 @@ const ListColumn = ({
 
   return (
     <div
-      className={`bg-gray-50 rounded-lg border border-gray-200 h-[644px] transition-all duration-200 ${
+      className={`bg-[#f1f2f4] rounded-lg border border-gray-200 h-[644px] transition-all duration-200 ${
         isHovered ? "shadow-lg" : "shadow-sm"
       }`}
       onMouseEnter={() => setIsHovered(true)}
