@@ -15,6 +15,7 @@ import { UserProvider } from "./contexts/UserContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import { SocketProvider } from "./contexts/SocketContext";
 import { useUser } from "./contexts/UserContext";
+import ResetPassword from "./components/ResetPassword";
 
 function AppContent() {
   const { isAuthenticated, loading } = useUser();
@@ -28,12 +29,14 @@ function AppContent() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
         {!isAuthenticated ? (
-          <Route path="*" element={<AuthPage />} />
+          <>
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<AuthPage />} />
+          </>
         ) : (
           <Route
             path="*"

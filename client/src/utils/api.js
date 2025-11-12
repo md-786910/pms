@@ -53,7 +53,7 @@ api.interceptors.response.use(
       localStorage.removeItem("user");
 
       // Only redirect if not already on login page
-      if (window.location.pathname !== "/login") {
+      if (!["/login", "/reset-password"].includes(window.location.pathname)) {
         window.location.href = "/login";
       }
     }
