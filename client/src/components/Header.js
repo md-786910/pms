@@ -190,7 +190,6 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                             </div>
                             {/* Divider */}
                             <div className="border-t border-gray-200 my-2"></div>
-                            relatedProject
                             {/* Sender Info */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
