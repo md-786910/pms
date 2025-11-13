@@ -96,8 +96,8 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="
-        hover:bg-gray-100 font-medium text-[#4338CA]
-        py-2 px-4 rounded-lg border border-[#4338CA] hover:border-transparent
+        hover:bg-gray-100 font-normal 
+        py-2 px-4 rounded-lg border hover:border-[#4338CA] hover:border-transparent
         transition-all duration-200 flex items-center space-x-2
       "
               >
@@ -119,7 +119,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
               onClick={() => setOpen(!open)}
               className="p-2 rounded-lg hover:bg-gray-100 relative"
             >
-              <Bell className="w-5 h-5 text-[#4338CA]" />
+              <Bell className="w-5 h-5 text-gray-600" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {unreadCount}
