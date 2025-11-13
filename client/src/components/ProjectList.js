@@ -45,7 +45,7 @@ const ProjectList = () => {
               Manage your projects and collaborate with your team
             </p>
           </div>
-          {user?.role === "admin" && (
+          {/* {user?.role === "admin" && (
             <button
               onClick={() => setShowCreateModal(true)}
               className="bg-white text-primary-600 hover:bg-primary-50 font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
@@ -53,7 +53,7 @@ const ProjectList = () => {
               <Plus className="w-4 h-4" />
               <span>Create Project</span>
             </button>
-          )}
+          )} */}
         </div>
       </div>
 

@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Check, LogOut } from "lucide-react";
+import { Bell, Check, LogOut, Plus } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import AdvancedSearch from "./AdvancedSearch";
+import { useProject } from "../contexts/ProjectContext";
 import Avatar from "./Avatar";
 import { useNavigate } from "react-router-dom";
+import CreateProjectModal from "./CreateProjectModal";
 
 const timeAgo = (dateString) => {
   const now = new Date();
@@ -27,6 +29,8 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [open, setOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { projects, loading, fetchProjects } = useProject();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -56,6 +60,12 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  const handleModalClose = () => {
+    setShowCreateModal(false);
+    // Force refresh projects after modal closes
+    console.log("🔄 ProjectList: Refreshing projects after modal close");
+    fetchProjects();
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-2">
@@ -81,6 +91,26 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
           <div className="hidden md:block">
             <AdvancedSearch />
           </div>
+          <div>
+            {user?.role === "admin" && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="
+        hover:bg-gray-100 font-medium text-[#4338CA]
+        py-2 px-4 rounded-lg border border-[#4338CA] hover:border-transparent
+        transition-all duration-200 flex items-center space-x-2
+      "
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Project</span>
+              </button>
+            )}
+
+            {/* Create Project Modal */}
+            {showCreateModal && (
+              <CreateProjectModal onClose={handleModalClose} />
+            )}
+          </div>
 
           {/* Notifications */}
           <div className="relative" ref={bellRef}>
@@ -89,7 +119,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
               onClick={() => setOpen(!open)}
               className="p-2 rounded-lg hover:bg-gray-100 relative"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+              <Bell className="w-5 h-5 text-[#4338CA]" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {unreadCount}
