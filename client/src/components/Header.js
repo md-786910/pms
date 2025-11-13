@@ -205,7 +205,6 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                                 <div>
                                   <p className="text-[13px] font-semibold text-gray-900">
                                     {n.sender?.name || "Unknown User"}
-                                    navigate(redirectUri);
                                   </p>
                                   <p className="text-[12px] text-gray-500">
                                     {timeAgo(n.createdAt)}
