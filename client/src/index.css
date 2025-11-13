@@ -347,6 +347,47 @@
     @apply text-sm;
   }
 }
+/* Smooth modern scrollbar — visible only on hover */
+.group::-webkit-scrollbar {
+  width: 4px;
+  opacity: 0;
+}
+
+.group:hover::-webkit-scrollbar {
+  opacity: 1;
+}
+
+.group::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* Tailwind gray-300 */
+  border-radius: 9999px;
+}
+
+.group::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8; /* Tailwind gray-400 */
+}
+
+.group::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* end */
+/* fade in */
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDownFade {
+  animation: slideDownFade 0.25s ease-out forwards;
+}
+
+
 
 
 button:disabled,

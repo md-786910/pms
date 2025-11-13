@@ -4,6 +4,7 @@ import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
 import AdvancedSearch from "./AdvancedSearch";
 import Avatar from "./Avatar";
+import { useNavigate } from "react-router-dom";
 
 const timeAgo = (dateString) => {
   const now = new Date();
@@ -26,6 +27,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [open, setOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
@@ -97,7 +99,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
             {/* Dropdown */}
             {open && (
-              <div className="absolute right-0 mt-2 w-96 bg-white shadow-2xl border border-gray-200 rounded-xl p-3 z-[100]">
+              <div className="absolute -right-12 top-12 mt-2 w-[26vw] bg-white shadow-2xl border border-gray-200 rounded-xl p-3 z-[100] opacity-0 translate-y-[-10px] animate-slideDownFade">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-semibold text-gray-700">
@@ -105,6 +107,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                   </h3>
 
                   <div className="flex items-center space-x-2">
+                    {/* Toggle unread */}
                     <label className="flex items-center text-xs text-gray-600 cursor-pointer">
                       <input
                         type="checkbox"
@@ -112,9 +115,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                         onChange={() => setShowUnreadOnly(!showUnreadOnly)}
                         className="mr-1 accent-blue-600"
                       />
-                      Only unread
+                      Only show unread
                     </label>
 
+                    {/* Mark all as read */}
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
@@ -134,61 +138,94 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                   </p>
                 ) : (
                   <>
-                    <div className="max-h-80 overflow-y-auto space-y-3">
+                    <div className="relative group max-h-[65vh] overflow-y-auto space-y-3 pr-2">
                       {displayNotifications.map((n) => (
                         <div
                           key={n._id}
                           onClick={(e) => {
                             e.stopPropagation();
                             markAsRead(n._id);
-                            window.location.href = `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`;
+                            setOpen(false);
+                            navigate(
+                              `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`
+                            );
                           }}
-                          className={`relative border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${
-                            !n.read ? "bg-blue-50" : "bg-white"
+                          className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${
+                            !n.read
+                              ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent"
+                              : "bg-white"
                           }`}
                         >
-                          {/* Header: Notification Title */}
-                          <div className="flex items-start justify-between gap-y-1">
-                            {/* Sender info (left) */}
-                            <div className="flex items-center space-x-2">
+                          {/* Project name (Top Priority) */}
+                          {n.relatedProject && (
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-[15px] font-semibold text-gray-900">
+                                  {n.relatedProject?.name}
+                                </span>
+                                <span className="text-[12px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                                  Project
+                                </span>
+                              </div>
+
+                              {/* Optional unread dot */}
+                              {!n.read && (
+                                <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm"></span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Card title and message */}
+                          <div className="ml-1 mb-3">
+                            <p className="text-[14px] text-gray-800 font-medium">
+                              🗂️ {n.title || "Card Update"}
+                            </p>
+                            <p className="text-[13px] text-gray-600 mt-1 leading-snug">
+                              {n.message ||
+                                "You have a new update on this card."}
+                            </p>
+                          </div>
+
+                          {/* Divider */}
+                          <div className="border-t border-gray-200 my-2"></div>
+
+                          {/* Sender Info */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
                               <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-sm"
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm"
                                 style={{
-                                  backgroundColor: n.sender?.color || "#6b7280",
+                                  backgroundColor: n.sender?.color || "#6366f1",
                                 }}
                               >
                                 {n.sender?.avatar || "U"}
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-gray-900">
+                                <p className="text-[13px] font-semibold text-gray-900">
                                   {n.sender?.name || "Unknown User"}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-[12px] text-gray-500">
                                   {timeAgo(n.createdAt)}
                                 </p>
                               </div>
                             </div>
 
-                            {/* Project name (right, top-aligned + wraps if needed) */}
-                            {n.relatedProject && (
-                              <div className="text-right flex-wrap">
-                                <p className="text-xs font-medium text-gray-600 leading-tight">
-                                  {n.relatedProject?.name}
-                                </p>
-                              </div>
+                            {/* Quick action */}
+                            {n.relatedCard?._id && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(n._id);
+                                  setOpen(false);
+                                  navigate(
+                                    `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`
+                                  );
+                                }}
+                                className="text-xs text-blue-600 hover:underline font-medium"
+                              >
+                                View Card →
+                              </button>
                             )}
-                          </div>
-
-                          {/* Title */}
-                          <div className="text-sm font-bold rounded-lg py-1.5 shadow-sm">
-                            {n?.title}
-                          </div>
-
-                          {/* Message + Project Info */}
-                          <div className="pl-1">
-                            <p className="text-sm text-gray-700 leading-snug">
-                              {n?.message}
-                            </p>
                           </div>
                         </div>
                       ))}

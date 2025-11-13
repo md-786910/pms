@@ -988,12 +988,12 @@ const ProjectBoard = () => {
               <div className="flex items-center gap-1.5">
                 {/* Start Date */}
                 {projectData.project?.startDate && (
-                  <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
-                    <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center">
-                      <Calendar className="w-3.5 h-3.5" />
+                  <div className="flex bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 text-white bg-[#26de81] rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5 " />
                     </div>
                     <div className="text-xs">
-                      <div className="text-white/60 font-medium text-[10px] leading-none">
+                      <div className="text-white/80 font-medium text-[10px] leading-none">
                         Start Date
                       </div>
                       <div className="text-white font-semibold leading-tight">
@@ -1005,11 +1005,11 @@ const ProjectBoard = () => {
                 {/* End Date */}
                 {projectData.project?.endDate && (
                   <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
-                    <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center">
+                    <div className="w-6 h-6 bg-[#fa8231] rounded-full flex items-center justify-center">
                       <Calendar className="w-3.5 h-3.5" />
                     </div>
                     <div className="text-xs">
-                      <div className="text-white/60 font-medium text-[10px] leading-none">
+                      <div className="text-white/80 font-medium text-[10px] leading-none">
                         End Date
                       </div>
                       <div className="text-white font-semibold leading-tight">
