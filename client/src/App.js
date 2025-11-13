@@ -72,6 +72,14 @@ function AppContent() {
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/project/:id" element={<ProjectBoard />} />
                       <Route
+                        path="/project/:id/edit"
+                        element={<ProjectBoard />}
+                      />
+                      <Route
+                        path="/project/:projectId/edit"
+                        element={<ProjectBoard />}
+                      />
+                      <Route
                         path="/project/:projectId/card/:cardId"
                         element={<ProjectBoard />}
                       />

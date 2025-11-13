@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   Plus,
@@ -721,8 +721,36 @@ const ProjectBoard = () => {
   };
 
   const handleEditProject = () => {
+    // Open modal and update the URL so refreshing preserves modal state
+    if (actualProjectId) {
+      navigate(`/project/${actualProjectId}/edit`);
+    }
     setShowEditProjectModal(true);
   };
+
+  // Keep edit modal state in sync with the URL so refreshing the page
+  // with /edit stays open, and navigating away closes it.
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!actualProjectId) return;
+
+    const pathname = location.pathname || "";
+    // If path contains /edit or /settings at the end, show modal
+    if (
+      pathname.endsWith(`/${actualProjectId}/edit`) ||
+      pathname.endsWith(`/${actualProjectId}/settings`) ||
+      pathname.endsWith(`/project/${actualProjectId}/edit`) ||
+      pathname.endsWith(`/project/${actualProjectId}/settings`) ||
+      pathname.includes(`/${actualProjectId}/edit`) ||
+      pathname.includes(`/${actualProjectId}/settings`)
+    ) {
+      setShowEditProjectModal(true);
+    } else {
+      setShowEditProjectModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, actualProjectId]);
 
   if (loading || loadingCards || loadingColumns) {
     return (
@@ -1273,7 +1301,11 @@ const ProjectBoard = () => {
       {showEditProjectModal && currentProject && (
         <EditProjectModal
           project={currentProject}
-          onClose={() => setShowEditProjectModal(false)}
+          onClose={() => {
+            setShowEditProjectModal(false);
+            // Ensure we return to the main project view path when modal closes
+            navigate(`/project/${actualProjectId}`);
+          }}
         />
       )}
 

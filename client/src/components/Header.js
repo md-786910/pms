@@ -139,96 +139,99 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                 ) : (
                   <>
                     <div className="relative group max-h-[65vh] overflow-y-auto space-y-3 pr-2">
-                      {displayNotifications.map((n) => (
-                        <div
-                          key={n._id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(n._id);
-                            setOpen(false);
-                            navigate(
-                              `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`
-                            );
-                          }}
-                          className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${
-                            !n.read
-                              ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent"
-                              : "bg-white"
-                          }`}
-                        >
-                          {/* Project name (Top Priority) */}
-                          {n.relatedProject && (
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-[15px] font-semibold text-gray-900">
-                                  {n.relatedProject?.name}
-                                </span>
-                                <span className="text-[12px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
-                                  Project
-                                </span>
+                      {displayNotifications.map((n) => {
+                        const redirectUri =
+                          n.type === "project_activity"
+                            ? `/project/${n.relatedProject?._id}/edit`
+                            : `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`;
+
+                        return (
+                          <div
+                            key={n._id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(n._id);
+                              setOpen(false);
+                              navigate(redirectUri);
+                            }}
+                            className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${
+                              !n.read
+                                ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent"
+                                : "bg-white"
+                            }`}
+                          >
+                            {/* Project name (Top Priority) */}
+                            {n.relatedProject && (
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-[15px] font-semibold text-gray-900">
+                                    {n.relatedProject?.name}
+                                  </span>
+                                  <span className="text-[12px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                                    Project
+                                  </span>
+                                </div>
+
+                                {/* Optional unread dot */}
+                                {!n.read && (
+                                  <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm"></span>
+                                )}
+                              </div>
+                            )}
+                            {/* Card title and message */}
+                            <div className="ml-1 mb-3">
+                              <p className="text-[14px] text-gray-800 font-medium">
+                                🗂️ {n.title || "Card Update"}
+                              </p>
+                              <p className="text-[13px] text-gray-600 mt-1 leading-snug">
+                                {n.message ||
+                                  "You have a new update on this card."}
+                              </p>
+                            </div>
+                            {/* Divider */}
+                            <div className="border-t border-gray-200 my-2"></div>
+                            relatedProject
+                            {/* Sender Info */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div
+                                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm"
+                                  style={{
+                                    backgroundColor:
+                                      n.sender?.color || "#6366f1",
+                                  }}
+                                >
+                                  {n.sender?.avatar || "U"}
+                                </div>
+                                <div>
+                                  <p className="text-[13px] font-semibold text-gray-900">
+                                    {n.sender?.name || "Unknown User"}
+                                    navigate(redirectUri);
+                                  </p>
+                                  <p className="text-[12px] text-gray-500">
+                                    {timeAgo(n.createdAt)}
+                                  </p>
+                                </div>
                               </div>
 
-                              {/* Optional unread dot */}
-                              {!n.read && (
-                                <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm"></span>
+                              {/* Quick action */}
+                              {n.relatedProject?._id && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markAsRead(n._id);
+                                    setOpen(false);
+                                    navigate(redirectUri);
+                                  }}
+                                  className="text-xs text-blue-600 hover:underline font-medium"
+                                >
+                                  View Card →
+                                </button>
                               )}
                             </div>
-                          )}
-
-                          {/* Card title and message */}
-                          <div className="ml-1 mb-3">
-                            <p className="text-[14px] text-gray-800 font-medium">
-                              🗂️ {n.title || "Card Update"}
-                            </p>
-                            <p className="text-[13px] text-gray-600 mt-1 leading-snug">
-                              {n.message ||
-                                "You have a new update on this card."}
-                            </p>
                           </div>
-
-                          {/* Divider */}
-                          <div className="border-t border-gray-200 my-2"></div>
-
-                          {/* Sender Info */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div
-                                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm"
-                                style={{
-                                  backgroundColor: n.sender?.color || "#6366f1",
-                                }}
-                              >
-                                {n.sender?.avatar || "U"}
-                              </div>
-                              <div>
-                                <p className="text-[13px] font-semibold text-gray-900">
-                                  {n.sender?.name || "Unknown User"}
-                                </p>
-                                <p className="text-[12px] text-gray-500">
-                                  {timeAgo(n.createdAt)}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Quick action */}
-                            {n.relatedCard?._id && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markAsRead(n._id);
-                                  setOpen(false);
-                                  navigate(
-                                    `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`
-                                  );
-                                }}
-                                className="text-xs text-blue-600 hover:underline font-medium"
-                              >
-                                View Card →
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* View All / Less */}
