@@ -162,6 +162,7 @@ export const cardAPI = {
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
   archiveCard: (id) => api.put(`/cards/${id}/archive`),
   restoreCard: (id) => api.put(`/cards/${id}/restore`),
+  deleteCard: (id) => api.delete(`/cards/${id}`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
   moveAllCards: (projectId, sourceStatus, targetStatus) =>
     api.post(`/projects/${projectId}/cards/move-all`, {

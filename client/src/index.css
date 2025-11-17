@@ -347,9 +347,37 @@
     @apply text-sm;
   }
 }
-/* Smooth modern scrollbar — visible only on hover */
+/* Smooth modern scrollbar — thicker and more visible */
+/* Global scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9; /* gray-100 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* gray-300 */
+  border-radius: 10px;
+  border: 2px solid #f1f5f9; /* Add border for better visibility */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8; /* gray-400 */
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Group scrollbar styles - visible only on hover */
 .group::-webkit-scrollbar {
-  width: 4px;
+  width: 8px;
   opacity: 0;
 }
 
@@ -359,7 +387,7 @@
 
 .group::-webkit-scrollbar-thumb {
   background-color: #cbd5e1; /* Tailwind gray-300 */
-  border-radius: 9999px;
+  border-radius: 10px;
 }
 
 .group::-webkit-scrollbar-thumb:hover {

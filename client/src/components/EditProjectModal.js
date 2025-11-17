@@ -26,6 +26,8 @@ const EditProjectModal = ({ project, onClose }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
+  const startDateInputRef = useRef(null);
+  const endDateInputRef = useRef(null);
   const [activities, setActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
@@ -499,11 +501,28 @@ const EditProjectModal = ({ project, onClose }) => {
                         Start Date <span className="text-red-500">*</span>
                       </label>
                       <input
+                        ref={startDateInputRef}
                         type="date"
                         name="startDate"
                         value={formData.startDate}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        onClick={(e) => {
+                          if (!editMode && startDateInputRef.current) {
+                            // Try to show the native date picker
+                            if (startDateInputRef.current.showPicker) {
+                              try {
+                                startDateInputRef.current.showPicker();
+                              } catch (error) {
+                                // Fallback: just focus the input
+                                startDateInputRef.current.focus();
+                              }
+                            } else {
+                              // Fallback: focus the input which should open the picker
+                              startDateInputRef.current.focus();
+                            }
+                          }
+                        }}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                         required
                         disabled={editMode}
                       />
@@ -514,11 +533,28 @@ const EditProjectModal = ({ project, onClose }) => {
                         End Date
                       </label>
                       <input
+                        ref={endDateInputRef}
                         type="date"
                         name="endDate"
                         value={formData.endDate}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        onClick={(e) => {
+                          if (!editMode && endDateInputRef.current) {
+                            // Try to show the native date picker
+                            if (endDateInputRef.current.showPicker) {
+                              try {
+                                endDateInputRef.current.showPicker();
+                              } catch (error) {
+                                // Fallback: just focus the input
+                                endDateInputRef.current.focus();
+                              }
+                            } else {
+                              // Fallback: focus the input which should open the picker
+                              endDateInputRef.current.focus();
+                            }
+                          }
+                        }}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                         disabled={editMode}
                       />
                     </div>

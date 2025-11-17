@@ -60,7 +60,7 @@ const ProjectBoard = () => {
   // Card modal state
   const [selectedCard, setSelectedCard] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
-  const [projectData, setProjectData] = useState([]);
+  const [projectData, setProjectData] = useState(null);
   const [draggingColumnId, setDraggingColumnId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
 
@@ -139,6 +139,16 @@ const ProjectBoard = () => {
   // Determine the actual project ID
   const actualProjectId = projectId || id;
 
+  // Sync projectData with currentProject when it updates (e.g., after saving changes)
+  useEffect(() => {
+    if (currentProject && actualProjectId === currentProject._id) {
+      setProjectData((prev) => ({
+        ...(prev || {}),
+        project: currentProject,
+      }));
+    }
+  }, [currentProject, actualProjectId]);
+
   useEffect(() => {
     if (actualProjectId) {
       fetchProject(actualProjectId);
@@ -211,15 +221,21 @@ const ProjectBoard = () => {
       }
     };
 
-    const handleCardRestored = (data) => {
-      if (data.card) {
-        // Use the function directly instead of calling fetchCards
+    const handleCardRestoredSocket = (data) => {
+      // Only handle socket events from other users, not our own actions
+      if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
+        // Refresh cards when another user restores a card
         cardAPI
           .getCards(actualProjectId, true)
           .then((response) => {
             const fetchedCards = response.data.cards || [];
             setCards(fetchedCards);
             setFilteredCards(fetchedCards);
+            
+            // Update selected card if it's the one being restored
+            if (selectedCard && selectedCard._id === data.card._id) {
+              setSelectedCard(data.card);
+            }
           })
           .catch((error) => {
             console.error("Error fetching cards:", error);
@@ -286,7 +302,7 @@ const ProjectBoard = () => {
     socket.on("card-created", handleCardCreated);
     socket.on("card-updated", handleCardUpdated);
     socket.on("card-archived", handleCardArchived);
-    socket.on("card-restored", handleCardRestored);
+    socket.on("card-restored", handleCardRestoredSocket);
     socket.on("card-status-changed", handleCardStatusChanged);
     socket.on("card-user-assigned", handleCardUpdated);
     socket.on("card-user-unassigned", handleCardUpdated);
@@ -303,7 +319,7 @@ const ProjectBoard = () => {
       socket.off("card-created", handleCardCreated);
       socket.off("card-updated", handleCardUpdated);
       socket.off("card-archived", handleCardArchived);
-      socket.off("card-restored", handleCardRestored);
+      socket.off("card-restored", handleCardRestoredSocket);
       socket.off("card-status-changed", handleCardStatusChanged);
       socket.off("card-user-assigned", handleCardUpdated);
       socket.off("card-user-unassigned", handleCardUpdated);
@@ -454,28 +470,52 @@ const ProjectBoard = () => {
     }
   };
 
-  const handleCardRestored = async (cardId) => {
+  const handleCardPermanentlyDeleted = async (cardId) => {
     try {
-      const response = await cardAPI.restoreCard(cardId);
-      if (response.data.success) {
-        // Refresh cards to get updated data
-        await fetchCards();
-        showToast("Card restored successfully!", "success");
+      // Remove the card from state permanently (optimistic update)
+      setCards((prev) => prev.filter((card) => card._id !== cardId));
+      setFilteredCards((prev) => prev.filter((card) => card._id !== cardId));
+      
+      // Refresh cards to ensure sync with server
+      await fetchCards();
+      
+      // Close modal if the deleted card was selected
+      if (selectedCard && selectedCard._id === cardId) {
+        setShowCardModal(false);
+        setSelectedCard(null);
+        // Navigate back to project view
+        navigate(`/project/${actualProjectId}`);
+      }
+    } catch (error) {
+      console.error("Error handling card deletion:", error);
+      // Refresh cards as fallback
+      await fetchCards();
+    }
+  };
 
-        // Update selected card if it's the one being restored
-        if (selectedCard && selectedCard._id === cardId) {
+  const handleCardRestored = async (cardId, restoredCard) => {
+    try {
+      // Refresh cards to get updated data (API is already called in CardModal)
+      await fetchCards();
+
+      // Update selected card if it's the one being restored
+      if (selectedCard && selectedCard._id === cardId) {
+        // Use the restored card data if provided, otherwise update local state
+        if (restoredCard) {
+          setSelectedCard(restoredCard);
+        } else {
+          // Fallback: update local state
           setSelectedCard((prev) => ({
             ...prev,
             isArchived: false,
             archivedAt: null,
             archivedBy: null,
-            status: response.data.card.status,
+            status: prev.originalStatus || "todo",
           }));
         }
       }
     } catch (error) {
-      console.error("Error restoring card:", error);
-      showToast("Failed to restore card", "error");
+      console.error("Error handling card restoration:", error);
     }
   };
 
@@ -1369,6 +1409,7 @@ const ProjectBoard = () => {
           onCardUpdated={handleCardUpdated}
           onCardDeleted={handleCardDeleted}
           onCardRestored={handleCardRestored}
+          onCardPermanentlyDeleted={handleCardPermanentlyDeleted}
           onStatusChange={handleStatusChange}
           onNavigateCard={handleNavigateCard}
         />

@@ -263,7 +263,11 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
                             checked={selectedUsers.some(
                               (selectedUser) => selectedUser._id === user._id
                             )}
-                            onChange={() => handleUserToggle(user)}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleUserToggle(user);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                             className="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500 cursor-pointer"
                           />
                           <Avatar user={user} size="sm" />

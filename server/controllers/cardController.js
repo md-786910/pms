@@ -1896,6 +1896,78 @@ const removeAttachment = async (req, res) => {
   }
 };
 
+// @route   DELETE /api/cards/:id
+// @desc    Permanently delete a card
+// @access  Private
+const deleteCard = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Only allow deletion of archived cards
+    if (!card.isArchived) {
+      return res.status(400).json({
+        success: false,
+        message: "Only archived cards can be permanently deleted. Please archive the card first.",
+      });
+    }
+
+    // Delete all related card items first
+    const CardItem = require("../models/CardItem");
+    await CardItem.deleteMany({ card: cardId });
+
+    // Delete the card
+    await Card.findByIdAndDelete(cardId);
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const { getIO } = require("../config/socket");
+      const io = getIO();
+      io.to(`project-${project._id}`).emit("card-deleted", {
+        cardId,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Card permanently deleted",
+    });
+  } catch (error) {
+    console.error("Delete card error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while deleting card",
+    });
+  }
+};
+
 // @route   POST /api/projects/:projectId/cards/move-all
 // @desc    Move all cards from one column to another
 // @access  Private
@@ -2081,4 +2153,5 @@ module.exports = {
   removeAttachment,
   uploadFiles,
   moveAllCards,
+  deleteCard,
 };

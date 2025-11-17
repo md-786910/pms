@@ -38,6 +38,7 @@ const CardModal = ({
   onCardUpdated,
   onCardDeleted,
   onCardRestored,
+  onCardPermanentlyDeleted,
   onStatusChange,
   onNavigateCard,
 }) => {
@@ -175,6 +176,7 @@ const CardModal = ({
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteCardConfirm, setShowDeleteCardConfirm] = useState(false);
   const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -215,6 +217,7 @@ const CardModal = ({
   const formattingHelpModalRef = useRef(null);
   const initialDueDateRef = useRef(formData.dueDate);
   const cardIdRef = useRef(card._id);
+  const dateInputRef = useRef(null);
 
   // Handle click outside to close modal
   useEffect(() => {
@@ -1065,16 +1068,53 @@ const CardModal = ({
   const handleRestore = async () => {
     try {
       setLoading(true);
-      // const response = await cardAPI.restoreCard(card._id);
-      onCardRestored(card._id);
-      // onClose();
-
-      // if (response.data.success) {
-      //   showToast("Card restored successfully!", "success");
-      // }
+      const response = await cardAPI.restoreCard(card._id);
+      if (response.data.success) {
+        // Update card locally first
+        onCardUpdated(response.data.card);
+        // Notify parent component
+        if (onCardRestored) {
+          onCardRestored(card._id, response.data.card);
+        }
+        showToast("Card restored successfully!", "success");
+        // Don't close modal - let user see the restored card
+      }
     } catch (error) {
       console.error("Error restoring card:", error);
       showToast("Failed to restore card", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = () => {
+    setShowDeleteCardConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setLoading(true);
+      const response = await cardAPI.deleteCard(card._id);
+      if (response.data.success) {
+        // Close modal first
+        onClose();
+        setShowDeleteCardConfirm(false);
+        
+        // Notify parent to remove card from state
+        if (onCardPermanentlyDeleted) {
+          await onCardPermanentlyDeleted(card._id);
+        } else if (onCardDeleted) {
+          await onCardDeleted(card._id);
+        }
+        
+        showToast("Card deleted permanently", "success");
+      }
+    } catch (error) {
+      console.error("Error deleting card:", error);
+      showToast(
+        error.response?.data?.message || "Failed to delete card",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -1473,10 +1513,10 @@ const CardModal = ({
           </div>
 
           {/* Modal Content */}
-          <div className="pt-2 pb-8 px-8 max-h-[calc(95vh-200px)] ">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="pt-2 pb-8 px-4 max-h-[calc(95vh-200px)] ">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Main Content */}
-              <div className="lg:col-span-2 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="lg:col-span-2 space-y-4 max-h-[70vh] overflow-y-auto px-2">
                 {/* Status and Due Date Display */}
 
                 <div className="sticky top-0 z-50 bg-white pb-4">
@@ -1627,6 +1667,47 @@ const CardModal = ({
                     </label>
                   </div>
 
+                  {/* Progress Bar - Show when checklist is active or has items */}
+                  {(items.length > 0 || showAddItem) && (
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-500 font-medium">
+                          {items.length > 0
+                            ? `${
+                                items.filter((item) => item.completed).length
+                              }/${items.length} items`
+                            : "0 items"}
+                        </span>
+                        <span className="text-xs text-gray-500 font-medium">
+                          {items.length > 0
+                            ? `${Math.round(
+                                (items.filter((item) => item.completed).length /
+                                  items.length) *
+                                  100
+                              )}%`
+                            : "0%"}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 transition-all duration-300"
+                          style={{
+                            width: `${
+                              items.length > 0
+                                ? Math.round(
+                                    (items.filter((item) => item.completed)
+                                      .length /
+                                      items.length) *
+                                      100
+                                  )
+                                : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Items List - Scrollable area */}
                   <div className="space-y-2 mb-3 max-h-64 overflow-y-auto">
                     {loadingItems ? (
@@ -1673,23 +1754,28 @@ const CardModal = ({
                             </div>
                           ) : (
                             /* View Mode */
-                            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                              <button
-                                onClick={() =>
-                                  handleToggleItem(item._id, item.completed)
-                                }
+                            <div
+                              onClick={() =>
+                                handleToggleItem(item._id, item.completed)
+                              }
+                              className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors cursor-pointer"
+                            >
+                              <div
                                 className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                                   item.completed
                                     ? "bg-green-500 border-green-500 text-white"
-                                    : "border-gray-300 hover:border-gray-400"
+                                    : "border-gray-300"
                                 }`}
                               >
                                 {item.completed && (
                                   <CheckSquare className="w-3 h-3" />
                                 )}
-                              </button>
-                              <button
-                                onDoubleClick={() => handleStartEditItem(item)}
+                              </div>
+                              <div
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartEditItem(item);
+                                }}
                                 className={`flex-1 text-left text-sm ${
                                   item.completed
                                     ? "line-through text-gray-400"
@@ -1697,17 +1783,23 @@ const CardModal = ({
                                 }`}
                               >
                                 {item.title}
-                              </button>
+                              </div>
                               <div className="flex items-center space-x-1">
                                 <button
-                                  onClick={() => handleStartEditItem(item)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEditItem(item);
+                                  }}
                                   className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all"
                                   title="Edit item"
                                 >
                                   <Edit className="w-3 h-3" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteItem(item._id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteItem(item._id);
+                                  }}
                                   className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all"
                                   title="Delete item"
                                 >
@@ -1984,7 +2076,7 @@ const CardModal = ({
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto px-2">
                 {/* Navigation Buttons */}
                 <div className="flex items-center justify-between gap-2 pt-4">
                   <button
@@ -2085,12 +2177,29 @@ const CardModal = ({
                     )}
                   </div>
                   <input
+                    ref={dateInputRef}
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                    onClick={(e) => {
+                      if (!isArchived && !autoSaving && dateInputRef.current) {
+                        // Try to show the native date picker
+                        if (dateInputRef.current.showPicker) {
+                          try {
+                            dateInputRef.current.showPicker();
+                          } catch (error) {
+                            // Fallback: just focus the input
+                            dateInputRef.current.focus();
+                          }
+                        } else {
+                          // Fallback: focus the input which should open the picker
+                          dateInputRef.current.focus();
+                        }
+                      }
+                    }}
+                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm cursor-pointer ${
                       isArchived ? "bg-gray-100 cursor-not-allowed" : ""
                     }`}
                     disabled={autoSaving || isArchived}
@@ -2347,17 +2456,28 @@ const CardModal = ({
                 </div>
 
                 {/* Archive Card Button */}
-                <div>
+                <div className="space-y-2">
                   {card.isArchived ? (
-                    <button
-                      onClick={handleRestore}
-                      disabled={loading}
-                      className="w-full bg-green-600 text-white hover:bg-green-700 font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm disabled:opacity-50"
-                      title="Restore card"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>Restore Card</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={handleRestore}
+                        disabled={loading}
+                        className="w-full bg-green-600 text-white hover:bg-green-700 font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm disabled:opacity-50"
+                        title="Restore card"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Restore Card</span>
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        disabled={loading}
+                        className="w-full bg-red-600 text-white hover:bg-red-700 font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm disabled:opacity-50"
+                        title="Permanently delete card"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete</span>
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={handleArchive}
@@ -2503,6 +2623,19 @@ const CardModal = ({
         confirmText="Archive Card"
         cancelText="Cancel"
         type="warning"
+        isLoading={loading}
+      />
+
+      {/* Delete Card Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteCardConfirm}
+        onClose={() => setShowDeleteCardConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Card"
+        message="Are you sure you want to delete this?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
         isLoading={loading}
       />
 
