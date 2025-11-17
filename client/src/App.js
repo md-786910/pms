@@ -15,6 +15,7 @@ import { UserProvider } from "./contexts/UserContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import { SocketProvider } from "./contexts/SocketContext";
 import { useUser } from "./contexts/UserContext";
+import ResetPassword from "./components/ResetPassword";
 
 function AppContent() {
   const { isAuthenticated, loading } = useUser();
@@ -28,12 +29,14 @@ function AppContent() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
         {!isAuthenticated ? (
-          <Route path="*" element={<AuthPage />} />
+          <>
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<AuthPage />} />
+          </>
         ) : (
           <Route
             path="*"
@@ -57,7 +60,7 @@ function AppContent() {
                     sidebarCollapsed={sidebarCollapsed}
                   />
 
-                  <main className="flex-1 p-6 overflow-auto transition-all duration-300">
+                  <main className="flex-1 pt-6 px-6 overflow-auto transition-all duration-300 bg-slate-200">
                     <Routes>
                       <Route path="/" element={<ProjectList />} />
                       <Route path="/admin" element={<AdminPanel />} />
@@ -68,6 +71,14 @@ function AppContent() {
                       />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/project/:id" element={<ProjectBoard />} />
+                      <Route
+                        path="/project/:id/edit"
+                        element={<ProjectBoard />}
+                      />
+                      <Route
+                        path="/project/:projectId/edit"
+                        element={<ProjectBoard />}
+                      />
                       <Route
                         path="/project/:projectId/card/:cardId"
                         element={<ProjectBoard />}

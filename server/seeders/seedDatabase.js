@@ -78,6 +78,7 @@ const seedDatabase = async () => {
         title: "Welcome to the Project",
         description:
           "This is your first card. You can edit, move, and manage it.",
+        cardNumber: 1,
         project: sampleProject._id,
         status: "todo",
         priority: "medium",
@@ -88,6 +89,7 @@ const seedDatabase = async () => {
       {
         title: "Set up development environment",
         description: "Configure the development environment for the project",
+        cardNumber: 2,
         project: sampleProject._id,
         status: "doing",
         priority: "high",
@@ -98,6 +100,7 @@ const seedDatabase = async () => {
       {
         title: "Review project requirements",
         description: "Review and validate all project requirements",
+        cardNumber: 3,
         project: sampleProject._id,
         status: "review",
         priority: "medium",
@@ -107,6 +110,7 @@ const seedDatabase = async () => {
       {
         title: "Complete initial setup",
         description: "Finish the initial project setup",
+        cardNumber: 4,
         project: sampleProject._id,
         status: "done",
         priority: "low",

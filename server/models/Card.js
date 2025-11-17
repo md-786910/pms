@@ -13,6 +13,10 @@ const cardSchema = new mongoose.Schema(
       trim: true,
       maxlength: [10000, "Description cannot be more than 10000 characters"],
     },
+    cardNumber: {
+      type: Number,
+      required: true,
+    },
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",

@@ -307,7 +307,7 @@ const CardItem = ({
               ) : (
                 <div>
                   <h4
-                    className="font-medium text-gray-900 text-sm leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1"
+                    className="font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1"
                     onClick={handleTitleEdit}
                     title="Click to edit title"
                   >
@@ -315,8 +315,8 @@ const CardItem = ({
                   </h4>
                   {/* Issue Number and Priority */}
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">
-                      #{card._id?.slice(-4) || "0000"}
+                    <span className="bg-gray-200  text-black font-medium px-2 py-0.5 rounded">
+                      #{card.cardNumber || card._id?.slice(-4) || "0000"}
                     </span>
                     {card.priority && (
                       <span
@@ -440,7 +440,7 @@ const CardItem = ({
               // console.log("Checking attachment:", attachment);
               // Check by MIME type first
               if (attachment.mimeType?.startsWith("image/")) {
-                console.log("Found image by MIME type:", attachment.mimeType);
+                // console.log("Found image by MIME type:", attachment.mimeType);
                 return true;
               }
               // Check by file extension
@@ -449,7 +449,7 @@ const CardItem = ({
                   /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
                 )
               ) {
-                console.log("Found image by URL extension:", attachment.url);
+                // console.log("Found image by URL extension:", attachment.url);
                 return true;
               }
               // Check by filename
@@ -458,16 +458,16 @@ const CardItem = ({
                   /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
                 )
               ) {
-                console.log(
-                  "Found image by filename:",
-                  attachment.originalName
-                );
+                // console.log(
+                //   "Found image by filename:",
+                //   attachment.originalName
+                // );
                 return true;
               }
               return false;
             });
 
-            console.log("First image found:", firstImage);
+            // console.log("First image found:", firstImage);
 
             if (firstImage) {
               // Construct proper image URL
@@ -475,7 +475,7 @@ const CardItem = ({
                 ? firstImage.url
                 : `${API_URL}${firstImage.url}`;
 
-              console.log("Image URL:", imageUrl);
+              // console.log("Image URL:", imageUrl);
 
               return (
                 <div className="mb-3 relative group cursor-pointer">
@@ -536,16 +536,16 @@ const CardItem = ({
               card.description !== "<p><br></p>" &&
               card.description !== "<p></p>"
             ) {
-              console.log("No images found, showing description");
+              // console.log("No images found, showing description");
               return (
                 <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
                   {stripHtmlTags(card.description)}
                 </p>
               );
             } else if (card.attachments && card.attachments.length > 0) {
-              console.log(
-                "Has attachments but no images, showing attachment count"
-              );
+              // console.log(
+              //   "Has attachments but no images, showing attachment count"
+              // );
               return (
                 <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center space-x-2 text-xs text-gray-600">

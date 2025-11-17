@@ -17,6 +17,8 @@ const {
   addAttachment,
   removeAttachment,
   uploadFiles,
+  moveAllCards,
+  deleteCard,
 } = require("../controllers/cardController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
@@ -30,6 +32,26 @@ router.use(auth);
 // @desc    Get all cards for a project
 // @access  Private
 router.get("/projects/:projectId/cards", getCards);
+
+// @route   POST /api/projects/:projectId/cards/move-all
+// @desc    Move all cards from one column to another
+// @access  Private
+router.post(
+  "/projects/:projectId/cards/move-all",
+  [
+    body("sourceStatus")
+      .notEmpty()
+      .withMessage("Source status is required")
+      .isString()
+      .withMessage("Source status must be a string"),
+    body("targetStatus")
+      .notEmpty()
+      .withMessage("Target status is required")
+      .isString()
+      .withMessage("Target status must be a string"),
+  ],
+  moveAllCards
+);
 
 // @route   GET /api/cards/:id
 // @desc    Get single card
@@ -138,6 +160,11 @@ router.put("/:id/archive", archiveCard);
 // @desc    Restore archived card
 // @access  Private
 router.put("/:id/restore", restoreCard);
+
+// @route   DELETE /api/cards/:id
+// @desc    Permanently delete a card (only for archived cards)
+// @access  Private
+router.delete("/:id", deleteCard);
 
 // @route   PUT /api/cards/:id/status
 // @desc    Update card status

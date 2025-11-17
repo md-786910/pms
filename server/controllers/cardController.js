@@ -217,9 +217,14 @@ const createCard = async (req, res) => {
       });
     }
 
+    // Calculate the next card number for this project
+    const cardCount = await Card.countDocuments({ project });
+    const cardNumber = cardCount + 1;
+
     const card = new Card({
       title,
       description,
+      cardNumber,
       project,
       status,
       priority,
@@ -1891,6 +1896,245 @@ const removeAttachment = async (req, res) => {
   }
 };
 
+// @route   DELETE /api/cards/:id
+// @desc    Permanently delete a card
+// @access  Private
+const deleteCard = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Only allow deletion of archived cards
+    if (!card.isArchived) {
+      return res.status(400).json({
+        success: false,
+        message: "Only archived cards can be permanently deleted. Please archive the card first.",
+      });
+    }
+
+    // Delete all related card items first
+    const CardItem = require("../models/CardItem");
+    await CardItem.deleteMany({ card: cardId });
+
+    // Delete the card
+    await Card.findByIdAndDelete(cardId);
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const { getIO } = require("../config/socket");
+      const io = getIO();
+      io.to(`project-${project._id}`).emit("card-deleted", {
+        cardId,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Card permanently deleted",
+    });
+  } catch (error) {
+    console.error("Delete card error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while deleting card",
+    });
+  }
+};
+
+// @route   POST /api/projects/:projectId/cards/move-all
+// @desc    Move all cards from one column to another
+// @access  Private
+const moveAllCards = async (req, res) => {
+  try {
+    const projectId = req.params.projectId || req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+    const { sourceStatus, targetStatus } = req.body;
+
+    if (!sourceStatus || !targetStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "Source status and target status are required",
+      });
+    }
+
+    if (sourceStatus === targetStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "Source and target columns cannot be the same",
+      });
+    }
+
+    // Check if user has access to this project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Verify columns exist
+    const sourceColumn = await Column.findOne({
+      project: projectId,
+      status: sourceStatus,
+    });
+    const targetColumn = await Column.findOne({
+      project: projectId,
+      status: targetStatus,
+    });
+
+    if (!sourceColumn) {
+      return res.status(404).json({
+        success: false,
+        message: "Source column not found",
+      });
+    }
+
+    if (!targetColumn) {
+      return res.status(404).json({
+        success: false,
+        message: "Target column not found",
+      });
+    }
+
+    // Prevent moving to/from archive column
+    if (sourceStatus === "archive" || targetStatus === "archive") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot move cards to or from archive column using this endpoint",
+      });
+    }
+
+    // Find all cards in the source column (non-archived)
+    const cards = await Card.find({
+      project: projectId,
+      status: sourceStatus,
+      isArchived: false,
+    });
+
+    if (cards.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No cards found in the source column",
+      });
+    }
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Get status labels
+    const sourceStatusLabel = sourceColumn.name;
+    const targetStatusLabel = targetColumn.name;
+
+    // Update all cards
+    const updatedCards = [];
+    for (const card of cards) {
+      const oldStatus = card.status;
+      card.status = targetStatus;
+
+      // Add automatic comment for bulk move
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${sourceStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${targetStatusLabel}</span></p>`,
+        timestamp: new Date(),
+      });
+
+      // Add activity log entry
+      card.activityLog.push({
+        action: "status_changed",
+        user: userId,
+        timestamp: new Date(),
+        details: `Status changed from ${oldStatus} to ${targetStatus} (bulk move)`,
+      });
+
+      await card.save();
+
+      // Populate the card with user details
+      await card.populate("assignees", "name email avatar color");
+      await card.populate("createdBy", "name email avatar color");
+
+      updatedCards.push(card);
+    }
+
+    // Emit Socket.IO events for real-time updates
+    try {
+      const io = getIO();
+      // Emit individual card updates for each moved card
+      updatedCards.forEach((card) => {
+        io.to(`project-${projectId}`).emit("card-status-changed", {
+          card,
+          userId: userId.toString(),
+        });
+      });
+
+      // Also emit a bulk move event
+      io.to(`project-${projectId}`).emit("cards-bulk-moved", {
+        projectId,
+        sourceStatus,
+        targetStatus,
+        cardCount: updatedCards.length,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully moved ${updatedCards.length} card(s) from "${sourceStatusLabel}" to "${targetStatusLabel}"`,
+      movedCount: updatedCards.length,
+      cards: updatedCards,
+    });
+  } catch (error) {
+    console.error("Move all cards error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while moving cards",
+    });
+  }
+};
+
 module.exports = {
   getCards,
   getCard,
@@ -1908,4 +2152,6 @@ module.exports = {
   addAttachment,
   removeAttachment,
   uploadFiles,
+  moveAllCards,
+  deleteCard,
 };

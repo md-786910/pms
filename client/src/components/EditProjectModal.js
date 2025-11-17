@@ -9,6 +9,7 @@ import {
   Clock,
   User,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
@@ -25,9 +26,12 @@ const EditProjectModal = ({ project, onClose }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
+  const startDateInputRef = useRef(null);
+  const endDateInputRef = useRef(null);
   const [activities, setActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -357,23 +361,39 @@ const EditProjectModal = ({ project, onClose }) => {
         className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
       >
         {/* Sticky Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-10 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-          title="Close modal"
-        >
-          <X className="w-4 h-4 text-gray-600" />
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+            title="Close modal"
+          >
+            <X className="w-4 h-4 text-gray-600" />
+          </button>
+          <button
+            className="absolute top-6 right-20 z-10 px-4 py-2 bg-primary-500 hover:bg-primary-400 text-white font-semibold text-base transition-colors duration-200 rounded-md flex items-center justify-center gap-2"
+            title="Edit mode"
+            onClick={() => setEditMode(!editMode)}
+          >
+            {editMode ? (
+              <>
+                <Pencil className="w-4 h-4" />
+                <span>Edit mode</span>
+              </>
+            ) : (
+              "Cancel edit"
+            )}
+          </button>
+        </div>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex-shrink-0">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-white/20 rounded-xl">
               <Save className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Edit Project</h2>
-              <p className="text-primary-100 text-lg">
+              <h2 className="text-xl font-bold">Edit Project</h2>
+              <p className="text-primary-100 text-md">
                 Update project details and manage attachments
               </p>
             </div>
@@ -415,6 +435,7 @@ const EditProjectModal = ({ project, onClose }) => {
                         className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         placeholder="Enter project name"
                         required
+                        disabled={editMode}
                       />
                     </div>
                     {/* Client Name */}
@@ -429,6 +450,7 @@ const EditProjectModal = ({ project, onClose }) => {
                         onChange={handleChange}
                         className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         placeholder="Enter client name"
+                        disabled={editMode}
                       />
                     </div>
                     {/* Project Status */}
@@ -442,6 +464,7 @@ const EditProjectModal = ({ project, onClose }) => {
                         onChange={handleChange}
                         className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         required
+                        disabled={editMode}
                       >
                         <option value="new">New</option>
                         <option value="ongoing">Ongoing</option>
@@ -464,6 +487,7 @@ const EditProjectModal = ({ project, onClose }) => {
                         onChange={handleChange}
                         className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         required
+                        disabled={editMode}
                       >
                         <option value="">Select Project Type</option>
                         <option value="maintenance">Maintenance</option>
@@ -477,12 +501,30 @@ const EditProjectModal = ({ project, onClose }) => {
                         Start Date <span className="text-red-500">*</span>
                       </label>
                       <input
+                        ref={startDateInputRef}
                         type="date"
                         name="startDate"
                         value={formData.startDate}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        onClick={(e) => {
+                          if (!editMode && startDateInputRef.current) {
+                            // Try to show the native date picker
+                            if (startDateInputRef.current.showPicker) {
+                              try {
+                                startDateInputRef.current.showPicker();
+                              } catch (error) {
+                                // Fallback: just focus the input
+                                startDateInputRef.current.focus();
+                              }
+                            } else {
+                              // Fallback: focus the input which should open the picker
+                              startDateInputRef.current.focus();
+                            }
+                          }
+                        }}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                         required
+                        disabled={editMode}
                       />
                     </div>
                     {/* End Date */}
@@ -491,11 +533,29 @@ const EditProjectModal = ({ project, onClose }) => {
                         End Date
                       </label>
                       <input
+                        ref={endDateInputRef}
                         type="date"
                         name="endDate"
                         value={formData.endDate}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        onClick={(e) => {
+                          if (!editMode && endDateInputRef.current) {
+                            // Try to show the native date picker
+                            if (endDateInputRef.current.showPicker) {
+                              try {
+                                endDateInputRef.current.showPicker();
+                              } catch (error) {
+                                // Fallback: just focus the input
+                                endDateInputRef.current.focus();
+                              }
+                            } else {
+                              // Fallback: focus the input which should open the picker
+                              endDateInputRef.current.focus();
+                            }
+                          }
+                        }}
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
+                        disabled={editMode}
                       />
                     </div>
                   </div>
@@ -506,17 +566,32 @@ const EditProjectModal = ({ project, onClose }) => {
                       Description
                     </label>
                     <div className="border border-gray-300 rounded-lg overflow-hidden">
-                      <SimpleQuillEditor
-                        value={formData.description}
-                        onChange={(content) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            description: content,
-                          }))
-                        }
-                        placeholder="Enter project description"
-                        height="200px"
-                      />
+                      {!editMode ? (
+                        <SimpleQuillEditor
+                          value={formData.description}
+                          onChange={(content) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              description: content,
+                            }))
+                          }
+                          placeholder="Enter project description"
+                          height="300px"
+                          readOnly={editMode}
+                        />
+                      ) : (
+                        <div>
+                          <p
+                            className="letter-spacing-0.5 p-2"
+                            style={{
+                              lineHeight: 1.65,
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: formData.description,
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -546,6 +621,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       onChange={handleChange}
                       className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="https://example.com"
+                      disabled={editMode}
                     />
                   </div>
                   {/* Demo Site URL */}
@@ -560,6 +636,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       onChange={handleChange}
                       className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="https://demo.example.com"
+                      disabled={editMode}
                     />
                   </div>
                   {/* Markup URL */}
@@ -574,13 +651,20 @@ const EditProjectModal = ({ project, onClose }) => {
                       onChange={handleChange}
                       className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="https://markup.example.com"
+                      disabled={editMode}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Section 3: Files and Documents */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div
+                className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                style={{
+                  // editMode ? {pointerEvents: "none"} : {pointerEvents: "auto"}
+                  cursor: editMode ? "not-allowed" : "pointer",
+                }}
+              >
                 <div className="flex items-center mb-4">
                   <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
                     <Upload className="w-5 h-5 text-white" />
@@ -622,6 +706,7 @@ const EditProjectModal = ({ project, onClose }) => {
                     onChange={handleFileInputChange}
                     className="hidden"
                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.json"
+                    disabled={editMode}
                   />
                 </div>
 
@@ -807,14 +892,14 @@ const EditProjectModal = ({ project, onClose }) => {
             <button
               type="submit"
               form="edit-project-form"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-8 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
-              disabled={loading}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+              disabled={loading || editMode}
             >
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 <>
-                  <Save className="w-5 h-5" />
+                  <Save className="w-4 h-4" />
                   <span>Save Changes</span>
                 </>
               )}

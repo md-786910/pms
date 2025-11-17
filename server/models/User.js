@@ -50,31 +50,24 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: function () {
         const colors = [
-          "bg-blue-600",
-          "bg-green-600",
-          "bg-purple-600",
-          "bg-orange-600",
-          "bg-pink-600",
-          "bg-red-600",
-          "bg-indigo-600",
-          "bg-teal-600",
-          "bg-yellow-600",
-          "bg-gray-600",
-          "bg-cyan-600",
-          "bg-emerald-600",
-          "bg-violet-600",
-          "bg-rose-600",
-          "bg-sky-600",
-          "bg-lime-600",
+          "teal",
+          "green",
+          "purple",
+          "orange",
+          "pink",
+          "red",
+          "indigo",
+          "#eb3b5a",
+          "#4b7bec",
+          "#26de81",
+          "violet",
+          "#2bcbba",
+          "#8854d0",
+          "#3867d6",
         ];
         // Generate consistent color based on user's name/email
-        const seed = (this.name || this.email || "default")
-          .split("")
-          .reduce((a, b) => {
-            a = (a << 5) - a + b.charCodeAt(0);
-            return a & a;
-          }, 0);
-        return colors[Math.abs(seed) % colors.length];
+        newColor = colors[Math.floor(Math.random() * colors.length)];
+        return newColor;
       },
     },
     isActive: {

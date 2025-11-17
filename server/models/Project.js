@@ -1,4 +1,12 @@
 const mongoose = require("mongoose");
+const COLOR_PALETTE = [
+  "#FF5733",
+  "#FFC300",
+  "#33FF57",
+  "#3357FF",
+  "#FF33A8",
+  "#8D33FF",
+];
 
 const projectSchema = new mongoose.Schema(
   {
@@ -36,6 +44,7 @@ const projectSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    bgColor: { type: String },
     liveSiteUrl: {
       type: String,
       trim: true,

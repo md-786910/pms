@@ -19,7 +19,7 @@ const Avatar = ({
   // Get user data
   const name = user?.name || "";
   const avatar = user?.avatar || "";
-  const color = user?.color || "bg-gray-600";
+  const color = user?.color || "bg-gray-400";
 
   // Always generate 2-letter initials from name (ignore stored avatar)
   const initials = (() => {
@@ -38,15 +38,13 @@ const Avatar = ({
   })();
 
   // Clean color class (remove bg- prefix if it exists)
-  const cleanColor = color.startsWith("bg-") ? color : `bg-${color}-900`;
-
   const avatarElement = (
     <div
-      className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-black font-medium ${cleanColor} border border-gray-200 shadow-sm ${className}`}
+      className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-white font-medium ${className}`}
       title={showTooltip ? name : undefined}
       style={{
-        color: "black",
-        textShadow: "text-shadow-sky-300",
+        color: "white",
+        background: color,
       }}
     >
       {initials}

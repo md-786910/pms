@@ -23,9 +23,7 @@ export const NotificationProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     try {
-      console.log("🔔 Fetching notifications...");
       const response = await notificationAPI.getNotifications();
-      console.log("📊 Notifications response:", response.data);
       setNotifications(response.data.notifications || []);
     } catch (error) {
       console.error("❌ Error fetching notifications:", error);

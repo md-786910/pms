@@ -84,10 +84,8 @@ const LabelsModal = ({
   useEffect(() => {
     if (isOpen && card && card.labels && card.labels.length > 0) {
       const labelNames = card.labels.map((label) => label.name);
-      console.log("Initializing selected labels:", labelNames);
       setSelectedLabels(new Set(labelNames));
     } else if (isOpen && card) {
-      console.log("Card has no labels, resetting selection");
       setSelectedLabels(new Set());
     }
   }, [isOpen, card]);
@@ -115,14 +113,8 @@ const LabelsModal = ({
             projectId = card.project;
           }
 
-          console.log("Fetching labels for project:", projectId);
-          console.log("Card object:", card);
-          console.log("Card.project:", card.project);
-
           const response = await projectAPI.getProjectLabels(projectId);
-          console.log("Fetched labels from API:", response.data);
           if (response.data.success && response.data.labels) {
-            console.log("Setting available labels:", response.data.labels);
             setAvailableLabels(response.data.labels);
           }
         } catch (error) {
@@ -143,12 +135,10 @@ const LabelsModal = ({
     if (!socket || !isOpen || !card) return;
 
     const handleLabelCreated = (data) => {
-      console.log("Label created event received:", data);
       if (data.label) {
         // Skip if this event is from the current user (already added via API)
         const currentUserId = user?._id || user?.id;
         if (data.userId === currentUserId) {
-          console.log("Label created by current user, skipping Socket event");
           return;
         }
 
@@ -163,7 +153,6 @@ const LabelsModal = ({
           );
 
           if (existingByID || existingByName) {
-            console.log("Label already exists, skipping duplicate");
             return prev;
           }
           return [...prev, data.label];
@@ -172,12 +161,9 @@ const LabelsModal = ({
     };
 
     const handleLabelUpdated = (data) => {
-      console.log("Label updated event received:", data);
-
       // Skip if this event is from the current user (already updated via API)
       const currentUserId = user?._id || user?.id;
       if (data.userId === currentUserId) {
-        console.log("Label updated by current user, skipping Socket event");
         return;
       }
 
@@ -206,12 +192,9 @@ const LabelsModal = ({
     };
 
     const handleLabelRemoved = (data) => {
-      console.log("Label removed event received:", data);
-
       // Skip if this event is from the current user (already removed via API)
       const currentUserId = user?._id || user?.id;
       if (data.userId === currentUserId) {
-        console.log("Label removed by current user, skipping Socket event");
         return;
       }
 
@@ -273,7 +256,6 @@ const LabelsModal = ({
 
     if (isCurrentlySelected) {
       // Remove label from card
-      console.log(`Removing ${labelName} from card`);
       const currentLabels = card.labels || [];
       const labelToRemove = currentLabels.find(
         (label) => label.name === labelName
@@ -301,7 +283,6 @@ const LabelsModal = ({
       }
     } else {
       // Add label to card
-      console.log(`Adding ${labelName} to card`);
       const labelToAdd = availableLabels.find(
         (label) => label.name === labelName
       );
@@ -517,10 +498,6 @@ const LabelsModal = ({
 
       const labelId = labelToDelete._id || labelToDelete.id;
 
-      console.log("Deleting label:", labelToDelete);
-      console.log("Label ID:", labelId);
-      console.log("Project ID:", projectId);
-
       if (!labelId) {
         console.error("Label ID is undefined!");
         showToast("Error: Label ID is missing", "error");
@@ -530,8 +507,6 @@ const LabelsModal = ({
 
       // Permanently delete the label from project and all cards
       const response = await projectAPI.deleteLabel(projectId, labelId);
-
-      console.log("Delete response:", response);
 
       if (response.data.success) {
         // Remove from selected labels if it was selected

@@ -75,15 +75,13 @@ const CreateCardModal = ({
   return (
     <div className="modal-overlay">
       <div ref={modalRef} className="modal-content">
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200">
-          <h2 className="text-xl font-semibold text-secondary-900">
-            Create New Card
-          </h2>
+        <div className="flex items-center bg-gradient-to-r from-blue-600 to-blue-700  justify-between px-6 py-2 border-b border-secondary-200">
+          <h2 className="text-xl font-semibold text-white">Create New Card</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 transition-colors duration-200"
+            className="p-2 rounded-lg hover:bg-secondary-400 transition-colors duration-200"
           >
-            <X className="w-5 h-5 text-secondary-600" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 

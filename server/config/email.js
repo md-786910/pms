@@ -282,7 +282,7 @@ const emailTemplates = {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">📝 Project Update</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">👥 Bright Group</h1>
         </div>
         <div style="padding: 30px; background: #f8f9fa;">
           <h2 style="color: #333; margin-bottom: 20px;">Hello ${memberName},</h2>

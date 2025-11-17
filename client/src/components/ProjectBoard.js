@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   Plus,
-  MoreVertical,
   ChevronRight,
   Settings,
   Calendar,
   Filter,
   X,
+  ExternalLink,
+  Users,
+  UserPlus,
+  UserMinus,
 } from "lucide-react";
+import Avatar from "./Avatar";
+import InviteUserModal from "./InviteUserModal";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useSocket } from "../contexts/SocketContext";
@@ -21,18 +26,18 @@ import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
 import EditProjectModal from "./EditProjectModal";
 import FilterPanel from "./FilterPanel";
-import { stripHtmlTags } from "../utils/htmlUtils";
+import MoveAllCardsModal from "./MoveAllCardsModal";
+// import { stripHtmlTags } from "../utils/htmlUtils";
 import {
   getProjectStatusColors,
-  getProjectTypeColors,
-  getStatusBadgeClasses,
   getCardStatusColors,
 } from "../utils/statusColors";
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
   const navigate = useNavigate();
-  const { currentProject, fetchProject, loading } = useProject();
+  const { currentProject, fetchProject, loading, removeProjectMember } =
+    useProject();
   const { showToast } = useNotification();
   const { socket, joinProject, leaveProject } = useSocket();
   const { user } = useUser();
@@ -55,7 +60,7 @@ const ProjectBoard = () => {
   // Card modal state
   const [selectedCard, setSelectedCard] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
-  const [projectData, setProjectData] = useState([]);
+  const [projectData, setProjectData] = useState(null);
   const [draggingColumnId, setDraggingColumnId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
 
@@ -63,6 +68,15 @@ const ProjectBoard = () => {
   const [filteredCards, setFilteredCards] = useState([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  const [showMembersPopover, setShowMembersPopover] = useState(false);
+  const membersBtnRef = useRef(null);
+  const membersPopoverRef = useRef(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState(null);
+  const [confirmingUserId, setConfirmingUserId] = useState(null);
+  const [showMoveAllCardsModal, setShowMoveAllCardsModal] = useState(false);
+  const [sourceColumnForMove, setSourceColumnForMove] = useState(null);
+  const [isMovingCards, setIsMovingCards] = useState(false);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -74,8 +88,47 @@ const ProjectBoard = () => {
       }
     };
 
-    fetchProjectData();
-  }, []);
+    if (!selectedCard) {
+      fetchProjectData();
+    }
+  }, [id]);
+
+  // Close members popover on outside click
+  useEffect(() => {
+    if (!showMembersPopover) return;
+    const handleClickOutside = (e) => {
+      // Check if click is outside both the button AND the popover content
+      const isOutsideButton =
+        membersBtnRef.current && !membersBtnRef.current.contains(e.target);
+      const isOutsidePopover =
+        membersPopoverRef.current &&
+        !membersPopoverRef.current.contains(e.target);
+
+      if (isOutsideButton && isOutsidePopover) {
+        setShowMembersPopover(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMembersPopover]);
+
+  const handleRemoveMember = async (memberUserId) => {
+    if (!currentProject?._id) return;
+    try {
+      setRemovingMemberId(memberUserId);
+      await removeProjectMember(currentProject._id, memberUserId);
+      await fetchProject(currentProject._id);
+      showToast("Member removed from project", "success");
+    } catch (error) {
+      console.error("Error removing member:", error);
+      showToast(
+        error.response?.data?.message || "Failed to remove member",
+        "error"
+      );
+    } finally {
+      setRemovingMemberId(null);
+    }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -86,12 +139,23 @@ const ProjectBoard = () => {
   // Determine the actual project ID
   const actualProjectId = projectId || id;
 
+  // Sync projectData with currentProject when it updates (e.g., after saving changes)
+  useEffect(() => {
+    if (currentProject && actualProjectId === currentProject._id) {
+      setProjectData((prev) => ({
+        ...(prev || {}),
+        project: currentProject,
+      }));
+    }
+  }, [currentProject, actualProjectId]);
+
   useEffect(() => {
     if (actualProjectId) {
       fetchProject(actualProjectId);
       fetchCards();
       fetchColumns();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actualProjectId]);
 
   // Join/leave project room on mount/unmount
@@ -109,7 +173,6 @@ const ProjectBoard = () => {
     if (!socket) return;
 
     const handleCardCreated = (data) => {
-      console.log("Card created event received:", data);
       // Only update if not created by current user
       if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
         setCards((prev) => [...prev, data.card]);
@@ -119,7 +182,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardUpdated = (data) => {
-      console.log("Card updated event received:", data);
       // Only update if not updated by current user
       if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
         setCards((prev) =>
@@ -136,7 +198,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardArchived = (data) => {
-      console.log("Card archived event received:", data);
       if (data.card) {
         setCards((prev) =>
           prev.map((card) =>
@@ -160,16 +221,21 @@ const ProjectBoard = () => {
       }
     };
 
-    const handleCardRestored = (data) => {
-      console.log("Card restored event received:", data);
-      if (data.card) {
-        // Use the function directly instead of calling fetchCards
+    const handleCardRestoredSocket = (data) => {
+      // Only handle socket events from other users, not our own actions
+      if (data.card && data.userId !== user?._id && data.userId !== user?.id) {
+        // Refresh cards when another user restores a card
         cardAPI
           .getCards(actualProjectId, true)
           .then((response) => {
             const fetchedCards = response.data.cards || [];
             setCards(fetchedCards);
             setFilteredCards(fetchedCards);
+            
+            // Update selected card if it's the one being restored
+            if (selectedCard && selectedCard._id === data.card._id) {
+              setSelectedCard(data.card);
+            }
           })
           .catch((error) => {
             console.error("Error fetching cards:", error);
@@ -178,7 +244,6 @@ const ProjectBoard = () => {
     };
 
     const handleCardStatusChanged = (data) => {
-      console.log("Card status changed event received:", data);
       if (data.card) {
         setCards((prev) =>
           prev.map((card) =>
@@ -202,7 +267,6 @@ const ProjectBoard = () => {
     };
 
     const handleColumnCreated = (data) => {
-      console.log("Column created event received:", data);
       // Only update if not created by current user
       if (
         data.column &&
@@ -215,7 +279,6 @@ const ProjectBoard = () => {
     };
 
     const handleColumnUpdated = (data) => {
-      console.log("Column updated event received:", data);
       if (data.column) {
         setColumns((prev) =>
           prev.map((col) => (col._id === data.column._id ? data.column : col))
@@ -223,10 +286,23 @@ const ProjectBoard = () => {
       }
     };
 
+    const handleCardsBulkMoved = (data) => {
+      if (data.projectId === actualProjectId) {
+        // Refresh cards to get updated data
+        fetchCards();
+        if (data.userId !== user?._id && data.userId !== user?.id) {
+          showToast(
+            `${data.cardCount} card(s) moved from one column to another`,
+            "info"
+          );
+        }
+      }
+    };
+
     socket.on("card-created", handleCardCreated);
     socket.on("card-updated", handleCardUpdated);
     socket.on("card-archived", handleCardArchived);
-    socket.on("card-restored", handleCardRestored);
+    socket.on("card-restored", handleCardRestoredSocket);
     socket.on("card-status-changed", handleCardStatusChanged);
     socket.on("card-user-assigned", handleCardUpdated);
     socket.on("card-user-unassigned", handleCardUpdated);
@@ -237,12 +313,13 @@ const ProjectBoard = () => {
     socket.on("card-files-uploaded", handleCardUpdated);
     socket.on("column-created", handleColumnCreated);
     socket.on("column-updated", handleColumnUpdated);
+    socket.on("cards-bulk-moved", handleCardsBulkMoved);
 
     return () => {
       socket.off("card-created", handleCardCreated);
       socket.off("card-updated", handleCardUpdated);
       socket.off("card-archived", handleCardArchived);
-      socket.off("card-restored", handleCardRestored);
+      socket.off("card-restored", handleCardRestoredSocket);
       socket.off("card-status-changed", handleCardStatusChanged);
       socket.off("card-user-assigned", handleCardUpdated);
       socket.off("card-user-unassigned", handleCardUpdated);
@@ -253,8 +330,9 @@ const ProjectBoard = () => {
       socket.off("card-files-uploaded", handleCardUpdated);
       socket.off("column-created", handleColumnCreated);
       socket.off("column-updated", handleColumnUpdated);
+      socket.off("cards-bulk-moved", handleCardsBulkMoved);
     };
-  }, [socket, selectedCard, showToast, user]);
+  }, [socket, selectedCard, showToast, user, actualProjectId]);
 
   // Handle click outside to close add column modal
   useEffect(() => {
@@ -273,6 +351,7 @@ const ProjectBoard = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAddColumnModal]);
 
   // Handle card modal opening from URL
@@ -314,9 +393,7 @@ const ProjectBoard = () => {
 
   const fetchCards = async () => {
     try {
-      console.log("Fetching cards for project:", actualProjectId);
       const response = await cardAPI.getCards(actualProjectId, true); // Include archived cards
-      console.log("Cards response:", response);
       const fetchedCards = response.data.cards || [];
       setCards(fetchedCards);
       setFilteredCards(fetchedCards); // Initialize filtered cards
@@ -331,9 +408,7 @@ const ProjectBoard = () => {
 
   const fetchColumns = async () => {
     try {
-      console.log("Fetching columns for project:", actualProjectId);
       const response = await columnAPI.getColumns(actualProjectId);
-      console.log("Columns response:", response);
       setColumns(response.data.columns || []);
     } catch (error) {
       console.error("Error fetching columns:", error);
@@ -395,28 +470,52 @@ const ProjectBoard = () => {
     }
   };
 
-  const handleCardRestored = async (cardId) => {
+  const handleCardPermanentlyDeleted = async (cardId) => {
     try {
-      const response = await cardAPI.restoreCard(cardId);
-      if (response.data.success) {
-        // Refresh cards to get updated data
-        await fetchCards();
-        showToast("Card restored successfully!", "success");
+      // Remove the card from state permanently (optimistic update)
+      setCards((prev) => prev.filter((card) => card._id !== cardId));
+      setFilteredCards((prev) => prev.filter((card) => card._id !== cardId));
+      
+      // Refresh cards to ensure sync with server
+      await fetchCards();
+      
+      // Close modal if the deleted card was selected
+      if (selectedCard && selectedCard._id === cardId) {
+        setShowCardModal(false);
+        setSelectedCard(null);
+        // Navigate back to project view
+        navigate(`/project/${actualProjectId}`);
+      }
+    } catch (error) {
+      console.error("Error handling card deletion:", error);
+      // Refresh cards as fallback
+      await fetchCards();
+    }
+  };
 
-        // Update selected card if it's the one being restored
-        if (selectedCard && selectedCard._id === cardId) {
+  const handleCardRestored = async (cardId, restoredCard) => {
+    try {
+      // Refresh cards to get updated data (API is already called in CardModal)
+      await fetchCards();
+
+      // Update selected card if it's the one being restored
+      if (selectedCard && selectedCard._id === cardId) {
+        // Use the restored card data if provided, otherwise update local state
+        if (restoredCard) {
+          setSelectedCard(restoredCard);
+        } else {
+          // Fallback: update local state
           setSelectedCard((prev) => ({
             ...prev,
             isArchived: false,
             archivedAt: null,
             archivedBy: null,
-            status: response.data.card.status,
+            status: prev.originalStatus || "todo",
           }));
         }
       }
     } catch (error) {
-      console.error("Error restoring card:", error);
-      showToast("Failed to restore card", "error");
+      console.error("Error handling card restoration:", error);
     }
   };
 
@@ -456,6 +555,12 @@ const ProjectBoard = () => {
     setSelectedCard(null);
     // Navigate back to project view
     navigate(`/project/${actualProjectId}`);
+  };
+
+  const handleNavigateCard = (card) => {
+    setSelectedCard(card);
+    // Update URL to include card ID
+    navigate(`/project/${actualProjectId}/card/${card._id}`);
   };
 
   const getCardsByStatus = (status) => {
@@ -659,9 +764,57 @@ const ProjectBoard = () => {
   };
 
   const handleAddCardToColumn = (status) => {
-    console.log("Add card button clicked for status:", status);
     setSelectedStatus(status);
     setShowCreateModal(true);
+  };
+
+  const handleMoveAllCards = (sourceStatus) => {
+    const column = columns.find((col) => col.status === sourceStatus);
+    if (column) {
+      setSourceColumnForMove(column);
+      setShowMoveAllCardsModal(true);
+    }
+  };
+
+  const handleConfirmMoveAllCards = async (targetColumnId) => {
+    if (!sourceColumnForMove || !targetColumnId) return;
+
+    try {
+      setIsMovingCards(true);
+      const targetColumn = columns.find(
+        (col) => col._id === targetColumnId || col.status === targetColumnId
+      );
+
+      if (!targetColumn) {
+        showToast("Target column not found", "error");
+        return;
+      }
+
+      const response = await cardAPI.moveAllCards(
+        actualProjectId,
+        sourceColumnForMove.status,
+        targetColumn.status
+      );
+
+      if (response.data.success) {
+        // Refresh cards to get updated data
+        await fetchCards();
+        showToast(
+          `Successfully moved ${response.data.movedCount} card(s)`,
+          "success"
+        );
+        setShowMoveAllCardsModal(false);
+        setSourceColumnForMove(null);
+      }
+    } catch (error) {
+      console.error("Error moving all cards:", error);
+      showToast(
+        error.response?.data?.message || "Failed to move cards",
+        "error"
+      );
+    } finally {
+      setIsMovingCards(false);
+    }
   };
 
   const handleScroll = () => {
@@ -682,10 +835,38 @@ const ProjectBoard = () => {
   };
 
   const handleEditProject = () => {
+    // Open modal and update the URL so refreshing preserves modal state
+    if (actualProjectId) {
+      navigate(`/project/${actualProjectId}/edit`);
+    }
     setShowEditProjectModal(true);
   };
 
-  if (loading || loadingCards) {
+  // Keep edit modal state in sync with the URL so refreshing the page
+  // with /edit stays open, and navigating away closes it.
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!actualProjectId) return;
+
+    const pathname = location.pathname || "";
+    // If path contains /edit or /settings at the end, show modal
+    if (
+      pathname.endsWith(`/${actualProjectId}/edit`) ||
+      pathname.endsWith(`/${actualProjectId}/settings`) ||
+      pathname.endsWith(`/project/${actualProjectId}/edit`) ||
+      pathname.endsWith(`/project/${actualProjectId}/settings`) ||
+      pathname.includes(`/${actualProjectId}/edit`) ||
+      pathname.includes(`/${actualProjectId}/settings`)
+    ) {
+      setShowEditProjectModal(true);
+    } else {
+      setShowEditProjectModal(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, actualProjectId]);
+
+  if (loading || loadingCards || loadingColumns) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -712,33 +893,213 @@ const ProjectBoard = () => {
   return (
     <div className="h-full flex flex-col max-h-full">
       {/* Compact Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-[26px] text-white mb-4 flex-shrink-0">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-4 text-white mb-4 flex-shrink-0">
         <div className="flex items-center justify-between gap-3">
           {/* Left: Back + title + description */}
           <div className="flex items-center gap-3 min-w-0">
-            <Link
+            {/* <Link
               to="/"
               className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
               title="Back"
             >
               <ArrowLeft className="w-5 h-5" />
-            </Link>
+            </Link> */}
             <div className="min-w-0">
               <h1 className="text-lg font-semibold truncate max-w-[40vw]">
                 {currentProject.name}
               </h1>
-              <p className="text-blue-100 text-sm truncate max-w-[50vw]">
+              {/* <p className="text-blue-100 text-sm truncate max-w-[50vw]">
                 {stripHtmlTags(currentProject.description)}
-              </p>
+              </p> */}
             </div>
           </div>
 
-          {/* Right: Status pills + Date pill + Filter + Settings */}
-          <div className="flex items-center gap-3">
+          {/* Right: Members + Status pills + Date pill + Filter + Settings */}
+          <div className="flex items-center gap-2 relative">
+            <div className="flex flex-wrap items-center justify-center gap-2 mr-6">
+              {/* Live URL */}
+              {currentProject.liveSiteUrl && (
+                <a
+                  href={currentProject.liveSiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+        group relative flex items-center gap-2
+        px-2 py-2 rounded-lg text-xs font-medium
+        text-white shadow-md transition-all duration-300
+        bg-gradient-to-r from-emerald-500/80 to-teal-500/80
+        hover:from-emerald-400 hover:to-teal-400
+        hover:scale-105 hover:shadow-emerald-500/40
+      "
+                >
+                  <span>Live Site</span>
+                  <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </a>
+              )}
+
+              {/* Demo URL */}
+              {currentProject.demoSiteUrl && (
+                <a
+                  href={currentProject.demoSiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+        group relative flex items-center gap-2
+        px-2 py-2 rounded-lg text-xs font-medium
+        text-white shadow-md transition-all duration-300
+        bg-gradient-to-r from-blue-500/80 to-indigo-500/80
+        hover:from-blue-400 hover:to-indigo-400
+        hover:scale-105 hover:shadow-blue-500/40
+      "
+                >
+                  <span>Demo Site</span>
+                  <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </a>
+              )}
+
+              {/* Markup URL */}
+              {currentProject.markupUrl && (
+                <a
+                  href={currentProject.markupUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+        group relative flex items-center gap-2
+        px-2 py-2 rounded-lg text-xs font-medium
+        text-white shadow-md transition-all duration-300
+        bg-gradient-to-r from-pink-500/80 to-rose-500/80
+        hover:from-pink-400 hover:to-rose-400
+        hover:scale-105 hover:shadow-pink-500/40
+      "
+                >
+                  <span>Markup</span>
+                  <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </a>
+              )}
+            </div>
+
+            {/* Members avatar group */}
+            {Array.isArray(currentProject.members) && (
+              <div className="flex items-center gap-2 relative z-[20]">
+                <button
+                  ref={membersBtnRef}
+                  onClick={() => setShowMembersPopover((s) => !s)}
+                  className="flex items-center -space-x-2 group"
+                  title="Project members"
+                >
+                  {currentProject.members.slice(0, 3).map((m, idx) => (
+                    <div
+                      key={(m.user && (m.user._id || m.user.id)) || idx}
+                      className="relative inline-flex border-2 border-white/40 rounded-full shadow-sm transition-transform group-hover:scale-[1.02] bg-white/0"
+                      style={{ zIndex: 10 - idx }}
+                    >
+                      <Avatar user={m.user} size="sm" />
+                    </div>
+                  ))}
+                  {currentProject.members.length > 3 && (
+                    <div className="inline-flex w-8 h-8 items-center justify-center rounded-full bg-white/20 text-white text-[11px] font-semibold border-2 border-white/40 shadow-sm">
+                      +{currentProject.members.length - 3}
+                    </div>
+                  )}
+                </button>
+
+                {/* Popover listing all members */}
+                {showMembersPopover && (
+                  <div
+                    ref={membersPopoverRef}
+                    className="absolute left-0 top-full mt-2 w-80 bg-white text-secondary-900 rounded-xl shadow-lg ring-1 ring-black/5 overflow-hidden animate-[fadeIn_120ms_ease-out]"
+                  >
+                    <div className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm font-semibold">
+                          {currentProject.members.length} members
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowInviteModal(true);
+                          setShowMembersPopover(false);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        title="Add members"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="max-h-64 overflow-auto divide-y divide-secondary-100 cursor-pinter">
+                      {currentProject.members.map((m, idx) => (
+                        <div
+                          key={(m.user && (m.user._id || m.user.id)) || idx}
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-secondary-50 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Avatar user={m.user} size="sm" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {m.user?.name || m.user?.email || "Unknown"}
+                            </div>
+                            <div className="text-xs text-secondary-500 capitalize truncate">
+                              {m.role || "member"}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const userId = m.user?._id || m.user?.id;
+
+                              if (userId) {
+                                // handleRemoveMember(userId);
+                                setConfirmingUserId(userId);
+                              } else {
+                                console.error(
+                                  "No user ID found for member:",
+                                  m
+                                );
+                                showToast("Unable to identify member", "error");
+                              }
+                            }}
+                            className="p-1.5 rounded-md hover:bg-secondary-100 text-secondary-500 hover:text-red-600 transition-colors cursor-pointer"
+                            title="Remove member"
+                            disabled={
+                              removingMemberId === (m.user?._id || m.user?.id)
+                            }
+                          >
+                            {removingMemberId ===
+                            (m.user?._id || m.user?.id) ? (
+                              <svg
+                                className="w-4 h-4 animate-spin"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v4l3.5-3.5L12 20v4a8 8 0 01-8-8z"
+                                ></path>
+                              </svg>
+                            ) : (
+                              <UserMinus className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {/* Status pills */}
             <div className="flex items-center gap-2">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm cursor-default ${
                   getProjectStatusColors(currentProject.projectStatus).bgColor
                 } ${
                   getProjectStatusColors(currentProject.projectStatus).textColor
@@ -763,25 +1124,44 @@ const ProjectBoard = () => {
                 {getProjectTypeColors(currentProject.projectType).label}
               </span> */}
             </div>
-            {/* Date pill */}
-            <div className="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5">
-              <div className="w-7 h-7 bg-white/25 rounded-full flex items-center justify-center">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div className="text-xs">
-                <span className="font-medium">
-                  {formatDate(projectData.project?.startDate)}
-                </span>
+            {/* Date pills */}
+            {(projectData.project?.startDate ||
+              projectData.project?.endDate) && (
+              <div className="flex items-center gap-1.5">
+                {/* Start Date */}
+                {projectData.project?.startDate && (
+                  <div className="flex bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 text-white bg-[#26de81] rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5 " />
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-white/80 font-medium text-[10px] leading-none">
+                        Start Date
+                      </div>
+                      <div className="text-white font-semibold leading-tight">
+                        {formatDate(projectData.project.startDate)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* End Date */}
                 {projectData.project?.endDate && (
-                  <>
-                    <span className="opacity-70 mx-1">→</span>
-                    <span className="font-medium">
-                      {formatDate(projectData.project?.endDate)}
-                    </span>
-                  </>
+                  <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 bg-[#fa8231] rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-white/80 font-medium text-[10px] leading-none">
+                        End Date
+                      </div>
+                      <div className="text-white font-semibold leading-tight">
+                        {formatDate(projectData.project.endDate)}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            )}
             {/* Filter button and Cancel Filter button */}
             <div className="flex items-center gap-2">
               <button
@@ -865,6 +1245,7 @@ const ProjectBoard = () => {
                     onColumnRename={handleColumnRename}
                     onColumnDelete={handleColumnDelete}
                     onAddCard={handleAddCardToColumn}
+                    onMoveAllCards={handleMoveAllCards}
                   />
                 </div>
               );
@@ -947,17 +1328,19 @@ const ProjectBoard = () => {
                   Color
                 </label>
                 <div className="flex space-x-2">
-                  {["blue", "green", "red", "gray", "yellow"].map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setNewColumnColor(color)}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        newColumnColor === color
-                          ? "border-gray-800"
-                          : "border-gray-300"
-                      } bg-${color}-500 hover:opacity-80 transition-opacity`}
-                    />
-                  ))}
+                  {["blue", "green", "yellow", "red", "purple", "pink"].map(
+                    (color) => (
+                      <button
+                        key={color}
+                        onClick={() => setNewColumnColor(color)}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          newColumnColor === color
+                            ? "border-gray-800"
+                            : "border-gray-300"
+                        } bg-${color}-500 hover:opacity-80 transition-opacity`}
+                      />
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -1003,16 +1386,32 @@ const ProjectBoard = () => {
         type="danger"
         isLoading={false}
       />
+      <ConfirmationModal
+        isOpen={!!confirmingUserId}
+        title="Remove Member"
+        message="Are you sure you want to Delete user"
+        onCancel={() => setConfirmingUserId(null)}
+        onConfirm={() => {
+          handleRemoveMember(confirmingUserId);
+          setConfirmingUserId(null);
+        }}
+        onClose={() => {
+          setConfirmingUserId(false);
+        }}
+      />
 
       {/* Card Modal */}
       {showCardModal && selectedCard && (
         <CardModal
           card={selectedCard}
+          cards={filteredCards}
           onClose={handleCardModalClose}
           onCardUpdated={handleCardUpdated}
           onCardDeleted={handleCardDeleted}
           onCardRestored={handleCardRestored}
+          onCardPermanentlyDeleted={handleCardPermanentlyDeleted}
           onStatusChange={handleStatusChange}
+          onNavigateCard={handleNavigateCard}
         />
       )}
 
@@ -1020,7 +1419,20 @@ const ProjectBoard = () => {
       {showEditProjectModal && currentProject && (
         <EditProjectModal
           project={currentProject}
-          onClose={() => setShowEditProjectModal(false)}
+          onClose={() => {
+            setShowEditProjectModal(false);
+            // Ensure we return to the main project view path when modal closes
+            navigate(`/project/${actualProjectId}`);
+          }}
+        />
+      )}
+
+      {/* Invite/Add Members Modal */}
+      {showInviteModal && currentProject && (
+        <InviteUserModal
+          project={currentProject}
+          onClose={() => setShowInviteModal(false)}
+          onUserInvited={() => fetchProject(currentProject._id)}
         />
       )}
 
@@ -1036,6 +1448,22 @@ const ProjectBoard = () => {
         columns={columns}
         project={currentProject}
       />
+
+      {/* Move All Cards Modal */}
+      {showMoveAllCardsModal && sourceColumnForMove && (
+        <MoveAllCardsModal
+          isOpen={showMoveAllCardsModal}
+          onClose={() => {
+            setShowMoveAllCardsModal(false);
+            setSourceColumnForMove(null);
+          }}
+          onConfirm={handleConfirmMoveAllCards}
+          sourceColumn={sourceColumnForMove}
+          columns={columns}
+          cardCount={getCardsByStatus(sourceColumnForMove.status).length}
+          isLoading={isMovingCards}
+        />
+      )}
     </div>
   );
 };

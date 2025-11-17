@@ -37,7 +37,6 @@ api.interceptors.response.use(
     // Calculate request duration
     if (response.config.metadata) {
       const duration = new Date() - response.config.metadata.startTime;
-      console.log(`API Request to ${response.config.url} took ${duration}ms`);
     }
 
     return response;
@@ -54,7 +53,7 @@ api.interceptors.response.use(
       localStorage.removeItem("user");
 
       // Only redirect if not already on login page
-      if (window.location.pathname !== "/login") {
+      if (!["/login", "/reset-password"].includes(window.location.pathname)) {
         window.location.href = "/login";
       }
     }
@@ -163,7 +162,13 @@ export const cardAPI = {
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
   archiveCard: (id) => api.put(`/cards/${id}/archive`),
   restoreCard: (id) => api.put(`/cards/${id}/restore`),
+  deleteCard: (id) => api.delete(`/cards/${id}`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
+  moveAllCards: (projectId, sourceStatus, targetStatus) =>
+    api.post(`/projects/${projectId}/cards/move-all`, {
+      sourceStatus,
+      targetStatus,
+    }),
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),
   addComment: (id, comment, mentions = []) =>

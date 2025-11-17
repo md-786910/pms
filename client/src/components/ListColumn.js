@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MoreVertical, Edit2, Trash2, Plus } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Plus, ArrowRight } from "lucide-react";
 import CardItem from "./CardItem";
 import ConfirmationModal from "./ConfirmationModal";
 
@@ -20,6 +20,7 @@ const ListColumn = ({
   onColumnRename,
   onColumnDelete,
   onAddCard,
+  onMoveAllCards,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -79,7 +80,7 @@ const ListColumn = ({
 
   return (
     <div
-      className={`bg-gray-50 rounded-lg border border-gray-200 h-[600px] transition-all duration-200 ${
+      className={`bg-[#f1f2f4] rounded-lg border border-gray-200 h-[644px] transition-all duration-200 ${
         isHovered ? "shadow-lg" : "shadow-sm"
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -168,16 +169,33 @@ const ListColumn = ({
                   </>
                 )}
                 {status !== "archive" && (
-                  <button
-                    onClick={() => {
-                      onAddCard(status);
-                      setShowMenu(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Card</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        onAddCard(status);
+                        setShowMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Card</span>
+                    </button>
+                    {cards.length > 0 && onMoveAllCards && (
+                      <>
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <button
+                          onClick={() => {
+                            onMoveAllCards(status);
+                            setShowMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                          <span>Move all cards</span>
+                        </button>
+                      </>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -186,7 +204,7 @@ const ListColumn = ({
       </div>
 
       {/* Cards List */}
-      <div className="p-3 space-y-3 h-[540px] overflow-y-auto">
+      <div className="p-3 space-y-3 h-[580px] overflow-y-auto">
         {cards.map((card) => (
           <CardItem
             key={card._id || card.id}
@@ -216,7 +234,8 @@ const ListColumn = ({
         <div className="p-3 border-t border-gray-100">
           <button
             onClick={() => onAddCard(status)}
-            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400"
+            className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-white hover:text-white  rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400 bg-[#4338ca] font-medium transition-all duration-300 hover:from-blue-400 hover:to-indigo-400
+        hover:scale-105 hover:shadow-blue-500/40"
           >
             <Plus className="w-4 h-4" />
             <span>Add a card</span>

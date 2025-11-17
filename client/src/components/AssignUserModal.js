@@ -152,7 +152,7 @@ const AssignUserModal = ({
             <h2 className="text-xl font-bold">
               {card ? "Assign Users to Card" : "Manage Project Members"}
             </h2>
-            <p className="text-primary-100 text-lg">
+            <p className="text-primary-100 text-md">
               {card ? card.title : (localProject || project).name}
             </p>
           </div>

@@ -9,6 +9,29 @@ const {
   sendProjectUpdateEmail,
   sendMemberRemovedEmail,
 } = require("../config/email");
+const { COLOR_PALETTE } = require("../../client/src/utils/color");
+
+const assignColor = async () => {
+  // Fetch all used colors from DB
+  const projects = await Project.find({}, "bgColor");
+  const usedColors = new Set(projects.map((p) => p.bgColor));
+
+  // Queue: available colors
+  const availableColors = COLOR_PALETTE.filter((c) => !usedColors.has(c));
+
+  if (availableColors.length > 0) {
+    // Pick the first color in the queue (DSA: FIFO)
+    return availableColors[0];
+  }
+
+  // If all colors are used, generate random new color
+  return (
+    "#" +
+    Math.floor(Math.random() * 16777215)
+      .toString(16)
+      .padStart(6, "0")
+  );
+};
 
 // Helper function to create activity and send notifications
 const createActivityAndNotify = async (
@@ -136,6 +159,17 @@ const getProjects = async (req, res) => {
         .sort({ createdAt: -1 });
     }
 
+    // manipulate project
+    // projects = projects.map((project, index) => {
+    //   const projectColor = project.bgColor
+    //     ? project.bgColor
+    //     : COLOR_PALETTE[(index % COLOR_PALETTE.length) - 1];
+    //   return {
+    //     ...project.toJSON(),
+    //     bgColor: projectColor,
+    //   };
+    // });
+
     res.json({
       success: true,
       projects,
@@ -228,7 +262,7 @@ const createProject = async (req, res) => {
       color = "blue",
     } = req.body;
     const userId = req.user._id;
-
+    const bgColor = await assignColor();
     const project = new Project({
       name,
       description,
@@ -249,6 +283,7 @@ const createProject = async (req, res) => {
         },
       ],
       color,
+      bgColor,
     });
 
     await project.save();

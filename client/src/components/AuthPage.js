@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
   Lock,
@@ -368,114 +368,9 @@ const AuthPage = () => {
   const renderResetPasswordForm = () => (
     <div className="bg-white rounded-2xl shadow-xl p-8">
       <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Key className="w-8 h-8 text-green-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Reset Password
-        </h2>
-        <p className="text-gray-600">Enter your new password below.</p>
-      </div>
-
-      <form onSubmit={handleResetPassword} className="space-y-6">
-        {/* New Password Field */}
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            New Password
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-3 py-2 pl-10 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter new password"
-              required
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              ) : (
-                <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Confirm Password Field */}
-        <div>
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Confirm New Password
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-3 py-2 pl-10 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Confirm new password"
-              required
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              ) : (
-                <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-        >
-          {loading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-          ) : (
-            <>
-              <Key className="w-5 h-5" />
-              <span>{loading ? "Resetting..." : "Reset Password"}</span>
-            </>
-          )}
-        </button>
-      </form>
-
-      {/* Back to Login */}
-      <div className="mt-6 text-center">
-        <button
-          onClick={() => setCurrentView("login")}
-          className="flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Login</span>
-        </button>
+        <h4 className="text-xl font-bold text-gray-900 mb-2">
+          Email is sent to your registered email address
+        </h4>
       </div>
     </div>
   );
@@ -491,15 +386,14 @@ const AuthPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {currentView === "login" && "Welcome Back"}
             {currentView === "forgot-password" && "Reset Password"}
-            {currentView === "reset-password" && "Set New Password"}
+            {currentView === "reset-password" && ""}
           </h1>
           <p className="text-gray-600">
             {currentView === "login" &&
               "Sign in to your project management account"}
             {currentView === "forgot-password" &&
               "We'll help you get back into your account"}
-            {currentView === "reset-password" &&
-              "Choose a strong password for your account"}
+            {currentView === "reset-password" && ""}
           </p>
         </div>
 
