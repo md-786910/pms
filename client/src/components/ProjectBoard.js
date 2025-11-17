@@ -498,6 +498,12 @@ const ProjectBoard = () => {
     navigate(`/project/${actualProjectId}`);
   };
 
+  const handleNavigateCard = (card) => {
+    setSelectedCard(card);
+    // Update URL to include card ID
+    navigate(`/project/${actualProjectId}/card/${card._id}`);
+  };
+
   const getCardsByStatus = (status) => {
     if (status === "archive") {
       // For archive column, show only archived cards
@@ -1289,11 +1295,13 @@ const ProjectBoard = () => {
       {showCardModal && selectedCard && (
         <CardModal
           card={selectedCard}
+          cards={filteredCards}
           onClose={handleCardModalClose}
           onCardUpdated={handleCardUpdated}
           onCardDeleted={handleCardDeleted}
           onCardRestored={handleCardRestored}
           onStatusChange={handleStatusChange}
+          onNavigateCard={handleNavigateCard}
         />
       )}
 

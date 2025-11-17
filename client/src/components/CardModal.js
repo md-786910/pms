@@ -14,6 +14,8 @@ import {
   Plus,
   Archive,
   RotateCcw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -31,11 +33,13 @@ import { getCardStatusColors } from "../utils/statusColors";
 
 const CardModal = ({
   card,
+  cards = [],
   onClose,
   onCardUpdated,
   onCardDeleted,
   onCardRestored,
   onStatusChange,
+  onNavigateCard,
 }) => {
   const { users, user } = useUser();
   const { currentProject } = useProject();
@@ -299,7 +303,6 @@ const CardModal = ({
 
   // Update ref when card changes
   useEffect(() => {
-    initialDueDateRef.current = formData.dueDate;
     cardIdRef.current = card._id;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card._id]);
@@ -308,12 +311,17 @@ const CardModal = ({
   useEffect(() => {
     if (!isEditing) {
       // Only update if user is not currently editing
+      const newDueDate = card.dueDate
+        ? new Date(card.dueDate).toISOString().slice(0, 10)
+        : "";
+
+      // Update the initial due date ref BEFORE setting formData to prevent auto-save trigger
+      initialDueDateRef.current = newDueDate;
+
       setFormData({
         title: card.title || "",
         description: card.description || "",
-        dueDate: card.dueDate
-          ? new Date(card.dueDate).toISOString().slice(0, 10)
-          : "",
+        dueDate: newDueDate,
       });
     }
   }, [card.title, card.description, card.dueDate, isEditing]);
@@ -323,6 +331,11 @@ const CardModal = ({
     const autoSaveDueDate = async () => {
       // Skip if dueDate hasn't changed from initial value
       if (formData.dueDate === initialDueDateRef.current) {
+        return;
+      }
+
+      // Skip if user is currently editing (let them save manually)
+      if (isEditing) {
         return;
       }
 
@@ -359,7 +372,7 @@ const CardModal = ({
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.dueDate]);
+  }, [formData.dueDate, isEditing]);
 
   // File upload handler
   const handleFileUpload = useCallback(
@@ -1240,6 +1253,76 @@ const CardModal = ({
       })
       .filter(Boolean) || [];
 
+  // Navigation helpers for next/prev cards in the same column
+  const getCardsInSameColumn = () => {
+    if (!card || !cards || cards.length === 0) return [];
+
+    // Filter cards with the same status as current card
+    const sameStatusCards = cards.filter((c) => {
+      // Handle archived cards
+      if (card.isArchived || card.status === "archive") {
+        return c.isArchived === true;
+      }
+      // For non-archived cards, match status and ensure not archived
+      return c.status === card.status && c.isArchived !== true;
+    });
+
+    // Sort by cardNumber or position if available
+    return sameStatusCards.sort((a, b) => {
+      if (a.cardNumber && b.cardNumber) {
+        return a.cardNumber - b.cardNumber;
+      }
+      // Fallback to creation date or ID
+      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+    });
+  };
+
+  const getCurrentCardIndex = () => {
+    const sameColumnCards = getCardsInSameColumn();
+    return sameColumnCards.findIndex((c) => c._id === card._id);
+  };
+
+  const getNextCard = () => {
+    const sameColumnCards = getCardsInSameColumn();
+    const currentIndex = getCurrentCardIndex();
+    if (currentIndex >= 0 && currentIndex < sameColumnCards.length - 1) {
+      return sameColumnCards[currentIndex + 1];
+    }
+    return null;
+  };
+
+  const getPrevCard = () => {
+    const sameColumnCards = getCardsInSameColumn();
+    const currentIndex = getCurrentCardIndex();
+    if (currentIndex > 0) {
+      return sameColumnCards[currentIndex - 1];
+    }
+    return null;
+  };
+
+  const handleNavigateToCard = async (targetCard) => {
+    if (targetCard && onNavigateCard) {
+      try {
+        // Fetch full card data from API
+        const response = await cardAPI.getCard(targetCard._id);
+        if (response.data.success) {
+          // Use the fetched card data with all populated fields
+          onNavigateCard(response.data.card);
+        } else {
+          // Fallback to the card from the list if API fails
+          onNavigateCard(targetCard);
+        }
+      } catch (error) {
+        console.error("Error fetching card data:", error);
+        // Fallback to the card from the list if API fails
+        onNavigateCard(targetCard);
+      }
+    }
+  };
+
+  const nextCard = getNextCard();
+  const prevCard = getPrevCard();
+
   return (
     <>
       {/* Rich Text Editor Styles */}
@@ -1902,9 +1985,39 @@ const CardModal = ({
 
               {/* Sidebar */}
               <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto">
+                {/* Navigation Buttons */}
+                <div className="flex items-center justify-between gap-2 pt-4">
+                  <button
+                    onClick={() => handleNavigateToCard(prevCard)}
+                    disabled={!prevCard}
+                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${
+                      prevCard
+                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                    }`}
+                    title={prevCard ? "Previous card" : "No previous card"}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Prev card</span>
+                  </button>
+                  <button
+                    onClick={() => handleNavigateToCard(nextCard)}
+                    disabled={!nextCard}
+                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${
+                      nextCard
+                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                    }`}
+                    title={nextCard ? "Next card" : "No next card"}
+                  >
+                    <span>Next card</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 pt-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Status
                     {isArchived && (
                       <span className="text-xs text-gray-500 ml-2 font-normal">
