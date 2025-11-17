@@ -26,6 +26,7 @@ import ConfirmationModal from "./ConfirmationModal";
 import CardModal from "./CardModal";
 import EditProjectModal from "./EditProjectModal";
 import FilterPanel from "./FilterPanel";
+import MoveAllCardsModal from "./MoveAllCardsModal";
 // import { stripHtmlTags } from "../utils/htmlUtils";
 import {
   getProjectStatusColors,
@@ -73,6 +74,9 @@ const ProjectBoard = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState(null);
   const [confirmingUserId, setConfirmingUserId] = useState(null);
+  const [showMoveAllCardsModal, setShowMoveAllCardsModal] = useState(false);
+  const [sourceColumnForMove, setSourceColumnForMove] = useState(null);
+  const [isMovingCards, setIsMovingCards] = useState(false);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -266,6 +270,19 @@ const ProjectBoard = () => {
       }
     };
 
+    const handleCardsBulkMoved = (data) => {
+      if (data.projectId === actualProjectId) {
+        // Refresh cards to get updated data
+        fetchCards();
+        if (data.userId !== user?._id && data.userId !== user?.id) {
+          showToast(
+            `${data.cardCount} card(s) moved from one column to another`,
+            "info"
+          );
+        }
+      }
+    };
+
     socket.on("card-created", handleCardCreated);
     socket.on("card-updated", handleCardUpdated);
     socket.on("card-archived", handleCardArchived);
@@ -280,6 +297,7 @@ const ProjectBoard = () => {
     socket.on("card-files-uploaded", handleCardUpdated);
     socket.on("column-created", handleColumnCreated);
     socket.on("column-updated", handleColumnUpdated);
+    socket.on("cards-bulk-moved", handleCardsBulkMoved);
 
     return () => {
       socket.off("card-created", handleCardCreated);
@@ -296,6 +314,7 @@ const ProjectBoard = () => {
       socket.off("card-files-uploaded", handleCardUpdated);
       socket.off("column-created", handleColumnCreated);
       socket.off("column-updated", handleColumnUpdated);
+      socket.off("cards-bulk-moved", handleCardsBulkMoved);
     };
   }, [socket, selectedCard, showToast, user, actualProjectId]);
 
@@ -707,6 +726,55 @@ const ProjectBoard = () => {
   const handleAddCardToColumn = (status) => {
     setSelectedStatus(status);
     setShowCreateModal(true);
+  };
+
+  const handleMoveAllCards = (sourceStatus) => {
+    const column = columns.find((col) => col.status === sourceStatus);
+    if (column) {
+      setSourceColumnForMove(column);
+      setShowMoveAllCardsModal(true);
+    }
+  };
+
+  const handleConfirmMoveAllCards = async (targetColumnId) => {
+    if (!sourceColumnForMove || !targetColumnId) return;
+
+    try {
+      setIsMovingCards(true);
+      const targetColumn = columns.find(
+        (col) => col._id === targetColumnId || col.status === targetColumnId
+      );
+
+      if (!targetColumn) {
+        showToast("Target column not found", "error");
+        return;
+      }
+
+      const response = await cardAPI.moveAllCards(
+        actualProjectId,
+        sourceColumnForMove.status,
+        targetColumn.status
+      );
+
+      if (response.data.success) {
+        // Refresh cards to get updated data
+        await fetchCards();
+        showToast(
+          `Successfully moved ${response.data.movedCount} card(s)`,
+          "success"
+        );
+        setShowMoveAllCardsModal(false);
+        setSourceColumnForMove(null);
+      }
+    } catch (error) {
+      console.error("Error moving all cards:", error);
+      showToast(
+        error.response?.data?.message || "Failed to move cards",
+        "error"
+      );
+    } finally {
+      setIsMovingCards(false);
+    }
   };
 
   const handleScroll = () => {
@@ -1137,6 +1205,7 @@ const ProjectBoard = () => {
                     onColumnRename={handleColumnRename}
                     onColumnDelete={handleColumnDelete}
                     onAddCard={handleAddCardToColumn}
+                    onMoveAllCards={handleMoveAllCards}
                   />
                 </div>
               );
@@ -1338,6 +1407,22 @@ const ProjectBoard = () => {
         columns={columns}
         project={currentProject}
       />
+
+      {/* Move All Cards Modal */}
+      {showMoveAllCardsModal && sourceColumnForMove && (
+        <MoveAllCardsModal
+          isOpen={showMoveAllCardsModal}
+          onClose={() => {
+            setShowMoveAllCardsModal(false);
+            setSourceColumnForMove(null);
+          }}
+          onConfirm={handleConfirmMoveAllCards}
+          sourceColumn={sourceColumnForMove}
+          columns={columns}
+          cardCount={getCardsByStatus(sourceColumnForMove.status).length}
+          isLoading={isMovingCards}
+        />
+      )}
     </div>
   );
 };

@@ -163,6 +163,11 @@ export const cardAPI = {
   archiveCard: (id) => api.put(`/cards/${id}/archive`),
   restoreCard: (id) => api.put(`/cards/${id}/restore`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
+  moveAllCards: (projectId, sourceStatus, targetStatus) =>
+    api.post(`/projects/${projectId}/cards/move-all`, {
+      sourceStatus,
+      targetStatus,
+    }),
   assignUser: (id, userId) => api.post(`/cards/${id}/assign`, { userId }),
   unassignUser: (id, userId) => api.delete(`/cards/${id}/assign/${userId}`),
   addComment: (id, comment, mentions = []) =>

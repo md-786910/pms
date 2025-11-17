@@ -461,4 +461,36 @@ router.get("/:id/cards", projectMemberAuth, async (req, res) => {
   }
 });
 
+// @route   POST /api/projects/:id/cards/move-all
+// @desc    Move all cards from one column to another
+// @access  Private
+router.post(
+  "/:id/cards/move-all",
+  projectMemberAuth,
+  [
+    body("sourceStatus")
+      .notEmpty()
+      .withMessage("Source status is required")
+      .isString()
+      .withMessage("Source status must be a string"),
+    body("targetStatus")
+      .notEmpty()
+      .withMessage("Target status is required")
+      .isString()
+      .withMessage("Target status must be a string"),
+  ],
+  async (req, res) => {
+    try {
+      const { moveAllCards } = require("../controllers/cardController");
+      await moveAllCards(req, res);
+    } catch (error) {
+      console.error("Move all cards route error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while moving cards",
+      });
+    }
+  }
+);
+
 module.exports = router;

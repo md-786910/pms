@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MoreVertical, Edit2, Trash2, Plus } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Plus, ArrowRight } from "lucide-react";
 import CardItem from "./CardItem";
 import ConfirmationModal from "./ConfirmationModal";
 
@@ -20,6 +20,7 @@ const ListColumn = ({
   onColumnRename,
   onColumnDelete,
   onAddCard,
+  onMoveAllCards,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -168,16 +169,33 @@ const ListColumn = ({
                   </>
                 )}
                 {status !== "archive" && (
-                  <button
-                    onClick={() => {
-                      onAddCard(status);
-                      setShowMenu(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Card</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        onAddCard(status);
+                        setShowMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Card</span>
+                    </button>
+                    {cards.length > 0 && onMoveAllCards && (
+                      <>
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <button
+                          onClick={() => {
+                            onMoveAllCards(status);
+                            setShowMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                          <span>Move all cards</span>
+                        </button>
+                      </>
+                    )}
+                  </>
                 )}
               </div>
             )}
