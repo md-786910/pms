@@ -150,7 +150,7 @@ const CreateProjectModal = ({ onClose }) => {
       onClose();
     } catch (error) {
       console.error("Create project error:", error);
-      showToast("Failed to create project", "error");
+      showToast(error?.response?.data?.message, "error");
     } finally {
       setLoading(false);
     }
