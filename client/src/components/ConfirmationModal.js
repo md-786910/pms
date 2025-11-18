@@ -60,19 +60,31 @@ const ConfirmationModal = ({
   const styles = getTypeStyles();
 
   const handleConfirm = (e) => {
-    e.stopPropagation();
-    onConfirm();
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    onConfirm(e);
   };
 
   const handleCancel = (e) => {
-    e.stopPropagation();
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     if (!isLoading) {
-      onClose();
+      onClose(e);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-[100] overflow-y-auto"
+      onClick={(e) => {
+        // Stop propagation to prevent closing parent modals
+        e.stopPropagation();
+      }}
+    >
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
@@ -85,10 +97,20 @@ const ConfirmationModal = ({
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div 
+        className="flex min-h-full items-center justify-center p-4"
+        onClick={(e) => {
+          // Stop propagation to prevent closing parent modals
+          e.stopPropagation();
+        }}
+      >
         <div
           ref={modalRef}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            // Stop all event propagation
+            e.stopPropagation();
+            e.preventDefault();
+          }}
           className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all"
         >
           {/* Header */}

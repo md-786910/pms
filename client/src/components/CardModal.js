@@ -222,10 +222,17 @@ const CardModal = ({
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Don't close if clicking on confirmation modal or its children
+      const confirmationModal = document.querySelector('[class*="z-[100]"]');
+      if (confirmationModal && confirmationModal.contains(event.target)) {
+        return;
+      }
+
       if (modalRef.current && !modalRef.current.contains(event.target)) {
-        // Don't close modal if confirmation modal is open
+        // Don't close modal if any confirmation modal is open
         if (
           !showDeleteConfirm &&
+          !showDeleteCardConfirm &&
           !showAssignModal &&
           !showImageModal &&
           !showFormattingHelp &&
@@ -243,6 +250,7 @@ const CardModal = ({
   }, [
     onClose,
     showDeleteConfirm,
+    showDeleteCardConfirm,
     showAssignModal,
     showImageModal,
     showFormattingHelp,
@@ -1092,13 +1100,29 @@ const CardModal = ({
   };
 
   const confirmDelete = async () => {
+    if (!card || !card._id) {
+      showToast("Card ID is missing", "error");
+      setShowDeleteCardConfirm(false);
+      return;
+    }
+
+    if (!card.isArchived) {
+      showToast("Only archived cards can be permanently deleted", "error");
+      setShowDeleteCardConfirm(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log("Deleting card:", card._id);
       const response = await cardAPI.deleteCard(card._id);
-      if (response.data.success) {
-        // Close modal first
-        onClose();
+      
+      if (response && response.data && response.data.success) {
+        // Close confirmation modal
         setShowDeleteCardConfirm(false);
+        
+        // Close card modal
+        onClose();
 
         // Notify parent to remove card from state
         if (onCardPermanentlyDeleted) {
@@ -1108,13 +1132,17 @@ const CardModal = ({
         }
 
         showToast("Card deleted permanently", "success");
+      } else {
+        throw new Error("Delete request failed");
       }
     } catch (error) {
       console.error("Error deleting card:", error);
-      showToast(
-        error.response?.data?.message || "Failed to delete card",
-        "error"
-      );
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        "Failed to delete card. Please try again.";
+      showToast(errorMessage, "error");
+      // Keep modal open on error so user can try again
     } finally {
       setLoading(false);
     }
@@ -2627,17 +2655,33 @@ const CardModal = ({
       />
 
       {/* Delete Card Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showDeleteCardConfirm}
-        onClose={() => setShowDeleteCardConfirm(false)}
-        onConfirm={confirmDelete}
-        title="Delete Card"
-        message="Are you sure you want to delete this?"
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="danger"
-        isLoading={loading}
-      />
+      {showDeleteCardConfirm && (
+        <ConfirmationModal
+          isOpen={showDeleteCardConfirm}
+          onClose={(e) => {
+            // Prevent event propagation to card modal
+            if (e) {
+              e.stopPropagation();
+            }
+            if (!loading) {
+              setShowDeleteCardConfirm(false);
+            }
+          }}
+          onConfirm={(e) => {
+            // Prevent event propagation to card modal
+            if (e) {
+              e.stopPropagation();
+            }
+            confirmDelete();
+          }}
+          title="Permanently Delete Card"
+          message={`Are you sure you want to permanently delete "${card.title}"? This action cannot be undone and will remove the card from the database.`}
+          confirmText="Delete Permanently"
+          cancelText="Cancel"
+          type="danger"
+          isLoading={loading}
+        />
+      )}
 
       {/* Labels Modal */}
       <LabelsModal
