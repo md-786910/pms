@@ -158,6 +158,7 @@ export const cardAPI = {
     return api.get(`/projects/${projectId}/cards${params}`);
   },
   getCard: (id) => api.get(`/cards/${id}`),
+  getCardsDueToday: () => api.get("/cards/due-today"),
   createCard: (cardData) => api.post("/cards", cardData),
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
   archiveCard: (id) => api.put(`/cards/${id}/archive`),

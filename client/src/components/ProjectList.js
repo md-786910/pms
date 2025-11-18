@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Plus, FolderOpen, Users, Calendar, MoreVertical } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Plus,
+  FolderOpen,
+  Users,
+  Calendar,
+  MoreVertical,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
 import CreateProjectModal from "./CreateProjectModal";
@@ -11,19 +19,49 @@ import {
   getProjectTypeColors,
   getStatusBadgeClasses,
 } from "../utils/statusColors";
+import { cardAPI } from "../utils/api";
 
 const ProjectList = () => {
   const { projects, loading, fetchProjects } = useProject();
   const { user } = useUser();
+  const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [cardsDueToday, setCardsDueToday] = useState([]);
+  const [loadingCards, setLoadingCards] = useState(true);
 
-  // Debug logging
+  // Fetch cards due today
+  useEffect(() => {
+    const fetchCardsDueToday = async () => {
+      try {
+        setLoadingCards(true);
+        console.log("📅 Fetching cards due today...");
+        const response = await cardAPI.getCardsDueToday();
+        console.log("📅 Cards due today response:", response.data);
+        setCardsDueToday(response.data.cards || []);
+      } catch (error) {
+        console.error("❌ Error fetching cards due today:", error);
+        setCardsDueToday([]);
+      } finally {
+        setLoadingCards(false);
+      }
+    };
+
+    if (user) {
+      fetchCardsDueToday();
+    }
+  }, [user]);
 
   const handleModalClose = () => {
     setShowCreateModal(false);
     // Force refresh projects after modal closes
     console.log("🔄 ProjectList: Refreshing projects after modal close");
     fetchProjects();
+  };
+
+  const handleCardClick = (card) => {
+    // Navigate to the project board with the card open
+    const projectId = card.project?._id || card.project;
+    navigate(`/project/${projectId}/card/${card._id}`);
   };
 
   if (loading) {
@@ -37,23 +75,73 @@ const ProjectList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg  text-white">
+        <div>
+          <div className="py-4 px-6">
             <h1 className="text-xl font-bold mb-1">Your Projects</h1>
             <p className="text-primary-100 text-md">
               Manage your projects and collaborate with your team
             </p>
           </div>
-          {/* {user?.role === "admin" && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-white text-primary-600 hover:bg-primary-50 font-medium py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Project</span>
-            </button>
-          )} */}
+
+          {/* Cards Due Today */}
+          {cardsDueToday.length > 0 && (
+            <div className="bg-white border rounded-lg border-gray-200 p-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Cards Due Today
+                </h2>
+                {cardsDueToday.length > 0 && (
+                  <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full">
+                    {cardsDueToday.length}
+                  </span>
+                )}
+              </div>
+
+              {loadingCards ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : cardsDueToday.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {cardsDueToday.map((card) => (
+                    <div
+                      key={card._id}
+                      onClick={() => handleCardClick(card)}
+                      className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
+                          {card.title}
+                        </h3>
+                        <span className="bg-blue-200 text-blue-800 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                          #{card.cardNumber || card._id?.slice(-4)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <FolderOpen className="w-3 h-3" />
+                          <span className="truncate">{card.project?.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-1 text-blue-600">
+                          <Calendar className="w-3 h-3" />
+                          <span>Today</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">
+                    No cards due today. You're all caught up! 🎉
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

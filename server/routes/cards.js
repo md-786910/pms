@@ -9,6 +9,7 @@ const {
   restoreCard,
   updateStatus,
   toggleComplete,
+  getCardsDueToday,
   assignUser,
   unassignUser,
   addComment,
@@ -29,6 +30,11 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(auth);
+
+// @route   GET /api/cards/due-today
+// @desc    Get cards assigned to current user that are due today
+// @access  Private
+router.get("/due-today", getCardsDueToday);
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project

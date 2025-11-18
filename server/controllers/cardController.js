@@ -2289,6 +2289,49 @@ const moveAllCards = async (req, res) => {
   }
 };
 
+// @route   GET /api/cards/due-today
+// @desc    Get cards assigned to current user that are due today
+// @access  Private
+const getCardsDueToday = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get start and end of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Find cards assigned to user, due today, not completed, not archived
+    const cards = await Card.find({
+      assignees: userId,
+      dueDate: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      isComplete: false,
+      isArchived: false,
+    })
+      .populate("project", "name")
+      .populate("assignees", "name email avatar color")
+      .populate("createdBy", "name email avatar color")
+      .sort({ dueDate: 1 });
+
+    res.json({
+      success: true,
+      cards,
+      count: cards.length,
+    });
+  } catch (error) {
+    console.error("Get cards due today error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching cards due today",
+    });
+  }
+};
+
 // @route   PUT /api/cards/:id/read
 // @desc    Mark card as read by current user
 // @access  Private
@@ -2363,6 +2406,7 @@ module.exports = {
   restoreCard,
   updateStatus,
   toggleComplete,
+  getCardsDueToday,
   assignUser,
   unassignUser,
   addComment,
