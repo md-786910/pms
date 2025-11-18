@@ -20,6 +20,7 @@ const {
   uploadFiles,
   moveAllCards,
   deleteCard,
+  markCardAsRead,
 } = require("../controllers/cardController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
@@ -161,6 +162,11 @@ router.put("/:id/archive", archiveCard);
 // @desc    Restore archived card
 // @access  Private
 router.put("/:id/restore", restoreCard);
+
+// @route   PUT /api/cards/:id/read
+// @desc    Mark card as read by current user
+// @access  Private
+router.put("/:id/read", markCardAsRead);
 
 // @route   DELETE /api/cards/:id
 // @desc    Permanently delete a card (only for archived cards)

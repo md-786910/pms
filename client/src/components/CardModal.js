@@ -219,6 +219,35 @@ const CardModal = ({
   const cardIdRef = useRef(card._id);
   const dateInputRef = useRef(null);
 
+  // Mark card as read when modal opens
+  useEffect(() => {
+    const markCardAsRead = async () => {
+      if (!card || !card._id || !user) return;
+
+      // Check if card is already read by current user
+      const isRead = card.readBy?.some(
+        (readEntry) =>
+          (readEntry.user?._id || readEntry.user) === (user._id || user.id)
+      );
+
+      if (!isRead) {
+        try {
+          const { cardAPI } = await import("../utils/api");
+          const response = await cardAPI.markAsRead(card._id);
+          if (response.data.success && onCardUpdated) {
+            // Update card with read status
+            onCardUpdated(response.data.card);
+          }
+        } catch (error) {
+          console.error("Error marking card as read:", error);
+          // Don't show error toast, just log it
+        }
+      }
+    };
+
+    markCardAsRead();
+  }, [card._id, user, onCardUpdated]); // Only run when card ID or user changes
+
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event) => {

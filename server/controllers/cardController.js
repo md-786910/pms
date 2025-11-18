@@ -84,6 +84,7 @@ const getCards = async (req, res) => {
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
+      .populate("readBy.user", "name email avatar color")
       .populate("archivedBy", "name email avatar color")
       .sort({ updatedAt: -1 });
 
@@ -124,6 +125,7 @@ const getCard = async (req, res) => {
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
+      .populate("readBy.user", "name email avatar color")
       .populate("project", "name");
 
     if (!card) {
@@ -2287,6 +2289,71 @@ const moveAllCards = async (req, res) => {
   }
 };
 
+// @route   PUT /api/cards/:id/read
+// @desc    Mark card as read by current user
+// @access  Private
+const markCardAsRead = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Check if user has already read this card
+    const alreadyRead = card.readBy.some(
+      (readEntry) => readEntry.user.toString() === userId.toString()
+    );
+
+    if (!alreadyRead) {
+      // Add user to readBy array
+      card.readBy.push({
+        user: userId,
+        readAt: new Date(),
+      });
+      await card.save();
+    }
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+    await card.populate("readBy.user", "name email avatar color");
+
+    res.json({
+      success: true,
+      message: "Card marked as read",
+      card,
+    });
+  } catch (error) {
+    console.error("Mark card as read error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while marking card as read",
+    });
+  }
+};
+
 module.exports = {
   getCards,
   getCard,
@@ -2307,4 +2374,5 @@ module.exports = {
   uploadFiles,
   moveAllCards,
   deleteCard,
+  markCardAsRead,
 };
