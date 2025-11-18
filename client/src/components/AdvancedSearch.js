@@ -125,14 +125,27 @@ const AdvancedSearch = () => {
 
               const cardResults =
                 response.data.cards
-                  ?.filter(
-                    (card) =>
-                      card.title?.toLowerCase().includes(query.toLowerCase()) ||
-                      stripHtmlTags(card.description || "")
-                        .toLowerCase()
-                        .includes(query.toLowerCase()) ||
-                      card.status?.toLowerCase().includes(query.toLowerCase())
-                  )
+                  ?.filter((card) => {
+                    const queryLower = query.toLowerCase();
+                    const queryTrimmed = query.trim();
+                    
+                    // Check if query matches card number (handle "#27" or "27")
+                    const cardNumberStr = card.cardNumber?.toString() || "";
+                    const queryWithoutHash = queryTrimmed.replace(/^#/, "");
+                    const matchesCardNumber = 
+                      cardNumberStr === queryWithoutHash ||
+                      cardNumberStr.includes(queryWithoutHash) ||
+                      `#${cardNumberStr}`.toLowerCase().includes(queryLower);
+                    
+                    // Check title, description, and status
+                    const matchesTitle = card.title?.toLowerCase().includes(queryLower);
+                    const matchesDescription = stripHtmlTags(card.description || "")
+                      .toLowerCase()
+                      .includes(queryLower);
+                    const matchesStatus = card.status?.toLowerCase().includes(queryLower);
+                    
+                    return matchesCardNumber || matchesTitle || matchesDescription || matchesStatus;
+                  })
                   .map((card) => {
                     // Find readable column name for status
                     const column = columns.find(
@@ -151,13 +164,14 @@ const AdvancedSearch = () => {
                       title: card.title,
                       subtitle: cleanDescription,
                       status: readableStatus,
-                      icon: Tag,
+                      icon: Hash,
                       url: `/project/${project._id}/card/${card._id}`, // Direct card link
                       metadata: {
                         project: project.name,
                         assignees: card.assignees?.length || 0,
                         priority: card.priority,
                         dueDate: card.dueDate,
+                        cardNumber: card.cardNumber,
                       },
                     };
                   }) || [];
@@ -252,7 +266,7 @@ const AdvancedSearch = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search projects, cards, and more..."
+              placeholder="Search projects, cards (#27), and more..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsOpen(true)}
@@ -307,6 +321,11 @@ const AdvancedSearch = () => {
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {result.title}
                         </p>
+                        {result.metadata?.cardNumber !== undefined && (
+                          <span className="text-xs font-medium text-gray-500">
+                            #{result.metadata.cardNumber}
+                          </span>
+                        )}
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                             result.status,
@@ -321,6 +340,11 @@ const AdvancedSearch = () => {
                       </p>
                       {result.metadata && (
                         <div className="flex items-center space-x-4 mt-1">
+                          {result.metadata.cardNumber !== undefined && (
+                            <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                              #{result.metadata.cardNumber}
+                            </span>
+                          )}
                           {result.metadata.project && (
                             <span className="text-xs text-gray-400">
                               Project: {result.metadata.project}

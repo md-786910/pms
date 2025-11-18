@@ -231,7 +231,7 @@ const ProjectBoard = () => {
             const fetchedCards = response.data.cards || [];
             setCards(fetchedCards);
             setFilteredCards(fetchedCards);
-            
+
             // Update selected card if it's the one being restored
             if (selectedCard && selectedCard._id === data.card._id) {
               setSelectedCard(data.card);
@@ -475,10 +475,10 @@ const ProjectBoard = () => {
       // Remove the card from state permanently (optimistic update)
       setCards((prev) => prev.filter((card) => card._id !== cardId));
       setFilteredCards((prev) => prev.filter((card) => card._id !== cardId));
-      
+
       // Refresh cards to ensure sync with server
       await fetchCards();
-      
+
       // Close modal if the deleted card was selected
       if (selectedCard && selectedCard._id === cardId) {
         setShowCardModal(false);
@@ -985,7 +985,7 @@ const ProjectBoard = () => {
                   ref={membersBtnRef}
                   onClick={() => setShowMembersPopover((s) => !s)}
                   className="flex items-center -space-x-2 group"
-                  title="Project members"
+                  // title="Project members"
                 >
                   {currentProject.members.slice(0, 3).map((m, idx) => (
                     <div
@@ -993,7 +993,7 @@ const ProjectBoard = () => {
                       className="relative inline-flex border-2 border-white/40 rounded-full shadow-sm transition-transform group-hover:scale-[1.02] bg-white/0"
                       style={{ zIndex: 10 - idx }}
                     >
-                      <Avatar user={m.user} size="sm" />
+                      <Avatar user={m.user} size="sm" showTooltip={true} />
                     </div>
                   ))}
                   {currentProject.members.length > 3 && (
@@ -1125,11 +1125,11 @@ const ProjectBoard = () => {
               </span> */}
             </div>
             {/* Date pills */}
-            {(projectData.project?.startDate ||
-              projectData.project?.endDate) && (
+            {(projectData?.project?.startDate ||
+              projectData?.project?.endDate) && (
               <div className="flex items-center gap-1.5">
                 {/* Start Date */}
-                {projectData.project?.startDate && (
+                {projectData?.project?.startDate && (
                   <div className="flex bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
                     <div className="w-6 h-6 text-white bg-[#26de81] rounded-full flex items-center justify-center">
                       <Calendar className="w-3.5 h-3.5 " />
@@ -1139,13 +1139,13 @@ const ProjectBoard = () => {
                         Start Date
                       </div>
                       <div className="text-white font-semibold leading-tight">
-                        {formatDate(projectData.project.startDate)}
+                        {formatDate(projectData?.project?.startDate)}
                       </div>
                     </div>
                   </div>
                 )}
                 {/* End Date */}
-                {projectData.project?.endDate && (
+                {projectData?.project?.endDate && (
                   <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
                     <div className="w-6 h-6 bg-[#fa8231] rounded-full flex items-center justify-center">
                       <Calendar className="w-3.5 h-3.5" />
@@ -1155,7 +1155,7 @@ const ProjectBoard = () => {
                         End Date
                       </div>
                       <div className="text-white font-semibold leading-tight">
-                        {formatDate(projectData.project.endDate)}
+                        {formatDate(projectData?.project?.endDate)}
                       </div>
                     </div>
                   </div>

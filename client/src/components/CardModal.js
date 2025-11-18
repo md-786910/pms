@@ -1099,14 +1099,14 @@ const CardModal = ({
         // Close modal first
         onClose();
         setShowDeleteCardConfirm(false);
-        
+
         // Notify parent to remove card from state
         if (onCardPermanentlyDeleted) {
           await onCardPermanentlyDeleted(card._id);
         } else if (onCardDeleted) {
           await onCardDeleted(card._id);
         }
-        
+
         showToast("Card deleted permanently", "success");
       }
     } catch (error) {
@@ -1450,11 +1450,11 @@ const CardModal = ({
           {/* Modal Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <div className="flex items-center space-x-4 flex-1 min-w-0">
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-xl">📋</span>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h2
                     className="text-xl font-bold cursor-pointer"
                     onClick={() => setIsEditing(true)}
@@ -1466,7 +1466,7 @@ const CardModal = ({
                         onChange={(e) =>
                           setFormData({ ...formData, title: e.target.value })
                         }
-                        className="bg-transparent border-none outline-none focus:outline-none text-xl font-bold text-white placeholder-white placeholder-opacity-70"
+                        className="bg-transparent border-none outline-none focus:outline-none text-xl font-bold text-white placeholder-white placeholder-opacity-70 w-full px-2 py-1"
                         placeholder="Card title..."
                         autoFocus
                       />

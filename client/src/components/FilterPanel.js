@@ -173,7 +173,17 @@ const FilterPanel = ({
     // Keyword filter
     if (keyword.trim()) {
       const searchTerm = keyword.toLowerCase();
+      const searchTermTrimmed = keyword.trim();
+      const searchTermWithoutHash = searchTermTrimmed.replace(/^#/, "");
+      
       filteredCards = filteredCards.filter((card) => {
+        // Check if query matches card number (handle "#27" or "27")
+        const cardNumberStr = card.cardNumber?.toString() || "";
+        const cardNumberMatch = 
+          cardNumberStr === searchTermWithoutHash ||
+          cardNumberStr.includes(searchTermWithoutHash) ||
+          `#${cardNumberStr}`.toLowerCase().includes(searchTerm);
+        
         const titleMatch = card.title?.toLowerCase().includes(searchTerm);
         const descriptionMatch = card.description
           ?.toLowerCase()
@@ -188,7 +198,7 @@ const FilterPanel = ({
         const labelMatch = card.labels?.some((label) =>
           label.name?.toLowerCase().includes(searchTerm)
         );
-        return titleMatch || descriptionMatch || assigneeMatch || labelMatch;
+        return cardNumberMatch || titleMatch || descriptionMatch || assigneeMatch || labelMatch;
       });
     }
 
@@ -426,7 +436,7 @@ const FilterPanel = ({
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Search cards, members, labels, and more.
+                  Search cards (#27), members, labels, and more.
                 </p>
               </div>
 

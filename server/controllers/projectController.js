@@ -10,6 +10,7 @@ const {
   sendMemberRemovedEmail,
 } = require("../config/email");
 const { COLOR_PALETTE } = require("../../client/src/utils/color");
+const { getIO } = require("../config/socket");
 
 const assignColor = async () => {
   // Fetch all used colors from DB
@@ -803,6 +804,21 @@ const addMember = async (req, res) => {
 
       await notification.save();
 
+      // Populate the notification with related data
+      await notification.populate("sender", "name email avatar color");
+      await notification.populate("relatedProject", "name");
+
+      // Emit Socket.IO event for real-time notification
+      try {
+        const io = getIO();
+        io.to(`user-${userToAdd._id}`).emit("new-notification", {
+          notification,
+        });
+        console.log(`📬 Real-time notification sent to user ${userToAdd._id}`);
+      } catch (socketError) {
+        console.error("Socket.IO error while sending notification:", socketError);
+      }
+
       // Send notification email to existing user (no password creation needed)
       setImmediate(async () => {
         try {
@@ -1032,6 +1048,21 @@ const removeMember = async (req, res) => {
     });
 
     await notification.save();
+
+    // Populate the notification with related data
+    await notification.populate("sender", "name email avatar color");
+    await notification.populate("relatedProject", "name");
+
+    // Emit Socket.IO event for real-time notification
+    try {
+      const io = getIO();
+      io.to(`user-${memberId}`).emit("new-notification", {
+        notification,
+      });
+      console.log(`📬 Real-time notification sent to user ${memberId}`);
+    } catch (socketError) {
+      console.error("Socket.IO error while sending notification:", socketError);
+    }
 
     // Send email notification to the removed member
     setImmediate(async () => {

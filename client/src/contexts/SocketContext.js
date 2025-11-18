@@ -17,12 +17,23 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Create socket connection
+    // Get auth token from localStorage
+    const token = localStorage.getItem("authToken");
+
+    // Create socket connection with authentication
     const newSocket = io(API_URL, {
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
+      auth: {
+        token: token,
+      },
+      extraHeaders: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {},
     });
 
     newSocket.on("connect", () => {

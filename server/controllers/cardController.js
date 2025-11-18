@@ -273,6 +273,22 @@ const createCard = async (req, res) => {
         });
 
         await notification.save();
+
+        // Populate the notification with related data
+        await notification.populate("sender", "name email avatar color");
+        await notification.populate("relatedProject", "name");
+        await notification.populate("relatedCard", "title");
+
+        // Emit Socket.IO event for real-time notification
+        try {
+          const io = getIO();
+          io.to(`user-${assigneeId}`).emit("new-notification", {
+            notification,
+          });
+          console.log(`📬 Real-time notification sent to user ${assigneeId}`);
+        } catch (socketError) {
+          console.error("Socket.IO error while sending notification:", socketError);
+        }
       }
     }
 
@@ -993,6 +1009,22 @@ const assignUser = async (req, res) => {
       });
 
       await notification.save();
+
+      // Populate the notification with related data
+      await notification.populate("sender", "name email avatar color");
+      await notification.populate("relatedProject", "name");
+      await notification.populate("relatedCard", "title");
+
+      // Emit Socket.IO event for real-time notification
+      try {
+        const io = getIO();
+        io.to(`user-${assigneeId}`).emit("new-notification", {
+          notification,
+        });
+        console.log(`📬 Real-time notification sent to user ${assigneeId}`);
+      } catch (socketError) {
+        console.error("Socket.IO error while sending notification:", socketError);
+      }
     }
 
     // Populate the card with user details
@@ -1115,6 +1147,22 @@ const unassignUser = async (req, res) => {
       });
 
       await notification.save();
+
+      // Populate the notification with related data
+      await notification.populate("sender", "name email avatar color");
+      await notification.populate("relatedProject", "name");
+      await notification.populate("relatedCard", "title");
+
+      // Emit Socket.IO event for real-time notification
+      try {
+        const io = getIO();
+        io.to(`user-${assigneeId}`).emit("new-notification", {
+          notification,
+        });
+        console.log(`📬 Real-time notification sent to user ${assigneeId}`);
+      } catch (socketError) {
+        console.error("Socket.IO error while sending notification:", socketError);
+      }
     }
 
     // Populate the card with user details

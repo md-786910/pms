@@ -91,7 +91,18 @@ const CardFilterModal = ({
       // Keyword filter
       if (keyword.trim()) {
         const keywordLower = keyword.toLowerCase();
+        const keywordTrimmed = keyword.trim();
+        const keywordWithoutHash = keywordTrimmed.replace(/^#/, "");
+        
+        // Check if query matches card number (handle "#27" or "27")
+        const cardNumberStr = card.cardNumber?.toString() || "";
+        const cardNumberMatch = 
+          cardNumberStr === keywordWithoutHash ||
+          cardNumberStr.includes(keywordWithoutHash) ||
+          `#${cardNumberStr}`.toLowerCase().includes(keywordLower);
+        
         const matchesKeyword =
+          cardNumberMatch ||
           card.title?.toLowerCase().includes(keywordLower) ||
           card.description?.toLowerCase().includes(keywordLower) ||
           card.labels?.some((label) =>
@@ -263,7 +274,7 @@ const CardFilterModal = ({
               className="w-full px-3 py-2 border border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Search cards, members, labels, and more.
+              Search cards (#27), members, labels, and more.
             </p>
           </div>
 
