@@ -304,6 +304,7 @@ const ProjectBoard = () => {
     socket.on("card-archived", handleCardArchived);
     socket.on("card-restored", handleCardRestoredSocket);
     socket.on("card-status-changed", handleCardStatusChanged);
+    socket.on("card-completion-toggled", handleCardUpdated);
     socket.on("card-user-assigned", handleCardUpdated);
     socket.on("card-user-unassigned", handleCardUpdated);
     socket.on("card-label-added", handleCardUpdated);
@@ -321,6 +322,7 @@ const ProjectBoard = () => {
       socket.off("card-archived", handleCardArchived);
       socket.off("card-restored", handleCardRestoredSocket);
       socket.off("card-status-changed", handleCardStatusChanged);
+      socket.off("card-completion-toggled", handleCardUpdated);
       socket.off("card-user-assigned", handleCardUpdated);
       socket.off("card-user-unassigned", handleCardUpdated);
       socket.off("card-label-added", handleCardUpdated);

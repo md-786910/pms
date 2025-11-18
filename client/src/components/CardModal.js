@@ -648,6 +648,25 @@ const CardModal = ({
     }
   };
 
+  const handleCompleteToggle = async () => {
+    try {
+      const response = await cardAPI.toggleComplete(card._id);
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        showToast(
+          response.data.card.isComplete
+            ? "Card marked as complete!"
+            : "Card marked as incomplete!",
+          "success"
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling completion:", error);
+      showToast("Failed to toggle completion", "error");
+    }
+  };
+
   // Card Items Management
   const fetchItems = async () => {
     try {
@@ -1116,11 +1135,11 @@ const CardModal = ({
       setLoading(true);
       console.log("Deleting card:", card._id);
       const response = await cardAPI.deleteCard(card._id);
-      
+
       if (response && response.data && response.data.success) {
         // Close confirmation modal
         setShowDeleteCardConfirm(false);
-        
+
         // Close card modal
         onClose();
 
@@ -1137,9 +1156,9 @@ const CardModal = ({
       }
     } catch (error) {
       console.error("Error deleting card:", error);
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.message || 
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
         "Failed to delete card. Please try again.";
       showToast(errorMessage, "error");
       // Keep modal open on error so user can try again
@@ -1550,13 +1569,48 @@ const CardModal = ({
                 <div className="sticky top-0 z-50 bg-white pb-4">
                   {/* Status/Due Row */}
                   <div className="flex items-center gap-2">
+                    {/* Completion Toggle */}
+                    <button
+                      onClick={handleCompleteToggle}
+                      disabled={isArchived}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                        card.isComplete
+                          ? "bg-green-500 border-green-500 hover:bg-green-600"
+                          : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
+                      } ${
+                        isArchived
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }`}
+                      title={
+                        card.isComplete
+                          ? "Mark as incomplete"
+                          : "Mark as complete"
+                      }
+                    >
+                      {card.isComplete && (
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </button>
                     <button
                       className={`btn px-5 py-0.5 rounded-md ${
                         card.cardNumber || card._id?.slice(-4) || "0000"
                           ? "bg-[#2bcbba]  "
                           : "bg-gray-200  border-gray-200"
                       }`}
-                      title="Due date"
+                      title="Card number"
                     >
                       #{card.cardNumber || card._id?.slice(-4) || "0000"}
                     </button>

@@ -932,6 +932,110 @@ const updateStatus = async (req, res) => {
   }
 };
 
+// @route   PUT /api/cards/:id/complete
+// @desc    Toggle card completion status
+// @access  Private
+const toggleComplete = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Toggle completion status
+    const wasCompleted = card.isComplete;
+    card.isComplete = !card.isComplete;
+
+    if (card.isComplete) {
+      // Mark as complete
+      card.completedAt = new Date();
+      card.completedBy = userId;
+    } else {
+      // Mark as incomplete
+      card.completedAt = null;
+      card.completedBy = null;
+    }
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for completion change
+    if (card.isComplete) {
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> marked this card as <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">complete</span></p>`,
+        timestamp: new Date(),
+      });
+    } else {
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> marked this card as <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">incomplete</span></p>`,
+        timestamp: new Date(),
+      });
+    }
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: card.isComplete ? "marked_complete" : "marked_incomplete",
+      user: userId,
+      timestamp: new Date(),
+      details: `Card marked as ${card.isComplete ? "complete" : "incomplete"}`,
+    });
+
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+    await card.populate("completedBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-completion-toggled", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: `Card marked as ${card.isComplete ? "complete" : "incomplete"}`,
+      card,
+    });
+  } catch (error) {
+    console.error("Toggle complete error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while toggling card completion",
+    });
+  }
+};
+
 // @route   POST /api/cards/:id/assign
 // @desc    Assign user to card
 // @access  Private
@@ -2191,6 +2295,7 @@ module.exports = {
   archiveCard,
   restoreCard,
   updateStatus,
+  toggleComplete,
   assignUser,
   unassignUser,
   addComment,

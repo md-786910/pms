@@ -13,10 +13,12 @@ import {
   X,
   Archive,
   RotateCcw,
+  Check,
+  Square,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
-import { cardItemAPI } from "../utils/api";
+import { cardItemAPI, cardAPI } from "../utils/api";
 import CardModal from "./CardModal";
 import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
@@ -225,6 +227,23 @@ const CardItem = ({
     }
   };
 
+  const handleCompleteToggle = async (e) => {
+    e.stopPropagation();
+    try {
+      const response = await cardAPI.toggleComplete(card._id);
+      onCardUpdated(response.data.card);
+      showToast(
+        response.data.card.isComplete
+          ? "Card marked as complete!"
+          : "Card marked as incomplete!",
+        "success"
+      );
+    } catch (error) {
+      console.error("Error toggling completion:", error);
+      showToast("Failed to toggle completion", "error");
+    }
+  };
+
   const handleQuickMove = (e, newStatus) => {
     e.stopPropagation();
     onStatusChange(card._id, newStatus);
@@ -293,26 +312,54 @@ const CardItem = ({
         {/* Card Header with Issue Number */}
         <div className="p-3 pb-2">
           <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 min-w-0">
-              {isEditingTitle ? (
-                <input
-                  ref={titleInputRef}
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onBlur={handleTitleSave}
-                  onKeyPress={handleTitleKeyPress}
-                  className="font-medium text-gray-900 text-sm leading-tight w-full bg-transparent border-none outline-none focus:outline-none px-1 py-0.5"
-                />
-              ) : (
-                <div className="min-w-0">
-                  <h4
-                    className="font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1 line-clamp-2 break-words"
-                    onClick={handleTitleEdit}
-                    title="Click to edit title"
-                  >
-                    {card.title}
-                  </h4>
+            <div className="flex-1 min-w-0 relative">
+              {/* Completion Checkbox - Show on hover or when completed */}
+              <button
+                onClick={handleCompleteToggle}
+                className={`absolute left-0 top-0.5 z-10 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
+                  isHovered || card.isComplete ? "opacity-100" : "opacity-0 pointer-events-none"
+                }`}
+                title={
+                  card.isComplete
+                    ? "Mark as incomplete"
+                    : "Mark as complete"
+                }
+              >
+                {card.isComplete ? (
+                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors duration-200">
+                    <Check className="w-3 h-3" strokeWidth={3} />
+                  </div>
+                ) : (
+                  <div className="w-4 h-4 border-2 border-gray-400 rounded-full hover:border-gray-600 transition-colors duration-200"></div>
+                )}
+              </button>
+
+              <div className={`transition-transform duration-200 ease-in-out ${
+                isHovered || card.isComplete ? "translate-x-6" : "translate-x-0"
+              }`}>
+                {isEditingTitle ? (
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyPress={handleTitleKeyPress}
+                    className="font-medium text-gray-900 text-sm leading-tight w-full bg-transparent border-none outline-none focus:outline-none px-1 py-0.5"
+                  />
+                ) : (
+                  <div className="min-w-0">
+                    <h4
+                      className={`font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1 line-clamp-2 break-words ${
+                        card.isComplete
+                          ? "line-through text-gray-500"
+                          : ""
+                      }`}
+                      onClick={handleTitleEdit}
+                      title="Click to edit title"
+                    >
+                      {card.title}
+                    </h4>
                   {/* Issue Number and Priority */}
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
                     <span className="bg-gray-200  text-black font-medium px-2 py-0.5 rounded">
@@ -331,6 +378,7 @@ const CardItem = ({
                   </div>
                 </div>
               )}
+              </div>
             </div>
 
             {/* Action Buttons - Show on Hover */}

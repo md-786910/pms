@@ -8,6 +8,7 @@ const {
   archiveCard,
   restoreCard,
   updateStatus,
+  toggleComplete,
   assignUser,
   unassignUser,
   addComment,
@@ -180,6 +181,11 @@ router.put(
   ],
   updateStatus
 );
+
+// @route   PUT /api/cards/:id/complete
+// @desc    Toggle card completion status
+// @access  Private
+router.put("/:id/complete", toggleComplete);
 
 // @route   POST /api/cards/:id/assign
 // @desc    Assign user to card

@@ -147,6 +147,17 @@ const cardSchema = new mongoose.Schema(
       type: String,
       default: "todo",
     },
+    isComplete: {
+      type: Boolean,
+      default: false,
+    },
+    completedAt: {
+      type: Date,
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,

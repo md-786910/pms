@@ -164,6 +164,7 @@ export const cardAPI = {
   restoreCard: (id) => api.put(`/cards/${id}/restore`),
   deleteCard: (id) => api.delete(`/cards/${id}`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
+  toggleComplete: (id) => api.put(`/cards/${id}/complete`),
   moveAllCards: (projectId, sourceStatus, targetStatus) =>
     api.post(`/projects/${projectId}/cards/move-all`, {
       sourceStatus,
