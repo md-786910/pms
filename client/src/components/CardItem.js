@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Calendar,
   MessageSquare,
@@ -313,30 +315,75 @@ const CardItem = ({
     );
   }, [card.readBy, user]);
 
+  // Make card draggable
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: card._id || card.id,
+    data: {
+      type: "card",
+      card: card,
+      status: card.status,
+    },
+    disabled: card.isArchived, // Disable dragging for archived cards
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Handle card click - prevent if dragging
+  const handleCardClick = (e) => {
+    // Don't open modal if we're dragging or if click is on an interactive element
+    if (isDragging || e.target.closest("button, a, input")) {
+      return;
+    }
+    if (onCardClick) {
+      onCardClick(card);
+    } else {
+      setShowModal(true);
+    }
+  };
+
   return (
     <>
       <div
-        className={`bg-white rounded-lg shadow-sm border transition-all duration-200 group relative ${
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={`bg-white rounded-lg shadow-sm border transition-all duration-200 group relative cursor-grab active:cursor-grabbing ${
           isUnread
             ? "border-l-blue-500 border-l-4 hover:shadow-md hover:border-l-blue-600"
             : "border-gray-200 hover:shadow-md hover:border-gray-300"
-        }`}
+        } ${isDragging ? "shadow-xl scale-105 z-50 opacity-50" : ""}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
       >
         {/* Unread Indicator Dot */}
         {/* {isUnread && (
           <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full z-10" />
         )} */}
         {/* Card Header with Issue Number */}
-        <div className="p-3 pb-2">
+        <div className="p-3 pb-2 relative z-10">
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0 relative">
               {/* Completion Checkbox - Show on hover or when completed, but hidden when archived */}
               {!card.isArchived && (
                 <button
-                  onClick={handleCompleteToggle}
-                  className={`absolute left-0 top-0.5 z-10 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCompleteToggle(e);
+                  }}
+                  className={`absolute left-0 top-0.5 z-20 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
                     isHovered || card.isComplete
                       ? "opacity-100"
                       : "opacity-0 pointer-events-none"
@@ -376,7 +423,10 @@ const CardItem = ({
                   <div className="min-w-0">
                     <h4
                       className={`font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1 line-clamp-2 break-words`}
-                      onClick={handleTitleEdit}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTitleEdit(e);
+                      }}
                       title="Click to edit title"
                     >
                       {card.title}

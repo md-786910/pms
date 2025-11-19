@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   ArrowLeft,
   Plus,
   ChevronRight,
@@ -63,6 +78,21 @@ const ProjectBoard = () => {
   const [projectData, setProjectData] = useState(null);
   const [draggingColumnId, setDraggingColumnId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
+
+  // Card drag-and-drop state
+  const [activeCardId, setActiveCardId] = useState(null);
+
+  // Configure sensors for drag-and-drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px of movement before starting drag
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Filter state
   const [filteredCards, setFilteredCards] = useState([]);
@@ -541,6 +571,189 @@ const ProjectBoard = () => {
     } catch (error) {
       console.error("Error updating card status:", error);
       showToast("Failed to update card status", "error");
+    }
+  };
+
+  // Handle card drag end (for drag-and-drop)
+  const handleCardDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveCardId(null);
+
+    if (!over || !active) return;
+
+    const cardId = active.id;
+    const sourceStatus = active.data.current?.status;
+    const targetStatus = over.data.current?.status || over.id;
+
+    // If dropped on a column (not another card)
+    if (over.data.current?.droppableType === "column") {
+      const newStatus = targetStatus;
+
+      // Get cards in the target column
+      const targetCards = getCardsByStatus(newStatus);
+
+      // If moving to a different column, add to end
+      if (sourceStatus !== newStatus) {
+        const newOrder = targetCards.length;
+
+        // Update locally first for instant feedback
+        const updatedCards = cards.map((card) => {
+          if (card._id === cardId) {
+            return { ...card, status: newStatus, order: newOrder };
+          }
+          return card;
+        });
+        setCards(updatedCards);
+        setFilteredCards(updatedCards);
+
+        // Update backend
+        try {
+          const cardOrders = [
+            { cardId: String(cardId), order: newOrder, status: newStatus },
+          ];
+          const response = await cardAPI.reorderCards(cardOrders);
+          if (response.data.success && response.data.cards) {
+            // Update with server response
+            const updatedCard = response.data.cards[0];
+            setCards((prev) =>
+              prev.map((card) => (card._id === cardId ? updatedCard : card))
+            );
+            setFilteredCards((prev) =>
+              prev.map((card) => (card._id === cardId ? updatedCard : card))
+            );
+          }
+        } catch (error) {
+          console.error("Error reordering card:", error);
+          const errorMessage =
+            error.response?.data?.message || "Failed to move card";
+          showToast(errorMessage, "error");
+          // Revert on error
+          fetchCards();
+        }
+      }
+      return;
+    }
+
+    // If dropped on another card
+    const overCardId = over.id;
+    if (cardId === overCardId) return;
+
+    const sourceCards = getCardsByStatus(sourceStatus);
+    const targetCards = getCardsByStatus(targetStatus);
+    const sourceIndex = sourceCards.findIndex((c) => c._id === cardId);
+    const overIndex = targetCards.findIndex((c) => c._id === overCardId);
+
+    if (sourceIndex === -1 || overIndex === -1) return;
+
+    // Same column reordering
+    if (sourceStatus === targetStatus) {
+      const reorderedCards = arrayMove(sourceCards, sourceIndex, overIndex);
+
+      // Update locally first
+      const updatedCards = cards.map((card) => {
+        const newIndex = reorderedCards.findIndex((c) => c._id === card._id);
+        if (newIndex !== -1 && card.status === sourceStatus) {
+          return { ...card, order: newIndex };
+        }
+        return card;
+      });
+      setCards(updatedCards);
+      setFilteredCards(updatedCards);
+
+      // Update backend
+      try {
+        const cardOrders = reorderedCards.map((card, index) => ({
+          cardId: String(card._id),
+          order: index,
+        }));
+        const response = await cardAPI.reorderCards(cardOrders);
+        if (response.data.success && response.data.cards) {
+          // Update with server response
+          const updatedCardsMap = {};
+          response.data.cards.forEach((card) => {
+            updatedCardsMap[card._id] = card;
+          });
+          setCards((prev) =>
+            prev.map((card) => updatedCardsMap[card._id] || card)
+          );
+          setFilteredCards((prev) =>
+            prev.map((card) => updatedCardsMap[card._id] || card)
+          );
+        }
+      } catch (error) {
+        console.error("Error reordering cards:", error);
+        const errorMessage =
+          error.response?.data?.message || "Failed to reorder cards";
+        showToast(errorMessage, "error");
+        fetchCards();
+      }
+    } else {
+      // Moving between columns
+      const newTargetCards = [...targetCards];
+      newTargetCards.splice(overIndex, 0, sourceCards[sourceIndex]);
+
+      // Update locally first
+      const updatedCards = cards.map((card) => {
+        if (card._id === cardId) {
+          return { ...card, status: targetStatus, order: overIndex };
+        }
+        // Update orders in target column
+        if (card.status === targetStatus) {
+          const newIndex = newTargetCards.findIndex((c) => c._id === card._id);
+          if (newIndex !== -1) {
+            return { ...card, order: newIndex };
+          }
+        }
+        // Update orders in source column
+        if (card.status === sourceStatus && card._id !== cardId) {
+          const newIndex = sourceCards
+            .filter((c) => c._id !== cardId)
+            .findIndex((c) => c._id === card._id);
+          if (newIndex !== -1) {
+            return { ...card, order: newIndex };
+          }
+        }
+        return card;
+      });
+      setCards(updatedCards);
+      setFilteredCards(updatedCards);
+
+      // Update backend
+      try {
+        const cardOrders = [];
+        // Add moved card
+        cardOrders.push({
+          cardId: String(cardId),
+          order: overIndex,
+          status: targetStatus,
+        });
+        // Add all target column cards
+        newTargetCards.forEach((card, index) => {
+          if (card._id !== cardId) {
+            cardOrders.push({ cardId: String(card._id), order: index });
+          }
+        });
+        const response = await cardAPI.reorderCards(cardOrders);
+        if (response.data.success && response.data.cards) {
+          // Update with server response
+          const updatedCardsMap = {};
+          response.data.cards.forEach((card) => {
+            updatedCardsMap[card._id] = card;
+          });
+          setCards((prev) =>
+            prev.map((card) => updatedCardsMap[card._id] || card)
+          );
+          setFilteredCards((prev) =>
+            prev.map((card) => updatedCardsMap[card._id] || card)
+          );
+        }
+      } catch (error) {
+        console.error("Error moving card:", error);
+        const errorMessage =
+          error.response?.data?.message || "Failed to move card";
+        showToast(errorMessage, "error");
+        fetchCards();
+      }
     }
   };
 
@@ -1201,79 +1414,102 @@ const ProjectBoard = () => {
 
       {/* Board */}
       <div className="relative flex-1 overflow-hidden min-h-0">
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scroll-smooth"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={(event) => {
+            if (event.active.data.current?.type === "card") {
+              setActiveCardId(event.active.id);
+            }
+          }}
+          onDragEnd={handleCardDragEnd}
         >
-          <div className="flex gap-4 lg:gap-6 min-w-max h-full">
-            {columns.map((column) => {
-              const config = getColumnConfig(column);
-              const colKey = column._id || column.status;
-              return (
-                <div
-                  key={colKey}
-                  className={`w-80 flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
-                    draggingColumnId === colKey
-                      ? "opacity-40 scale-[0.98]"
-                      : "opacity-100"
-                  } ${
-                    dragOverColumnId === colKey
-                      ? "ring-4 ring-blue-500 rounded-lg bg-blue-50 shadow-xl border-2 border-blue-300"
-                      : ""
-                  }`}
-                  draggable={column.status !== "archive"}
-                  onDragStart={() => handleColumnDragStart(colKey)}
-                  onDragEnter={() => setDragOverColumnId(colKey)}
-                  onDragOver={handleColumnDragOver}
-                  onDragLeave={() => setDragOverColumnId(null)}
-                  onDrop={() => handleColumnDrop(colKey)}
-                  onDragEnd={handleColumnDragEnd}
-                >
-                  <ListColumn
-                    title={config.title}
-                    status={column.status}
-                    cards={getCardsByStatus(column.status)}
-                    color={config.color}
-                    bgColor={config.bgColor}
-                    borderColor={config.borderColor}
-                    textColor={config.textColor}
-                    onCardUpdated={handleCardUpdated}
-                    onCardDeleted={handleCardDeleted}
-                    onCardRestored={handleCardRestored}
-                    onStatusChange={handleStatusChange}
-                    onCardClick={handleCardClick}
-                    projectId={actualProjectId}
-                    onColumnRename={handleColumnRename}
-                    onColumnDelete={handleColumnDelete}
-                    onAddCard={handleAddCardToColumn}
-                    onMoveAllCards={handleMoveAllCards}
-                  />
-                </div>
-              );
-            })}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scroll-smooth"
+          >
+            <div className="flex gap-4 lg:gap-6 min-w-max h-full">
+              {columns.map((column) => {
+                const config = getColumnConfig(column);
+                const colKey = column._id || column.status;
+                const columnCards = getCardsByStatus(column.status);
+                return (
+                  <div
+                    key={colKey}
+                    className={`w-80 flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                      draggingColumnId === colKey
+                        ? "opacity-100 scale-[0.98]"
+                        : "opacity-100"
+                    } ${
+                      dragOverColumnId === colKey
+                        ? "ring-4 ring-blue-500 rounded-lg bg-blue-50 shadow-xl border-2 border-blue-300"
+                        : ""
+                    }`}
+                    draggable={column.status !== "archive"}
+                    onDragStart={() => handleColumnDragStart(colKey)}
+                    onDragEnter={() => setDragOverColumnId(colKey)}
+                    onDragOver={handleColumnDragOver}
+                    onDragLeave={() => setDragOverColumnId(null)}
+                    onDrop={() => handleColumnDrop(colKey)}
+                    onDragEnd={handleColumnDragEnd}
+                  >
+                    <ListColumn
+                      title={config.title}
+                      status={column.status}
+                      cards={columnCards}
+                      color={config.color}
+                      bgColor={config.bgColor}
+                      borderColor={config.borderColor}
+                      textColor={config.textColor}
+                      onCardUpdated={handleCardUpdated}
+                      onCardDeleted={handleCardDeleted}
+                      onCardRestored={handleCardRestored}
+                      onStatusChange={handleStatusChange}
+                      onCardClick={handleCardClick}
+                      projectId={actualProjectId}
+                      onColumnRename={handleColumnRename}
+                      onColumnDelete={handleColumnDelete}
+                      onAddCard={handleAddCardToColumn}
+                      onMoveAllCards={handleMoveAllCards}
+                    />
+                  </div>
+                );
+              })}
 
-            {/* Add Column Button - Fixed Position */}
-            <div className="w-80 flex-shrink-0">
-              <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 h-[600px] flex items-center justify-center hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 group">
-                <button
-                  onClick={() => setShowAddColumnModal(true)}
-                  className="flex flex-col items-center space-y-3 text-gray-500 hover:text-gray-700 transition-colors duration-200 group-hover:scale-105"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gray-200 group-hover:bg-gray-300 flex items-center justify-center transition-colors duration-200">
-                    <Plus className="w-6 h-6" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium">Add Column</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Create a new workflow stage
-                    </p>
-                  </div>
-                </button>
+              {/* Add Column Button - Fixed Position */}
+              <div className="w-80 flex-shrink-0">
+                <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 h-[600px] flex items-center justify-center hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 group">
+                  <button
+                    onClick={() => setShowAddColumnModal(true)}
+                    className="flex flex-col items-center space-y-3 text-gray-500 hover:text-gray-700 transition-colors duration-200 group-hover:scale-105"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gray-200 group-hover:bg-gray-300 flex items-center justify-center transition-colors duration-200">
+                      <Plus className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium">Add Column</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Create a new workflow stage
+                      </p>
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+
+          {/* Drag Overlay for visual feedback */}
+          <DragOverlay>
+            {activeCardId ? (
+              <div className="bg-white rounded-lg shadow-xl border-2 border-blue-500 p-3 w-80 opacity-95 rotate-3 transform">
+                <div className="text-sm font-semibold text-gray-800">
+                  {cards.find((c) => c._id === activeCardId)?.title || "Card"}
+                </div>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
 
         {/* Scroll indicators */}
         <div className="absolute top-0 left-0 bg-gradient-to-r from-white to-transparent w-8 h-full pointer-events-none opacity-50"></div>

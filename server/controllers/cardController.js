@@ -86,7 +86,7 @@ const getCards = async (req, res) => {
       .populate("comments.user", "name email avatar color")
       .populate("readBy.user", "name email avatar color")
       .populate("archivedBy", "name email avatar color")
-      .sort({ updatedAt: -1 });
+      .sort({ order: 1, updatedAt: -1 });
 
     // Sort comments in each card with latest at top
     cards.forEach((card) => {
@@ -930,6 +930,169 @@ const updateStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while updating card status",
+    });
+  }
+};
+
+// @route   PUT /api/cards/reorder
+// @desc    Update card order and optionally status (for drag-and-drop)
+// @access  Private
+const reorderCards = async (req, res) => {
+  try {
+    const { cardOrders } = req.body; // Array of { cardId, order, status? }
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    console.log("Reorder cards request:", {
+      userId,
+      cardOrdersCount: cardOrders?.length,
+      cardOrders: cardOrders,
+    });
+
+    if (!Array.isArray(cardOrders) || cardOrders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "cardOrders array is required",
+      });
+    }
+
+    // Get the first card to check project access
+    const firstCard = await Card.findById(cardOrders[0].cardId);
+    if (!firstCard) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(firstCard.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Get user information for activity comments
+    const user = await User.findById(userId).select("name");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update all cards
+    const updatedCards = [];
+    for (const { cardId, order, status } of cardOrders) {
+      if (!cardId) {
+        console.warn("Skipping card order update: cardId is missing");
+        continue;
+      }
+
+      const card = await Card.findById(cardId);
+      if (!card) {
+        console.warn(`Card not found: ${cardId}`);
+        continue;
+      }
+
+      // Verify card belongs to same project
+      if (card.project.toString() !== firstCard.project.toString()) {
+        console.warn(`Card ${cardId} does not belong to project ${firstCard.project}`);
+        continue;
+      }
+
+      const oldStatus = card.status;
+      const oldOrder = card.order || 0;
+
+      // Update order (ensure it's a number)
+      card.order = typeof order === "number" ? order : parseInt(order, 10) || 0;
+
+      // Update status if provided and different
+      if (status && status !== oldStatus) {
+        card.status = status;
+
+        try {
+          // Add automatic comment for status change
+          const previousStatusLabel = await getStatusLabel(card.project, oldStatus);
+          const newStatusLabel = await getStatusLabel(card.project, status);
+
+          card.comments.push({
+            user: userId,
+            text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
+            timestamp: new Date(),
+          });
+
+          // Add activity log entry
+          card.activityLog.push({
+            action: "status_changed",
+            user: userId,
+            timestamp: new Date(),
+            details: `Status changed from ${oldStatus} to ${status}`,
+          });
+        } catch (labelError) {
+          console.error("Error getting status labels:", labelError);
+          // Continue without comment if label fetch fails
+        }
+      } else if (order !== oldOrder) {
+        // Add activity log entry for order change
+        card.activityLog.push({
+          action: "reordered",
+          user: userId,
+          timestamp: new Date(),
+          details: `Card order changed from ${oldOrder} to ${card.order}`,
+        });
+      }
+
+      try {
+        await card.save();
+        await card.populate("assignees", "name email avatar color");
+        await card.populate("createdBy", "name email avatar color");
+        updatedCards.push(card);
+      } catch (saveError) {
+        console.error(`Error saving card ${cardId}:`, saveError);
+        // Continue with other cards even if one fails
+      }
+    }
+
+    if (updatedCards.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No cards were updated",
+      });
+    }
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${firstCard.project}`).emit("cards-reordered", {
+        cards: updatedCards,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Cards reordered successfully",
+      cards: updatedCards,
+    });
+  } catch (error) {
+    console.error("Reorder cards error:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Request body:", req.body);
+    res.status(500).json({
+      success: false,
+      message: "Server error while reordering cards",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };
@@ -2405,6 +2568,7 @@ module.exports = {
   archiveCard,
   restoreCard,
   updateStatus,
+  reorderCards,
   toggleComplete,
   getCardsDueToday,
   assignUser,

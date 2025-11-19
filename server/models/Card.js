@@ -171,6 +171,10 @@ const cardSchema = new mongoose.Schema(
         },
       },
     ],
+    order: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -179,6 +183,7 @@ const cardSchema = new mongoose.Schema(
 
 // Index for better query performance
 cardSchema.index({ project: 1, status: 1 });
+cardSchema.index({ project: 1, status: 1, order: 1 });
 cardSchema.index({ assignees: 1 });
 cardSchema.index({ dueDate: 1 });
 cardSchema.index({ project: 1, isArchived: 1 });

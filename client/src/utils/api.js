@@ -166,6 +166,7 @@ export const cardAPI = {
   deleteCard: (id) => api.delete(`/cards/${id}`),
   markAsRead: (id) => api.put(`/cards/${id}/read`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
+  reorderCards: (cardOrders) => api.put(`/cards/reorder`, { cardOrders }),
   toggleComplete: (id) => api.put(`/cards/${id}/complete`),
   moveAllCards: (projectId, sourceStatus, targetStatus) =>
     api.post(`/projects/${projectId}/cards/move-all`, {
