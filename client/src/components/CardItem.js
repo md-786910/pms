@@ -332,30 +332,32 @@ const CardItem = ({
         <div className="p-3 pb-2">
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 min-w-0 relative">
-              {/* Completion Checkbox - Show on hover or when completed */}
-              <button
-                onClick={handleCompleteToggle}
-                className={`absolute left-0 top-0.5 z-10 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
-                  isHovered || card.isComplete
-                    ? "opacity-100"
-                    : "opacity-0 pointer-events-none"
-                }`}
-                title={
-                  card.isComplete ? "Mark as incomplete" : "Mark as complete"
-                }
-              >
-                {card.isComplete ? (
-                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors duration-200">
-                    <Check className="w-3 h-3" strokeWidth={3} />
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 border-2 border-gray-400 rounded-full hover:border-gray-600 transition-colors duration-200"></div>
-                )}
-              </button>
+              {/* Completion Checkbox - Show on hover or when completed, but hidden when archived */}
+              {!card.isArchived && (
+                <button
+                  onClick={handleCompleteToggle}
+                  className={`absolute left-0 top-0.5 z-10 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
+                    isHovered || card.isComplete
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                  title={
+                    card.isComplete ? "Mark as incomplete" : "Mark as complete"
+                  }
+                >
+                  {card.isComplete ? (
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors duration-200">
+                      <Check className="w-3 h-3" strokeWidth={3} />
+                    </div>
+                  ) : (
+                    <div className="w-4 h-4 border-2 border-gray-400 rounded-full hover:border-gray-600 transition-colors duration-200"></div>
+                  )}
+                </button>
+              )}
 
               <div
                 className={`transition-transform duration-200 ease-in-out ${
-                  isHovered || card.isComplete
+                  (isHovered || card.isComplete) && !card.isArchived
                     ? "translate-x-6"
                     : "translate-x-0"
                 }`}

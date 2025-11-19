@@ -1598,41 +1598,38 @@ const CardModal = ({
                 <div className="sticky top-0 z-50 bg-white pb-4">
                   {/* Status/Due Row */}
                   <div className="flex items-center gap-2">
-                    {/* Completion Toggle */}
-                    <button
-                      onClick={handleCompleteToggle}
-                      disabled={isArchived}
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                        card.isComplete
-                          ? "bg-green-500 border-green-500 hover:bg-green-600"
-                          : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
-                      } ${
-                        isArchived
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer"
-                      }`}
-                      title={
-                        card.isComplete
-                          ? "Mark as incomplete"
-                          : "Mark as complete"
-                      }
-                    >
-                      {card.isComplete && (
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </button>
+                    {/* Completion Toggle - Hidden when archived */}
+                    {!isArchived && (
+                      <button
+                        onClick={handleCompleteToggle}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                          card.isComplete
+                            ? "bg-green-500 border-green-500 hover:bg-green-600"
+                            : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
+                        } cursor-pointer`}
+                        title={
+                          card.isComplete
+                            ? "Mark as incomplete"
+                            : "Mark as complete"
+                        }
+                      >
+                        {card.isComplete && (
+                          <svg
+                            className="w-5 h-5 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                     <button
                       className={`btn px-5 py-0.5 rounded-md ${
                         card.cardNumber || card._id?.slice(-4) || "0000"
@@ -2590,14 +2587,17 @@ const CardModal = ({
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={handleArchive}
-                      className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
-                      title="Archive card"
-                    >
-                      <Archive className="w-4 h-4" />
-                      <span>Archive Card</span>
-                    </button>
+                    // Hide Archive button when card is complete
+                    !card.isComplete && (
+                      <button
+                        onClick={handleArchive}
+                        className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                        title="Archive card"
+                      >
+                        <Archive className="w-4 h-4" />
+                        <span>Archive Card</span>
+                      </button>
+                    )
                   )}
                 </div>
               </div>
