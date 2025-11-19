@@ -779,15 +779,28 @@ const ProjectBoard = () => {
   };
 
   const getCardsByStatus = (status) => {
+    let cards;
     if (status === "archive") {
       // For archive column, show only archived cards
-      return filteredCards.filter((card) => card.isArchived === true);
+      cards = filteredCards.filter((card) => card.isArchived === true);
     } else {
       // For other columns, show only non-archived cards with matching status
-      return filteredCards.filter(
+      cards = filteredCards.filter(
         (card) => card.status === status && card.isArchived !== true
       );
     }
+    // Sort by order field (ascending), then by updatedAt (descending) as fallback
+    return cards.sort((a, b) => {
+      const orderA = a.order ?? 0;
+      const orderB = b.order ?? 0;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // If order is the same, sort by updatedAt descending
+      const dateA = new Date(a.updatedAt || 0);
+      const dateB = new Date(b.updatedAt || 0);
+      return dateB - dateA;
+    });
   };
 
   const getColumnConfig = (column) => {
