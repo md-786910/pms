@@ -2495,6 +2495,45 @@ const getCardsDueToday = async (req, res) => {
   }
 };
 
+// @route   GET /api/cards/back-date
+// @desc    Get cards assigned to current user that are past due (before today)
+// @access  Private
+const getCardsBackDate = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get start of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Find cards assigned to user, due before today, not completed, not archived
+    const cards = await Card.find({
+      assignees: userId,
+      dueDate: {
+        $lt: startOfDay,
+      },
+      isComplete: false,
+      isArchived: false,
+    })
+      .populate("project", "name")
+      .populate("assignees", "name email avatar color")
+      .populate("createdBy", "name email avatar color")
+      .sort({ dueDate: -1 });
+
+    res.json({
+      success: true,
+      cards,
+      count: cards.length,
+    });
+  } catch (error) {
+    console.error("Get cards back date error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching cards back date",
+    });
+  }
+};
+
 // @route   PUT /api/cards/:id/read
 // @desc    Mark card as read by current user
 // @access  Private
@@ -2571,6 +2610,7 @@ module.exports = {
   reorderCards,
   toggleComplete,
   getCardsDueToday,
+  getCardsBackDate,
   assignUser,
   unassignUser,
   addComment,

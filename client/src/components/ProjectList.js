@@ -27,7 +27,9 @@ const ProjectList = () => {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [cardsDueToday, setCardsDueToday] = useState([]);
+  const [cardsBackDate, setCardsBackDate] = useState([]);
   const [loadingCards, setLoadingCards] = useState(true);
+  const [loadingBackDateCards, setLoadingBackDateCards] = useState(true);
 
   // Fetch cards due today
   useEffect(() => {
@@ -51,6 +53,28 @@ const ProjectList = () => {
     }
   }, [user]);
 
+  // Fetch cards back date
+  useEffect(() => {
+    const fetchCardsBackDate = async () => {
+      try {
+        setLoadingBackDateCards(true);
+        console.log("📅 Fetching cards back date...");
+        const response = await cardAPI.getCardsBackDate();
+        console.log("📅 Cards back date response:", response.data);
+        setCardsBackDate(response.data.cards || []);
+      } catch (error) {
+        console.error("❌ Error fetching cards back date:", error);
+        setCardsBackDate([]);
+      } finally {
+        setLoadingBackDateCards(false);
+      }
+    };
+
+    if (user) {
+      fetchCardsBackDate();
+    }
+  }, [user]);
+
   const handleModalClose = () => {
     setShowCreateModal(false);
     // Force refresh projects after modal closes
@@ -62,6 +86,14 @@ const ProjectList = () => {
     // Navigate to the project board with the card open
     const projectId = card.project?._id || card.project;
     navigate(`/project/${projectId}/card/${card._id}`);
+  };
+
+  const formatDueDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   };
 
   if (loading) {
@@ -86,7 +118,7 @@ const ProjectList = () => {
 
           {/* Cards Due Today */}
           {cardsDueToday.length > 0 && (
-            <div className="bg-white border rounded-lg border-gray-200 p-4">
+            <div className="bg-white border border-gray-200 p-4">
               <div className="flex items-center space-x-2 mb-4">
                 <Clock className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -137,6 +169,65 @@ const ProjectList = () => {
                   <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 text-sm">
                     No cards due today. You're all caught up! 🎉
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Cards Back Date */}
+          {cardsBackDate.length > 0 && (
+            <div className="bg-white border border-gray-200 p-4 rounded-b-lg">
+              <div className="flex items-center space-x-2 mb-4">
+                <Clock className="w-5 h-5 text-red-600" />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Cards Back Date
+                </h2>
+                {cardsBackDate.length > 0 && (
+                  <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">
+                    {cardsBackDate.length}
+                  </span>
+                )}
+              </div>
+
+              {loadingBackDateCards ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                </div>
+              ) : cardsBackDate.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {cardsBackDate.map((card) => (
+                    <div
+                      key={card._id}
+                      onClick={() => handleCardClick(card)}
+                      className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
+                          {card.title}
+                        </h3>
+                        <span className="bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                          #{card.cardNumber || card._id?.slice(-4)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <FolderOpen className="w-3 h-3" />
+                          <span className="truncate">{card.project?.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-1 text-red-600">
+                          <Calendar className="w-3 h-3" />
+                          <span>{formatDueDate(card.dueDate)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">
+                    No past due cards. Great job!
                   </p>
                 </div>
               )}

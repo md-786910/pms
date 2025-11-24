@@ -11,6 +11,7 @@ const {
   reorderCards,
   toggleComplete,
   getCardsDueToday,
+  getCardsBackDate,
   assignUser,
   unassignUser,
   addComment,
@@ -36,6 +37,11 @@ router.use(auth);
 // @desc    Get cards assigned to current user that are due today
 // @access  Private
 router.get("/due-today", getCardsDueToday);
+
+// @route   GET /api/cards/back-date
+// @desc    Get cards assigned to current user that are past due (before today)
+// @access  Private
+router.get("/back-date", getCardsBackDate);
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
