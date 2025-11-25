@@ -92,12 +92,12 @@ const CardItem = ({
     } catch (error) {
       console.error("Error fetching card items:", error);
     }
-  }, [card._id]);
+  }, []);
 
   // Fetch card items
-  useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+  // useEffect(() => {
+  //   fetchItems();
+  // }, []);
 
   const handleAddItem = async () => {
     if (!newItemTitle.trim()) {

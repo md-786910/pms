@@ -51,7 +51,6 @@ export const ProjectProvider = ({ children }) => {
     try {
       console.log("Fetching project:", id);
       const response = await projectAPI.getProject(id);
-      console.log("Project response:", response);
       setCurrentProject(response.data.project);
       return response.data.project;
     } catch (error) {
