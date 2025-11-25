@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   DndContext,
@@ -592,7 +592,7 @@ const ProjectBoard = () => {
     showToast("Filters cleared", "success");
   };
 
-  const handleCardUpdated = (updatedCard) => {
+  const handleCardUpdated = useCallback((updatedCard) => {
     setCards((prev) =>
       prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
     );
@@ -600,12 +600,12 @@ const ProjectBoard = () => {
       prev.map((card) => (card._id === updatedCard._id ? updatedCard : card))
     );
     // Update selected card if it's the one being updated
-    if (selectedCard && selectedCard._id === updatedCard._id) {
-      setSelectedCard(updatedCard);
-    }
-  };
+    setSelectedCard((prev) =>
+      prev && prev._id === updatedCard._id ? updatedCard : prev
+    );
+  }, []);
 
-  const handleCardDeleted = (cardId) => {
+  const handleCardDeleted = useCallback((cardId) => {
     // Update the card to be archived instead of removing it
     setCards((prev) =>
       prev.map((card) =>
@@ -623,13 +623,15 @@ const ProjectBoard = () => {
     );
     showToast("Card archived successfully!", "success");
     // Close modal if the archived card was selected
-    if (selectedCard && selectedCard._id === cardId) {
-      setShowCardModal(false);
-      setSelectedCard(null);
-      // Navigate back to project view
-      navigate(`/project/${actualProjectId}`);
-    }
-  };
+    setSelectedCard((prev) => {
+      if (prev && prev._id === cardId) {
+        setShowCardModal(false);
+        navigate(`/project/${actualProjectId}`);
+        return null;
+      }
+      return prev;
+    });
+  }, [actualProjectId, navigate, showToast]);
 
   const handleCardPermanentlyDeleted = async (cardId) => {
     try {
@@ -654,33 +656,33 @@ const ProjectBoard = () => {
     }
   };
 
-  const handleCardRestored = async (cardId, restoredCard) => {
+  const handleCardRestored = useCallback(async (cardId, restoredCard) => {
     try {
       // Refresh cards to get updated data (API is already called in CardModal)
       await fetchCards();
 
       // Update selected card if it's the one being restored
-      if (selectedCard && selectedCard._id === cardId) {
-        // Use the restored card data if provided, otherwise update local state
-        if (restoredCard) {
-          setSelectedCard(restoredCard);
-        } else {
-          // Fallback: update local state
-          setSelectedCard((prev) => ({
+      setSelectedCard((prev) => {
+        if (prev && prev._id === cardId) {
+          if (restoredCard) {
+            return restoredCard;
+          }
+          return {
             ...prev,
             isArchived: false,
             archivedAt: null,
             archivedBy: null,
             status: prev.originalStatus || "todo",
-          }));
+          };
         }
-      }
+        return prev;
+      });
     } catch (error) {
       console.error("Error handling card restoration:", error);
     }
-  };
+  }, []);
 
-  const handleStatusChange = async (cardId, newStatus) => {
+  const handleStatusChange = useCallback(async (cardId, newStatus) => {
     try {
       await cardAPI.updateStatus(cardId, { status: newStatus });
       setCards((prev) =>
@@ -694,14 +696,14 @@ const ProjectBoard = () => {
         )
       );
       // Update selected card if it's the one being updated
-      if (selectedCard && selectedCard._id === cardId) {
-        setSelectedCard((prev) => ({ ...prev, status: newStatus }));
-      }
+      setSelectedCard((prev) =>
+        prev && prev._id === cardId ? { ...prev, status: newStatus } : prev
+      );
     } catch (error) {
       console.error("Error updating card status:", error);
       showToast("Failed to update card status", "error");
     }
-  };
+  }, [showToast]);
 
   // Handle card drag end (for drag-and-drop)
   const handleCardDragEnd = async (event) => {
@@ -887,12 +889,12 @@ const ProjectBoard = () => {
   };
 
   // Card modal handlers
-  const handleCardClick = (card) => {
+  const handleCardClick = useCallback((card) => {
     setSelectedCard(card);
     setShowCardModal(true);
     // Update URL to include card ID
     navigate(`/project/${actualProjectId}/card/${card._id}`);
-  };
+  }, [actualProjectId, navigate]);
 
   const handleCardModalClose = () => {
     setShowCardModal(false);
@@ -907,29 +909,38 @@ const ProjectBoard = () => {
     navigate(`/project/${actualProjectId}/card/${card._id}`);
   };
 
-  const getCardsByStatus = (status) => {
-    let cards;
-    if (status === "archive") {
-      // For archive column, show only archived cards
-      cards = filteredCards.filter((card) => card.isArchived === true);
-    } else {
-      // For other columns, show only non-archived cards with matching status
-      cards = filteredCards.filter(
-        (card) => card.status === status && card.isArchived !== true
-      );
-    }
-    // Sort by order field (ascending), then by updatedAt (descending) as fallback
-    return cards.sort((a, b) => {
-      const orderA = a.order ?? 0;
-      const orderB = b.order ?? 0;
-      if (orderA !== orderB) {
-        return orderA - orderB;
+  // Memoize cards by status to prevent unnecessary re-renders
+  const cardsByStatus = useMemo(() => {
+    const result = {};
+
+    // Group cards by status
+    columns.forEach((column) => {
+      let statusCards;
+      if (column.status === "archive") {
+        statusCards = filteredCards.filter((card) => card.isArchived === true);
+      } else {
+        statusCards = filteredCards.filter(
+          (card) => card.status === column.status && card.isArchived !== true
+        );
       }
-      // If order is the same, sort by updatedAt descending
-      const dateA = new Date(a.updatedAt || 0);
-      const dateB = new Date(b.updatedAt || 0);
-      return dateB - dateA;
+      // Sort by order field (ascending), then by updatedAt (descending) as fallback
+      result[column.status] = statusCards.sort((a, b) => {
+        const orderA = a.order ?? 0;
+        const orderB = b.order ?? 0;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        const dateA = new Date(a.updatedAt || 0);
+        const dateB = new Date(b.updatedAt || 0);
+        return dateB - dateA;
+      });
     });
+
+    return result;
+  }, [filteredCards, columns]);
+
+  const getCardsByStatus = (status) => {
+    return cardsByStatus[status] || [];
   };
 
   const getColumnConfig = (column) => {

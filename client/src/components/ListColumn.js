@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MoreVertical, Edit2, Trash2, Plus, ArrowRight } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import {
@@ -8,7 +8,7 @@ import {
 import CardItem from "./CardItem";
 import ConfirmationModal from "./ConfirmationModal";
 
-const ListColumn = ({
+const ListColumn = React.memo(({
   title,
   status,
   cards,
@@ -289,6 +289,41 @@ const ListColumn = ({
       />
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  // Compare primitive props
+  if (
+    prevProps.title !== nextProps.title ||
+    prevProps.status !== nextProps.status ||
+    prevProps.color !== nextProps.color ||
+    prevProps.projectId !== nextProps.projectId
+  ) {
+    return false;
+  }
+
+  // Compare cards array - check if same cards in same order
+  if (prevProps.cards.length !== nextProps.cards.length) {
+    return false;
+  }
+
+  // Compare each card by ID and key properties that affect rendering
+  for (let i = 0; i < prevProps.cards.length; i++) {
+    const prevCard = prevProps.cards[i];
+    const nextCard = nextProps.cards[i];
+    if (
+      prevCard._id !== nextCard._id ||
+      prevCard.order !== nextCard.order ||
+      prevCard.title !== nextCard.title ||
+      prevCard.status !== nextCard.status ||
+      prevCard.isArchived !== nextCard.isArchived ||
+      prevCard.updatedAt !== nextCard.updatedAt
+    ) {
+      return false;
+    }
+  }
+
+  // Props are equal, don't re-render
+  return true;
+});
 
 export default ListColumn;

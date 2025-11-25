@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -32,7 +32,43 @@ import {
   getStatusBadgeClasses,
 } from "../utils/statusColors";
 
-const CardItem = ({
+// Memoized CardImage component to prevent image blinking on re-renders
+const CardImage = React.memo(({ imageUrl, altText, imageId }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) return null;
+
+  return (
+    <div className="mb-3 relative cursor-pointer">
+      <img
+        key={imageId}
+        src={imageUrl}
+        alt={altText}
+        className="w-full h-24 object-cover rounded-lg border border-gray-200 bg-gray-100"
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+        style={{
+          opacity: isLoaded ? 1 : 0,
+          transition: "opacity 0.3s ease"
+        }}
+      />
+      {/* Loading placeholder */}
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+        </div>
+      )}
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if imageUrl or imageId changes
+  return prevProps.imageUrl === nextProps.imageUrl &&
+         prevProps.imageId === nextProps.imageId;
+});
+
+const CardItem = React.memo(({
   card,
   onCardUpdated,
   onCardDeleted,
@@ -46,7 +82,6 @@ const CardItem = ({
   const [showModal, setShowModal] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(card.title);
   const [items, setItems] = useState([]);
@@ -55,6 +90,46 @@ const CardItem = ({
   const dropdownRef = useRef(null);
   const titleInputRef = useRef(null);
   const itemInputRef = useRef(null);
+
+  // Memoize first image data to prevent recalculation and image blinking
+  const firstImageData = useMemo(() => {
+    const firstImage = card.attachments?.find((attachment) => {
+      // Check by MIME type first
+      if (attachment.mimeType?.startsWith("image/")) {
+        return true;
+      }
+      // Check by file extension
+      if (
+        attachment.url?.match(
+          /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
+        )
+      ) {
+        return true;
+      }
+      // Check by filename
+      if (
+        attachment.originalName?.match(
+          /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
+        )
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    if (!firstImage) return null;
+
+    // Construct proper image URL
+    const imageUrl = firstImage.url.startsWith("http")
+      ? firstImage.url
+      : `${API_URL}${firstImage.url}`;
+
+    return {
+      url: imageUrl,
+      altText: firstImage.originalName || "Card attachment",
+      id: firstImage._id || firstImage.url,
+    };
+  }, [card.attachments]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -364,8 +439,6 @@ const CardItem = ({
             ? "border-l-blue-500 border-l-4 hover:shadow-md hover:border-l-blue-600"
             : "border-gray-200 hover:shadow-md hover:border-gray-300"
         } ${isDragging ? "shadow-xl scale-105 z-50 opacity-50" : ""}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         onClick={handleCardClick}
       >
         {/* Unread Indicator Dot */}
@@ -384,9 +457,9 @@ const CardItem = ({
                     handleCompleteToggle(e);
                   }}
                   className={`absolute left-0 top-0.5 z-20 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
-                    isHovered || card.isComplete
+                    card.isComplete
                       ? "opacity-100"
-                      : "opacity-0 pointer-events-none"
+                      : "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
                   }`}
                   title={
                     card.isComplete ? "Mark as incomplete" : "Mark as complete"
@@ -404,9 +477,11 @@ const CardItem = ({
 
               <div
                 className={`transition-transform duration-200 ease-in-out ${
-                  (isHovered || card.isComplete) && !card.isArchived
+                  card.isComplete && !card.isArchived
                     ? "translate-x-6"
-                    : "translate-x-0"
+                    : card.isArchived
+                      ? "translate-x-0"
+                      : "translate-x-0 group-hover:translate-x-6"
                 }`}
               >
                 {isEditingTitle ? (
@@ -454,9 +529,7 @@ const CardItem = ({
 
             {/* Action Buttons - Show on Hover */}
             <div
-              className={`flex items-center space-x-1 transition-opacity duration-200 ${
-                isHovered ? "opacity-100" : "opacity-0"
-              }`}
+              className="flex items-center space-x-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100"
             >
               {/* <button
                 onClick={handleQuickEdit}
@@ -542,140 +615,28 @@ const CardItem = ({
             </div>
           </div>
 
-          {/* Card Image or Description */}
-          {(() => {
-            // Debug: Log card attachments
-            // console.log("Card attachments:", card.attachments);
-            // console.log(
-            //   "Card:",
-            //   card.title,
-            //   "has",
-            //   card.attachments?.length || 0,
-            //   "attachments"
-            // );
-
-            // Get the first image attachment
-            const firstImage = card.attachments?.find((attachment) => {
-              // console.log("Checking attachment:", attachment);
-              // Check by MIME type first
-              if (attachment.mimeType?.startsWith("image/")) {
-                // console.log("Found image by MIME type:", attachment.mimeType);
-                return true;
-              }
-              // Check by file extension
-              if (
-                attachment.url?.match(
-                  /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
-                )
-              ) {
-                // console.log("Found image by URL extension:", attachment.url);
-                return true;
-              }
-              // Check by filename
-              if (
-                attachment.originalName?.match(
-                  /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico)$/i
-                )
-              ) {
-                // console.log(
-                //   "Found image by filename:",
-                //   attachment.originalName
-                // );
-                return true;
-              }
-              return false;
-            });
-
-            // console.log("First image found:", firstImage);
-
-            if (firstImage) {
-              // Construct proper image URL
-              const imageUrl = firstImage.url.startsWith("http")
-                ? firstImage.url
-                : `${API_URL}${firstImage.url}`;
-
-              // console.log("Image URL:", imageUrl);
-
-              return (
-                <div className="mb-3 relative group cursor-pointer">
-                  <img
-                    src={imageUrl}
-                    alt={firstImage.originalName || "Card attachment"}
-                    className="w-full h-24 object-cover rounded-lg border border-gray-200 bg-gray-100 group-hover:opacity-90 transition-opacity duration-200"
-                    loading="lazy"
-                    onLoad={(e) => {
-                      e.target.style.opacity = "1";
-                      // Hide loading spinner
-                      const spinner =
-                        e.target.parentNode.querySelector(".loading-spinner");
-                      if (spinner) spinner.style.display = "none";
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                      // Hide loading spinner
-                      const spinner =
-                        e.target.parentNode.querySelector(".loading-spinner");
-                      if (spinner) spinner.style.display = "none";
-                      // Show description as fallback if image fails to load
-                      const fallbackDiv = document.createElement("div");
-                      fallbackDiv.className =
-                        "text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed";
-                      fallbackDiv.textContent = card.description || "";
-                      e.target.parentNode.appendChild(fallbackDiv);
-                    }}
-                    style={{ opacity: 0, transition: "opacity 0.3s ease" }}
-                  />
-                  {/* Loading placeholder */}
-                  <div className="loading-spinner absolute inset-0 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-                  </div>
-                  {/* Hover overlay */}
-                  {/* <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 text-gray-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                        />
-                      </svg>
-                    </div>
-                  </div> */}
-                </div>
-              );
-            } else if (
-              card.description &&
-              card.description.trim() &&
-              card.description !== "<p><br></p>" &&
-              card.description !== "<p></p>"
-            ) {
-              // console.log("No images found, showing description");
-              return (
-                <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                  {stripHtmlTags(card.description)}
-                </p>
-              );
-            } else if (card.attachments && card.attachments.length > 0) {
-              // console.log(
-              //   "Has attachments but no images, showing attachment count"
-              // );
-              return (
-                <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center space-x-2 text-xs text-gray-600">
-                    <Paperclip className="w-3 h-3" />
-                    <span>{card.attachments.length} attachment(s)</span>
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
+          {/* Card Image or Description - Using memoized CardImage component */}
+          {firstImageData ? (
+            <CardImage
+              imageUrl={firstImageData.url}
+              altText={firstImageData.altText}
+              imageId={firstImageData.id}
+            />
+          ) : card.description &&
+            card.description.trim() &&
+            card.description !== "<p><br></p>" &&
+            card.description !== "<p></p>" ? (
+            <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+              {stripHtmlTags(card.description)}
+            </p>
+          ) : card.attachments && card.attachments.length > 0 ? (
+            <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center space-x-2 text-xs text-gray-600">
+                <Paperclip className="w-3 h-3" />
+                <span>{card.attachments.length} attachment(s)</span>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Card Footer */}
@@ -996,6 +957,50 @@ const CardItem = ({
       />
     </>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders (especially for images)
+  if (prevProps.projectId !== nextProps.projectId) {
+    return false;
+  }
+
+  // Compare card properties that affect rendering
+  const prevCard = prevProps.card;
+  const nextCard = nextProps.card;
+
+  if (
+    prevCard._id !== nextCard._id ||
+    prevCard.title !== nextCard.title ||
+    prevCard.description !== nextCard.description ||
+    prevCard.status !== nextCard.status ||
+    prevCard.priority !== nextCard.priority ||
+    prevCard.dueDate !== nextCard.dueDate ||
+    prevCard.order !== nextCard.order ||
+    prevCard.isArchived !== nextCard.isArchived ||
+    prevCard.isCompleted !== nextCard.isCompleted ||
+    prevCard.updatedAt !== nextCard.updatedAt
+  ) {
+    return false;
+  }
+
+  // Compare arrays by length
+  if (prevCard.labels?.length !== nextCard.labels?.length) {
+    return false;
+  }
+
+  if (prevCard.assignedUsers?.length !== nextCard.assignedUsers?.length) {
+    return false;
+  }
+
+  if (prevCard.attachments?.length !== nextCard.attachments?.length) {
+    return false;
+  }
+
+  if (prevCard.comments?.length !== nextCard.comments?.length) {
+    return false;
+  }
+
+  // Props are equal, don't re-render
+  return true;
+});
 
 export default CardItem;
