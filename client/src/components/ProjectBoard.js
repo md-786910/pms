@@ -48,6 +48,128 @@ import {
   getCardStatusColors,
 } from "../utils/statusColors";
 
+// Horizontal Scroll Position Indicator Component (Jira-style)
+const HorizontalScrollIndicator = ({
+  scrollLeft,
+  scrollWidth,
+  clientWidth,
+  onScroll,
+}) => {
+  const isScrollable = scrollWidth > clientWidth;
+  const indicatorRef = useRef(null);
+  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  if (!isScrollable) return null;
+
+  const indicatorWidth = 120; // Width of the minimap
+  const totalLines = 8; // Number of vertical lines
+  const viewportRatio = clientWidth / scrollWidth;
+  const thumbWidth = Math.max(viewportRatio * indicatorWidth, 28);
+  const maxScroll = scrollWidth - clientWidth;
+  const scrollRatio = maxScroll > 0 ? scrollLeft / maxScroll : 0;
+  const thumbLeft = scrollRatio * (indicatorWidth - thumbWidth);
+
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+
+    const startX = e.clientX;
+    const startThumbLeft = thumbLeft;
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingRef.current) return;
+
+      const deltaX = moveEvent.clientX - startX;
+      const newThumbLeft = Math.max(
+        0,
+        Math.min(startThumbLeft + deltaX, indicatorWidth - thumbWidth)
+      );
+      const newScrollRatio =
+        indicatorWidth - thumbWidth > 0
+          ? newThumbLeft / (indicatorWidth - thumbWidth)
+          : 0;
+      const newScrollLeft = newScrollRatio * maxScroll;
+
+      if (onScroll) {
+        onScroll(newScrollLeft, false);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  // Handle click on the track to jump to position
+  const handleTrackClick = (e) => {
+    // Don't trigger if clicking on thumb
+    if (e.target.classList.contains("scroll-thumb")) return;
+
+    const rect = indicatorRef.current.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left - 10;
+    const clickPosition = Math.max(
+      0,
+      Math.min(relativeX - thumbWidth / 2, indicatorWidth - thumbWidth)
+    );
+    const newScrollRatio =
+      indicatorWidth - thumbWidth > 0
+        ? clickPosition / (indicatorWidth - thumbWidth)
+        : 0;
+    const newScrollLeft = newScrollRatio * maxScroll;
+
+    if (onScroll) {
+      onScroll(newScrollLeft, true);
+    }
+  };
+
+  return (
+    <div className="absolute right-5 bottom-6 z-20">
+      <div
+        ref={indicatorRef}
+        onClick={handleTrackClick}
+        className="relative bg-white rounded-[14px] shadow-lg p-2.5 cursor-pointer"
+        style={{
+          width: `${indicatorWidth + 20}px`,
+          height: "44px",
+          boxShadow:
+            "0 2px 8px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)",
+        }}
+      >
+        {/* Content lines representation (vertical bars) */}
+        <div className="flex gap-[4px] h-full w-full">
+          {Array.from({ length: totalLines }).map((_, i) => (
+            <div key={i} className="flex-1 bg-gray-200 rounded-[2px]" />
+          ))}
+        </div>
+
+        {/* Viewport indicator (highlighted section) - draggable thumb */}
+        <div
+          onMouseDown={handleMouseDown}
+          className="scroll-thumb absolute top-2 bottom-2 border-2 border-blue-500 rounded-md bg-transparent cursor-grab active:cursor-grabbing"
+          style={{
+            left: `${thumbLeft + 10}px`,
+            width: `${thumbWidth}px`,
+            transition: isDragging ? "none" : "left 0.1s ease-out",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
   const navigate = useNavigate();
@@ -107,6 +229,13 @@ const ProjectBoard = () => {
   const [showMoveAllCardsModal, setShowMoveAllCardsModal] = useState(false);
   const [sourceColumnForMove, setSourceColumnForMove] = useState(null);
   const [isMovingCards, setIsMovingCards] = useState(false);
+
+  // Horizontal scroll state for Jira-style indicator
+  const [horizontalScrollState, setHorizontalScrollState] = useState({
+    scrollLeft: 0,
+    scrollWidth: 0,
+    clientWidth: 0,
+  });
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -1050,6 +1179,12 @@ const ProjectBoard = () => {
       const { scrollLeft, scrollWidth, clientWidth } =
         scrollContainerRef.current;
       setShowScrollButton(scrollLeft < scrollWidth - clientWidth - 10);
+      // Update horizontal scroll state for Jira-style indicator
+      setHorizontalScrollState({
+        scrollLeft,
+        scrollWidth,
+        clientWidth,
+      });
     }
   };
 
@@ -1527,6 +1662,25 @@ const ProjectBoard = () => {
         {/* Scroll indicators */}
         <div className="absolute top-0 left-0 bg-gradient-to-r from-white to-transparent w-8 h-full pointer-events-none opacity-50"></div>
         <div className="absolute top-0 right-0 bg-gradient-to-l from-white to-transparent w-8 h-full pointer-events-none opacity-50"></div>
+
+        {/* Jira-style Horizontal Scroll Indicator */}
+        <HorizontalScrollIndicator
+          scrollLeft={horizontalScrollState.scrollLeft}
+          scrollWidth={horizontalScrollState.scrollWidth}
+          clientWidth={horizontalScrollState.clientWidth}
+          onScroll={(newScrollLeft, smooth = false) => {
+            if (scrollContainerRef.current) {
+              if (smooth) {
+                scrollContainerRef.current.scrollTo({
+                  left: newScrollLeft,
+                  behavior: "smooth",
+                });
+              } else {
+                scrollContainerRef.current.scrollLeft = newScrollLeft;
+              }
+            }
+          }}
+        />
 
         {/* Scroll to end button */}
         {showScrollButton && (

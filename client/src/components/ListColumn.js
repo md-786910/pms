@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MoreVertical, Edit2, Trash2, Plus, ArrowRight } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import {
@@ -72,11 +72,6 @@ const ListColumn = ({
   const confirmDelete = () => {
     onColumnDelete(status);
     setShowDeleteConfirm(false);
-  };
-
-  const handleAddCard = () => {
-    onAddCard(status);
-    setShowMenu(false);
   };
 
   textColor = `text-${color}-700`;
@@ -239,7 +234,7 @@ const ListColumn = ({
           items={cards.map((card) => card._id || card.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="p-3 space-y-3 h-[580px] overflow-y-auto">
+          <div className="p-3 space-y-3 h-[580px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {cards.map((card) => (
               <CardItem
                 key={card._id || card.id}
