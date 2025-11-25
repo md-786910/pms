@@ -4,6 +4,7 @@ const Card = require("../models/Card");
 const Notification = require("../models/Notification");
 const Invitation = require("../models/Invitation");
 const Activity = require("../models/Activity");
+const { createDefaultColumns } = require("./columnController");
 const {
   sendProjectInvitationEmail,
   sendProjectUpdateEmail,
@@ -288,6 +289,16 @@ const createProject = async (req, res) => {
     });
 
     await project.save();
+
+    // Create default columns asynchronously (non-blocking)
+    setImmediate(async () => {
+      try {
+        await createDefaultColumns(project._id, userId);
+        console.log(`Default columns created for project ${project._id}`);
+      } catch (columnError) {
+        console.error("Error creating default columns:", columnError);
+      }
+    });
 
     // Create activity and send notifications
     await createActivityAndNotify(
