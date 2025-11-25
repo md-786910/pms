@@ -49,7 +49,7 @@ import {
 } from "../utils/statusColors";
 
 // Horizontal Scroll Position Indicator Component (Jira-style)
-const HorizontalScrollIndicator = ({
+const HorizontalScrollIndicator = React.memo(({
   scrollLeft,
   scrollWidth,
   clientWidth,
@@ -168,7 +168,7 @@ const HorizontalScrollIndicator = ({
       </div>
     </div>
   );
-};
+});
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
@@ -1174,18 +1174,28 @@ const ProjectBoard = () => {
     }
   };
 
+  // Use ref to track if we have a pending animation frame
+  const scrollRAFRef = useRef(null);
+
   const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        scrollContainerRef.current;
-      setShowScrollButton(scrollLeft < scrollWidth - clientWidth - 10);
-      // Update horizontal scroll state for Jira-style indicator
-      setHorizontalScrollState({
-        scrollLeft,
-        scrollWidth,
-        clientWidth,
-      });
+    // Cancel any pending animation frame to throttle updates
+    if (scrollRAFRef.current) {
+      cancelAnimationFrame(scrollRAFRef.current);
     }
+
+    scrollRAFRef.current = requestAnimationFrame(() => {
+      if (scrollContainerRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } =
+          scrollContainerRef.current;
+        setShowScrollButton(scrollLeft < scrollWidth - clientWidth - 10);
+        // Update horizontal scroll state for Jira-style indicator
+        setHorizontalScrollState({
+          scrollLeft,
+          scrollWidth,
+          clientWidth,
+        });
+      }
+    });
   };
 
   const scrollToEnd = () => {
