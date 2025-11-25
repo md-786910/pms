@@ -563,7 +563,7 @@ const CardModal = ({
   if (card.status && !statusOptions.find((s) => s.value === card.status)) {
     allStatusOptions.push({
       value: card.status,
-      label: card.status,
+      label: card.statusLabel || card.status,
       color: "gray",
     });
   }
@@ -1171,14 +1171,14 @@ const CardModal = ({
 
         // Close card modal
         onClose();
-        
+
         // Notify parent to remove card from state
         if (onCardPermanentlyDeleted) {
           await onCardPermanentlyDeleted(card._id);
         } else if (onCardDeleted) {
           await onCardDeleted(card._id);
         }
-        
+
         showToast("Card deleted permanently", "success");
       } else {
         throw new Error("Delete request failed");
@@ -1642,11 +1642,12 @@ const CardModal = ({
                     </button>
                     {(() => {
                       const colors = getCardStatusColors(card.status);
-                      const label =
-                        allStatusOptions.find((s) => s.value === card.status)
-                          ?.label ||
-                        colors.label ||
-                        card.status;
+                      const label = card?.statusLabel;
+                      // card.statusLabel ||
+                      // allStatusOptions.find((s) => s.value === card.status)
+                      //   ?.label ||
+                      // colors.label ||
+                      // card.status;
                       return (
                         <button
                           className={`btn px-5 py-0.5 text-[15px] bg-[tomato] rounded-md text-black ${colors.borderColor}`}
@@ -2589,14 +2590,14 @@ const CardModal = ({
                   ) : (
                     // Hide Archive button when card is complete
                     !card.isComplete && (
-                    <button
-                      onClick={handleArchive}
-                      className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
-                      title="Archive card"
-                    >
-                      <Archive className="w-4 h-4" />
-                      <span>Archive Card</span>
-                    </button>
+                      <button
+                        onClick={handleArchive}
+                        className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                        title="Archive card"
+                      >
+                        <Archive className="w-4 h-4" />
+                        <span>Archive Card</span>
+                      </button>
                     )
                   )}
                 </div>
@@ -2739,8 +2740,8 @@ const CardModal = ({
 
       {/* Delete Card Confirmation Modal */}
       {showDeleteCardConfirm && (
-      <ConfirmationModal
-        isOpen={showDeleteCardConfirm}
+        <ConfirmationModal
+          isOpen={showDeleteCardConfirm}
           onClose={(e) => {
             // Prevent event propagation to card modal
             if (e) {
@@ -2760,10 +2761,10 @@ const CardModal = ({
           title="Permanently Delete Card"
           message={`Are you sure you want to permanently delete "${card.title}"? This action cannot be undone and will remove the card from the database.`}
           confirmText="Delete Permanently"
-        cancelText="Cancel"
-        type="danger"
-        isLoading={loading}
-      />
+          cancelText="Cancel"
+          type="danger"
+          isLoading={loading}
+        />
       )}
 
       {/* Labels Modal */}

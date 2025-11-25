@@ -4,6 +4,7 @@ const Project = require("../models/Project");
 const Card = require("../models/Card");
 const { validationResult } = require("express-validator");
 const { getIO } = require("../config/socket");
+const cacheService = require("../services/cacheService");
 
 // Helper function to clean up duplicate archive columns
 const cleanupDuplicateArchiveColumns = async (projectId) => {
@@ -202,6 +203,21 @@ const getColumns = async (req, res) => {
       });
     }
 
+    // Check cache first
+    const cacheKey = cacheService.getColumnsKey(projectId);
+    const cachedColumns = cacheService.get(cacheKey);
+
+    if (cachedColumns) {
+      console.log(`Cache hit for columns: ${projectId}`);
+      return res.json({
+        success: true,
+        columns: cachedColumns,
+        fromCache: true,
+      });
+    }
+
+    console.log(`Cache miss for columns: ${projectId}`);
+
     // Get all columns (excluding archive column for now)
     const columns = await Column.find({
       project: projectId,
@@ -228,6 +244,9 @@ const getColumns = async (req, res) => {
         sortedColumns.push(archiveColumn);
       }
     }
+
+    // Cache the columns (TTL: 5 minutes)
+    cacheService.set(cacheKey, sortedColumns);
 
     res.json({
       success: true,
@@ -312,6 +331,9 @@ const createColumn = async (req, res) => {
     });
 
     await column.save();
+
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
 
     // Populate the createdBy field
     await column.populate("createdBy", "name email avatar color");
@@ -409,6 +431,9 @@ const updateColumn = async (req, res) => {
 
     await column.save();
 
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
+
     // Populate the createdBy field
     await column.populate("createdBy", "name email avatar color");
 
@@ -505,6 +530,9 @@ const deleteColumn = async (req, res) => {
     // Delete the column (only possible if no cards exist)
     await Column.findByIdAndDelete(columnId);
 
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
+
     res.json({
       success: true,
       message: "Column deleted successfully",
@@ -576,6 +604,9 @@ const reorderColumns = async (req, res) => {
         { position: writeIndex }
       );
     }
+
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
 
     res.json({
       success: true,

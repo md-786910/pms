@@ -88,20 +88,35 @@ const getCards = async (req, res) => {
       .populate("archivedBy", "name email avatar color")
       .sort({ order: 1, updatedAt: -1 });
 
-    // Sort comments in each card with latest at top
-    cards.forEach((card) => {
-      if (card.comments && card.comments.length > 0) {
-        card.comments.sort((a, b) => {
+    // Fetch all columns for this project to create status -> column name mapping
+    const columns = await Column.find({ project: projectId }).select("status name");
+    const statusToLabelMap = {};
+    columns.forEach((col) => {
+      statusToLabelMap[col.status] = col.name;
+    });
+
+    // Sort comments in each card with latest at top and add statusLabel
+    const cardsWithLabels = cards.map((card) => {
+      const cardObj = card.toObject();
+
+      // Add statusLabel from column mapping
+      cardObj.statusLabel = statusToLabelMap[card.status] || card.status;
+
+      // Sort comments
+      if (cardObj.comments && cardObj.comments.length > 0) {
+        cardObj.comments.sort((a, b) => {
           const aTime = a.updatedAt || a.timestamp || a.createdAt;
           const bTime = b.updatedAt || b.timestamp || b.createdAt;
           return new Date(bTime) - new Date(aTime);
         });
       }
+
+      return cardObj;
     });
 
     res.json({
       success: true,
-      cards,
+      cards: cardsWithLabels,
     });
   } catch (error) {
     console.error("Get cards error:", error);
@@ -158,9 +173,17 @@ const getCard = async (req, res) => {
       });
     }
 
+    // Add statusLabel from column
+    const cardObj = card.toObject();
+    const column = await Column.findOne({
+      project: card.project._id,
+      status: card.status,
+    }).select("name");
+    cardObj.statusLabel = column ? column.name : card.status;
+
     res.json({
       success: true,
-      card,
+      card: cardObj,
     });
   } catch (error) {
     console.error("Get card error:", error);
