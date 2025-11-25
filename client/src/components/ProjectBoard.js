@@ -1575,7 +1575,7 @@ const ProjectBoard = () => {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scroll-smooth"
+            className="h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
           >
             <div className="flex gap-4 lg:gap-6 min-w-max h-full">
               {columns.map((column) => {
