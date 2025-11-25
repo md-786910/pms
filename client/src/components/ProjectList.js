@@ -77,8 +77,12 @@ const ProjectList = () => {
 
   const handleModalClose = () => {
     setShowCreateModal(false);
-    // Force refresh projects after modal closes
-    console.log("🔄 ProjectList: Refreshing projects after modal close");
+  };
+
+  const handleProjectCreated = () => {
+    setShowCreateModal(false);
+    // Only refresh projects after successful creation
+    console.log("🔄 ProjectList: Refreshing projects after project creation");
     fetchProjects();
   };
 
@@ -266,7 +270,12 @@ const ProjectList = () => {
       )}
 
       {/* Create Project Modal */}
-      {showCreateModal && <CreateProjectModal onClose={handleModalClose} />}
+      {showCreateModal && (
+        <CreateProjectModal
+          onClose={handleModalClose}
+          onSuccess={handleProjectCreated}
+        />
+      )}
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { useNotification } from "../contexts/NotificationContext";
 import { projectAPI } from "../utils/api";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 
-const CreateProjectModal = ({ onClose }) => {
+const CreateProjectModal = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -146,8 +146,12 @@ const CreateProjectModal = ({ onClose }) => {
         "✅ CreateProjectModal: Project creation completed, closing modal"
       );
 
-      // Close the modal immediately after successful creation
-      onClose();
+      // Call onSuccess to close modal and refresh projects list
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error("Create project error:", error);
       showToast(error?.response?.data?.message, "error");

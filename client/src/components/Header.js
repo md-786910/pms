@@ -62,8 +62,12 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   }, []);
   const handleModalClose = () => {
     setShowCreateModal(false);
-    // Force refresh projects after modal closes
-    console.log("🔄 ProjectList: Refreshing projects after modal close");
+  };
+
+  const handleProjectCreated = () => {
+    setShowCreateModal(false);
+    // Only refresh projects after successful creation
+    console.log("🔄 Header: Refreshing projects after project creation");
     fetchProjects();
   };
 
@@ -108,7 +112,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
             {/* Create Project Modal */}
             {showCreateModal && (
-              <CreateProjectModal onClose={handleModalClose} />
+              <CreateProjectModal
+                onClose={handleModalClose}
+                onSuccess={handleProjectCreated}
+              />
             )}
           </div>
 
