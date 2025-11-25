@@ -12,6 +12,7 @@ const {
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
 const { ensureArchiveColumn } = require("./columnController");
 const { getIO } = require("../config/socket");
+const cacheService = require("../services/cacheService");
 
 // Helper function to get status label from column
 const getStatusLabel = async (projectId, statusValue) => {
@@ -662,8 +663,11 @@ const archiveCard = async (req, res) => {
       });
     }
 
-    // Ensure archive column exists
+    // Ensure archive column exists (may create new Archive column)
     await ensureArchiveColumn(card.project, userId);
+
+    // Invalidate columns cache since Archive column might be newly created
+    cacheService.invalidateColumns(card.project);
 
     // Store original status before archiving
     card.originalStatus = card.status;
