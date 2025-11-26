@@ -120,6 +120,26 @@ const formidableOptions = {
   },
 };
 
+// Helper function to extract meaningful error message
+const getUploadErrorMessage = (err) => {
+  let errorMessage = "File upload failed";
+
+  if (err.message) {
+    errorMessage = err.message;
+  }
+
+  // Handle specific formidable error codes
+  if (err.code === "LIMIT_FILE_SIZE" || err.message?.includes("maxFileSize")) {
+    errorMessage = "File size exceeds the maximum limit of 25MB";
+  } else if (err.code === "LIMIT_FILE_COUNT" || err.message?.includes("maxFiles")) {
+    errorMessage = "Maximum 5 files can be uploaded at once";
+  } else if (err.message?.includes("not allowed") || err.message?.includes("File type")) {
+    errorMessage = err.message;
+  }
+
+  return errorMessage;
+};
+
 // Middleware to handle file uploads
 const uploadMiddleware = (req, res, next) => {
   const form = formidable(formidableOptions);
@@ -129,7 +149,7 @@ const uploadMiddleware = (req, res, next) => {
       console.error("Formidable parse error:", err);
       return res.status(400).json({
         success: false,
-        message: err.message || "File upload failed",
+        message: getUploadErrorMessage(err),
       });
     }
 
@@ -191,7 +211,7 @@ const uploadSingleMiddleware = (req, res, next) => {
       console.error("Formidable parse error:", err);
       return res.status(400).json({
         success: false,
-        message: err.message || "File upload failed",
+        message: getUploadErrorMessage(err),
       });
     }
 

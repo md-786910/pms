@@ -255,7 +255,7 @@ const EditProjectModal = ({ project, onClose }) => {
   const handleFileUpload = async (files) => {
     const fileArray = Array.from(files);
     const validFiles = fileArray.filter((file) => {
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 25 * 1024 * 1024; // 25MB
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
@@ -273,7 +273,7 @@ const EditProjectModal = ({ project, onClose }) => {
 
       if (file.size > maxSize) {
         showToast(
-          `File ${file.name} is too large. Maximum size is 10MB.`,
+          `File ${file.name} is too large. Maximum size is 25MB.`,
           "error"
         );
         return false;
@@ -697,7 +697,7 @@ const EditProjectModal = ({ project, onClose }) => {
                     </button>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Supports images, PDFs, documents (max 10MB each)
+                    Supports images, PDFs, documents (max 25MB each)
                   </p>
                   <input
                     ref={fileInputRef}

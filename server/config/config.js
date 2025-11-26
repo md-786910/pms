@@ -23,6 +23,6 @@ module.exports = {
   CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
 
   // File Upload
-  MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE) || 10485760, // 10MB
+  MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE) || 26214400, // 25MB
   UPLOAD_PATH: process.env.UPLOAD_PATH || "./uploads",
 };

@@ -425,10 +425,10 @@ const CardModal = ({
         return;
       }
 
-      // Check file sizes (max 10MB each)
+      // Check file sizes (max 25MB each)
       for (const file of files) {
-        if (file.size > 10 * 1024 * 1024) {
-          showToast(`File "${file.name}" size must be less than 10MB`, "error");
+        if (file.size > 25 * 1024 * 1024) {
+          showToast(`File "${file.name}" size must be less than 25MB`, "error");
           return;
         }
       }
@@ -2540,7 +2540,7 @@ const CardModal = ({
                         </label>
                       </div>
                       <p className="text-xs text-gray-500 text-center">
-                        Max 5 files, 10MB each. Supports images and documents.
+                        Max 5 files, 25MB each. Supports images and documents.
                       </p>
                     </div>
 
