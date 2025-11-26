@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   DndContext,
@@ -49,126 +55,124 @@ import {
 } from "../utils/statusColors";
 
 // Horizontal Scroll Position Indicator Component (Jira-style)
-const HorizontalScrollIndicator = React.memo(({
-  scrollLeft,
-  scrollWidth,
-  clientWidth,
-  onScroll,
-}) => {
-  const isScrollable = scrollWidth > clientWidth;
-  const indicatorRef = useRef(null);
-  const isDraggingRef = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
+const HorizontalScrollIndicator = React.memo(
+  ({ scrollLeft, scrollWidth, clientWidth, onScroll }) => {
+    console.log({ scrollLeft, scrollWidth, clientWidth });
+    const isScrollable = scrollWidth > clientWidth;
+    const indicatorRef = useRef(null);
+    const isDraggingRef = useRef(false);
+    const [isDragging, setIsDragging] = useState(false);
 
-  if (!isScrollable) return null;
+    if (!isScrollable) return null;
 
-  const indicatorWidth = 120; // Width of the minimap
-  const totalLines = 8; // Number of vertical lines
-  const viewportRatio = clientWidth / scrollWidth;
-  const thumbWidth = Math.max(viewportRatio * indicatorWidth, 28);
-  const maxScroll = scrollWidth - clientWidth;
-  const scrollRatio = maxScroll > 0 ? scrollLeft / maxScroll : 0;
-  const thumbLeft = scrollRatio * (indicatorWidth - thumbWidth);
+    const indicatorWidth = 120; // Width of the minimap
+    const totalLines = 8; // Number of vertical lines
+    const viewportRatio = clientWidth / scrollWidth;
+    const thumbWidth = Math.max(viewportRatio * indicatorWidth, 28);
+    const maxScroll = scrollWidth - clientWidth;
+    const scrollRatio = maxScroll > 0 ? scrollLeft / maxScroll : 0;
+    const thumbLeft = scrollRatio * (indicatorWidth - thumbWidth);
 
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    document.body.style.cursor = "grabbing";
-    document.body.style.userSelect = "none";
+    const handleMouseDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
 
-    const startX = e.clientX;
-    const startThumbLeft = thumbLeft;
+      const startX = e.clientX;
+      const startThumbLeft = thumbLeft;
 
-    const handleMouseMove = (moveEvent) => {
-      if (!isDraggingRef.current) return;
+      const handleMouseMove = (moveEvent) => {
+        if (!isDraggingRef.current) return;
 
-      const deltaX = moveEvent.clientX - startX;
-      const newThumbLeft = Math.max(
+        const deltaX = moveEvent.clientX - startX;
+        const newThumbLeft = Math.max(
+          0,
+          Math.min(startThumbLeft + deltaX, indicatorWidth - thumbWidth)
+        );
+        const newScrollRatio =
+          indicatorWidth - thumbWidth > 0
+            ? newThumbLeft / (indicatorWidth - thumbWidth)
+            : 0;
+        const newScrollLeft = newScrollRatio * maxScroll;
+
+        if (onScroll) {
+          onScroll(newScrollLeft, false);
+        }
+      };
+
+      const handleMouseUp = () => {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    };
+
+    // Handle click on the track to jump to position
+    const handleTrackClick = (e) => {
+      // Don't trigger if clicking on thumb
+      if (e.target.classList.contains("scroll-thumb")) return;
+
+      const rect = indicatorRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left - 10;
+      const clickPosition = Math.max(
         0,
-        Math.min(startThumbLeft + deltaX, indicatorWidth - thumbWidth)
+        Math.min(relativeX - thumbWidth / 2, indicatorWidth - thumbWidth)
       );
       const newScrollRatio =
         indicatorWidth - thumbWidth > 0
-          ? newThumbLeft / (indicatorWidth - thumbWidth)
+          ? clickPosition / (indicatorWidth - thumbWidth)
           : 0;
       const newScrollLeft = newScrollRatio * maxScroll;
 
       if (onScroll) {
-        onScroll(newScrollLeft, false);
+        onScroll(newScrollLeft, true);
       }
     };
 
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
-      setIsDragging(false);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
-
-  // Handle click on the track to jump to position
-  const handleTrackClick = (e) => {
-    // Don't trigger if clicking on thumb
-    if (e.target.classList.contains("scroll-thumb")) return;
-
-    const rect = indicatorRef.current.getBoundingClientRect();
-    const relativeX = e.clientX - rect.left - 10;
-    const clickPosition = Math.max(
-      0,
-      Math.min(relativeX - thumbWidth / 2, indicatorWidth - thumbWidth)
-    );
-    const newScrollRatio =
-      indicatorWidth - thumbWidth > 0
-        ? clickPosition / (indicatorWidth - thumbWidth)
-        : 0;
-    const newScrollLeft = newScrollRatio * maxScroll;
-
-    if (onScroll) {
-      onScroll(newScrollLeft, true);
-    }
-  };
-
-  return (
-    <div className="absolute right-5 bottom-6 z-20">
-      <div
-        ref={indicatorRef}
-        onClick={handleTrackClick}
-        className="relative bg-white rounded-[14px] shadow-lg p-2.5 cursor-pointer"
-        style={{
-          width: `${indicatorWidth + 20}px`,
-          height: "44px",
-          boxShadow:
-            "0 2px 8px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)",
-        }}
-      >
-        {/* Content lines representation (vertical bars) */}
-        <div className="flex gap-[4px] h-full w-full">
-          {Array.from({ length: totalLines }).map((_, i) => (
-            <div key={i} className="flex-1 bg-gray-200 rounded-[2px]" />
-          ))}
-        </div>
-
-        {/* Viewport indicator (highlighted section) - draggable thumb */}
+    return (
+      <div className="absolute right-5 bottom-6 z-20">
         <div
-          onMouseDown={handleMouseDown}
-          className="scroll-thumb absolute top-2 bottom-2 border-2 border-blue-500 rounded-md bg-transparent cursor-grab active:cursor-grabbing"
+          ref={indicatorRef}
+          onClick={handleTrackClick}
+          className="relative bg-white rounded-[14px] shadow-lg p-2.5 cursor-pointer"
           style={{
-            left: `${thumbLeft + 10}px`,
-            width: `${thumbWidth}px`,
-            transition: isDragging ? "none" : "left 0.1s ease-out",
+            width: `${indicatorWidth + 20}px`,
+            height: "44px",
+            boxShadow:
+              "0 2px 8px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08)",
           }}
-        />
+        >
+          {/* Content lines representation (vertical bars) */}
+          <div className="flex gap-[4px] h-full w-full">
+            {Array.from({ length: totalLines }).map((_, i) => (
+              <div key={i} className="flex-1 bg-gray-200 rounded-[2px]" />
+            ))}
+          </div>
+
+          {/* Viewport indicator (highlighted section) - draggable thumb */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="scroll-thumb absolute top-2 bottom-2 border-2 border-blue-500 rounded-md bg-transparent cursor-grab active:cursor-grabbing"
+            style={{
+              left: `${thumbLeft + 10}px`,
+              width: `${thumbWidth}px`,
+              transition: isDragging ? "none" : "left 0.1s ease-out",
+            }}
+          />
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const ProjectBoard = () => {
   const { id, projectId, cardId } = useParams();
@@ -605,33 +609,36 @@ const ProjectBoard = () => {
     );
   }, []);
 
-  const handleCardDeleted = useCallback((cardId) => {
-    // Update the card to be archived instead of removing it
-    setCards((prev) =>
-      prev.map((card) =>
-        card._id === cardId
-          ? { ...card, isArchived: true, status: "archive" }
-          : card
-      )
-    );
-    setFilteredCards((prev) =>
-      prev.map((card) =>
-        card._id === cardId
-          ? { ...card, isArchived: true, status: "archive" }
-          : card
-      )
-    );
-    showToast("Card archived successfully!", "success");
-    // Close modal if the archived card was selected
-    setSelectedCard((prev) => {
-      if (prev && prev._id === cardId) {
-        setShowCardModal(false);
-        navigate(`/project/${actualProjectId}`);
-        return null;
-      }
-      return prev;
-    });
-  }, [actualProjectId, navigate, showToast]);
+  const handleCardDeleted = useCallback(
+    (cardId) => {
+      // Update the card to be archived instead of removing it
+      setCards((prev) =>
+        prev.map((card) =>
+          card._id === cardId
+            ? { ...card, isArchived: true, status: "archive" }
+            : card
+        )
+      );
+      setFilteredCards((prev) =>
+        prev.map((card) =>
+          card._id === cardId
+            ? { ...card, isArchived: true, status: "archive" }
+            : card
+        )
+      );
+      showToast("Card archived successfully!", "success");
+      // Close modal if the archived card was selected
+      setSelectedCard((prev) => {
+        if (prev && prev._id === cardId) {
+          setShowCardModal(false);
+          navigate(`/project/${actualProjectId}`);
+          return null;
+        }
+        return prev;
+      });
+    },
+    [actualProjectId, navigate, showToast]
+  );
 
   const handleCardPermanentlyDeleted = async (cardId) => {
     try {
@@ -682,28 +689,31 @@ const ProjectBoard = () => {
     }
   }, []);
 
-  const handleStatusChange = useCallback(async (cardId, newStatus) => {
-    try {
-      await cardAPI.updateStatus(cardId, { status: newStatus });
-      setCards((prev) =>
-        prev.map((card) =>
-          card._id === cardId ? { ...card, status: newStatus } : card
-        )
-      );
-      setFilteredCards((prev) =>
-        prev.map((card) =>
-          card._id === cardId ? { ...card, status: newStatus } : card
-        )
-      );
-      // Update selected card if it's the one being updated
-      setSelectedCard((prev) =>
-        prev && prev._id === cardId ? { ...prev, status: newStatus } : prev
-      );
-    } catch (error) {
-      console.error("Error updating card status:", error);
-      showToast("Failed to update card status", "error");
-    }
-  }, [showToast]);
+  const handleStatusChange = useCallback(
+    async (cardId, newStatus) => {
+      try {
+        await cardAPI.updateStatus(cardId, { status: newStatus });
+        setCards((prev) =>
+          prev.map((card) =>
+            card._id === cardId ? { ...card, status: newStatus } : card
+          )
+        );
+        setFilteredCards((prev) =>
+          prev.map((card) =>
+            card._id === cardId ? { ...card, status: newStatus } : card
+          )
+        );
+        // Update selected card if it's the one being updated
+        setSelectedCard((prev) =>
+          prev && prev._id === cardId ? { ...prev, status: newStatus } : prev
+        );
+      } catch (error) {
+        console.error("Error updating card status:", error);
+        showToast("Failed to update card status", "error");
+      }
+    },
+    [showToast]
+  );
 
   // Handle card drag end (for drag-and-drop)
   const handleCardDragEnd = async (event) => {
@@ -889,12 +899,15 @@ const ProjectBoard = () => {
   };
 
   // Card modal handlers
-  const handleCardClick = useCallback((card) => {
-    setSelectedCard(card);
-    setShowCardModal(true);
-    // Update URL to include card ID
-    navigate(`/project/${actualProjectId}/card/${card._id}`);
-  }, [actualProjectId, navigate]);
+  const handleCardClick = useCallback(
+    (card) => {
+      setSelectedCard(card);
+      setShowCardModal(true);
+      // Update URL to include card ID
+      navigate(`/project/${actualProjectId}/card/${card._id}`);
+    },
+    [actualProjectId, navigate]
+  );
 
   const handleCardModalClose = () => {
     setShowCardModal(false);
@@ -1273,7 +1286,7 @@ const ProjectBoard = () => {
       </div>
     );
   }
-
+  console.log({ horizontalScrollState });
   return (
     <div className="h-full flex flex-col max-h-full">
       {/* Compact Header */}
@@ -1686,9 +1699,9 @@ const ProjectBoard = () => {
 
         {/* Jira-style Horizontal Scroll Indicator */}
         <HorizontalScrollIndicator
-          scrollLeft={horizontalScrollState.scrollLeft}
-          scrollWidth={horizontalScrollState.scrollWidth}
-          clientWidth={horizontalScrollState.clientWidth}
+          scrollLeft={horizontalScrollState.scrollLeft || 16}
+          scrollWidth={horizontalScrollState.scrollWidth || 1695}
+          clientWidth={horizontalScrollState.clientWidth || 1001}
           onScroll={(newScrollLeft, smooth = false) => {
             if (scrollContainerRef.current) {
               if (smooth) {
