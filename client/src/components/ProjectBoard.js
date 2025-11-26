@@ -57,7 +57,6 @@ import {
 // Horizontal Scroll Position Indicator Component (Jira-style)
 const HorizontalScrollIndicator = React.memo(
   ({ scrollLeft, scrollWidth, clientWidth, onScroll }) => {
-    console.log({ scrollLeft, scrollWidth, clientWidth });
     const isScrollable = scrollWidth > clientWidth;
     const indicatorRef = useRef(null);
     const isDraggingRef = useRef(false);
@@ -1286,7 +1285,6 @@ const ProjectBoard = () => {
       </div>
     );
   }
-  console.log({ horizontalScrollState });
   return (
     <div className="h-full flex flex-col max-h-full">
       {/* Compact Header */}
@@ -1595,7 +1593,7 @@ const ProjectBoard = () => {
       </div>
 
       {/* Board */}
-      <div className="relative flex-1 overflow-hidden min-h-0">
+      <div className="relative border-4 rounded-t-xl flex-1 overflow-hidden min-h-0">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1609,9 +1607,9 @@ const ProjectBoard = () => {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="h-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+            className="h-full overflow-x-auto rounded-lg  pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
           >
-            <div className="flex gap-4 lg:gap-6 min-w-max h-full">
+            <div className="flex gap-4 rounded-lg  lg:gap-6 min-w-max h-full">
               {columns.map((column) => {
                 const config = getColumnConfig(column);
                 const colKey = column._id || column.status;
@@ -1619,7 +1617,7 @@ const ProjectBoard = () => {
                 return (
                   <div
                     key={colKey}
-                    className={`w-80 flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                    className={`w-80  flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
                       draggingColumnId === colKey
                         ? "opacity-100 scale-[0.98]"
                         : "opacity-100"
