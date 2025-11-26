@@ -12,9 +12,9 @@ if (!fs.existsSync(uploadDir)) {
 const formidableOptions = {
   uploadDir: uploadDir,
   keepExtensions: true,
-  maxFileSize: 10 * 1024 * 1024, // 10MB limit
+  maxFileSize: 25 * 1024 * 1024, // 25MB limit
   maxFields: 10,
-  maxFieldsSize: 20 * 1024 * 1024, // 20MB total
+  maxFieldsSize: 25 * 1024 * 1024, // 25MB total
   maxFiles: 5, // Maximum 5 files per upload
   filter: function ({ name, originalFilename, mimetype }) {
     // Allow images, documents, certificates, and other common file types
