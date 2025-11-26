@@ -103,6 +103,10 @@ export const projectAPI = {
   createProject: (projectData) => api.post("/projects", projectData),
   updateProject: (id, projectData) => api.put(`/projects/${id}`, projectData),
   deleteProject: (id) => api.delete(`/projects/${id}`),
+  // Archive functionality
+  getArchivedProjects: () => api.get("/projects/archived"),
+  restoreProject: (id) => api.put(`/projects/${id}/restore`),
+  permanentDeleteProject: (id) => api.delete(`/projects/${id}/permanent`),
   addMember: (id, memberData) =>
     api.post(`/projects/${id}/members`, memberData),
   removeMember: (id, userId) => api.delete(`/projects/${id}/members/${userId}`),

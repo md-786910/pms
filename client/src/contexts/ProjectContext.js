@@ -14,8 +14,10 @@ export const useProject = () => {
 
 export const ProjectProvider = ({ children }) => {
   const [allProjects, setAllProjects] = useState([]);
+  const [archivedProjects, setArchivedProjects] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [archiveLoading, setArchiveLoading] = useState(false);
   const { user } = useUser();
 
   useEffect(() => {
@@ -176,6 +178,50 @@ export const ProjectProvider = ({ children }) => {
     }
   };
 
+  // Archive functionality
+  const fetchArchivedProjects = async () => {
+    try {
+      setArchiveLoading(true);
+      const response = await projectAPI.getArchivedProjects();
+      const projects = response.data.projects || [];
+      setArchivedProjects(projects);
+      return projects;
+    } catch (error) {
+      console.error("Error fetching archived projects:", error);
+      setArchivedProjects([]);
+      throw error;
+    } finally {
+      setArchiveLoading(false);
+    }
+  };
+
+  const restoreProject = async (id) => {
+    try {
+      const response = await projectAPI.restoreProject(id);
+      // Remove from archived projects
+      setArchivedProjects((prev) => prev.filter((p) => p._id !== id));
+      // Add to active projects
+      if (response.data.project) {
+        setAllProjects((prev) => [...prev, response.data.project]);
+      }
+      return response.data;
+    } catch (error) {
+      console.error("Error restoring project:", error);
+      throw error;
+    }
+  };
+
+  const permanentDeleteProject = async (id) => {
+    try {
+      await projectAPI.permanentDeleteProject(id);
+      // Remove from archived projects
+      setArchivedProjects((prev) => prev.filter((p) => p._id !== id));
+    } catch (error) {
+      console.error("Error permanently deleting project:", error);
+      throw error;
+    }
+  };
+
   const value = {
     projects,
     currentProject,
@@ -188,6 +234,12 @@ export const ProjectProvider = ({ children }) => {
     addProjectMember,
     removeProjectMember,
     setCurrentProject,
+    // Archive functionality
+    archivedProjects,
+    archiveLoading,
+    fetchArchivedProjects,
+    restoreProject,
+    permanentDeleteProject,
   };
 
   return (

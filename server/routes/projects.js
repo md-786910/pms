@@ -8,6 +8,9 @@ const {
   deleteProject,
   addMember,
   removeMember,
+  getArchivedProjects,
+  restoreProject,
+  permanentDeleteProject,
 } = require("../controllers/projectController");
 const { auth, projectMemberAuth, adminAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
@@ -64,6 +67,21 @@ router.post(
     }
   }
 );
+
+// @route   GET /api/projects/archived
+// @desc    Get all archived projects
+// @access  Private (Admin only)
+router.get("/archived", adminAuth, getArchivedProjects);
+
+// @route   PUT /api/projects/:id/restore
+// @desc    Restore archived project
+// @access  Private (Admin only)
+router.put("/:id/restore", adminAuth, restoreProject);
+
+// @route   DELETE /api/projects/:id/permanent
+// @desc    Permanently delete project
+// @access  Private (Admin only)
+router.delete("/:id/permanent", adminAuth, permanentDeleteProject);
 
 // @route   POST /api/projects/:id/upload
 // @desc    Upload files for a project

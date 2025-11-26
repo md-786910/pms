@@ -145,16 +145,17 @@ const getProjects = async (req, res) => {
     let projects;
 
     if (userRole === "admin") {
-      // Admin can see all projects
-      projects = await Project.find({ status: "active" })
+      // Admin can see all active (non-archived) projects
+      projects = await Project.find({ status: "active", isArchived: { $ne: true } })
         .populate("owner", "name email avatar color")
         .populate("members.user", "name email avatar color")
         .sort({ createdAt: -1 });
     } else {
-      // Members can only see projects they're part of
+      // Members can only see projects they're part of (non-archived)
       projects = await Project.find({
         $or: [{ owner: userId }, { "members.user": userId }],
         status: "active",
+        isArchived: { $ne: true },
       })
         .populate("owner", "name email avatar color")
         .populate("members.user", "name email avatar color")
@@ -696,7 +697,7 @@ const updateProject = async (req, res) => {
 };
 
 // @route   DELETE /api/projects/:id
-// @desc    Delete project
+// @desc    Archive project (soft delete)
 // @access  Private
 const deleteProject = async (req, res) => {
   try {
@@ -719,7 +720,163 @@ const deleteProject = async (req, res) => {
     if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: "Access denied. Only project owner can delete project.",
+        message: "Access denied. Only project owner or admin can archive project.",
+      });
+    }
+
+    // Soft delete - archive the project instead of permanently deleting
+    project.isArchived = true;
+    project.archivedAt = new Date();
+    project.archivedBy = userId;
+    await project.save();
+
+    // Create activity for archive
+    await createActivityAndNotify(
+      projectId,
+      userId,
+      "project_archived",
+      `Archived project "${project.name}"`,
+      { projectName: project.name }
+    );
+
+    res.json({
+      success: true,
+      message: "Project archived successfully. You can restore it from the Archive section.",
+    });
+  } catch (error) {
+    console.error("Archive project error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while archiving project",
+    });
+  }
+};
+
+// @route   GET /api/projects/archived
+// @desc    Get all archived projects
+// @access  Private (Admin only)
+const getArchivedProjects = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    // Only admin can see archived projects
+    if (userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only admins can view archived projects.",
+      });
+    }
+
+    const projects = await Project.find({ isArchived: true })
+      .populate("owner", "name email avatar color")
+      .populate("members.user", "name email avatar color")
+      .populate("archivedBy", "name email avatar color")
+      .sort({ archivedAt: -1 });
+
+    res.json({
+      success: true,
+      projects,
+    });
+  } catch (error) {
+    console.error("Get archived projects error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching archived projects",
+    });
+  }
+};
+
+// @route   PUT /api/projects/:id/restore
+// @desc    Restore archived project
+// @access  Private (Admin only)
+const restoreProject = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    // Only admin can restore projects
+    if (userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only admins can restore archived projects.",
+      });
+    }
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    if (!project.isArchived) {
+      return res.status(400).json({
+        success: false,
+        message: "Project is not archived",
+      });
+    }
+
+    // Restore the project
+    project.isArchived = false;
+    project.archivedAt = null;
+    project.archivedBy = null;
+    project.status = "active";
+    await project.save();
+
+    // Create activity for restore
+    await createActivityAndNotify(
+      projectId,
+      userId,
+      "project_restored",
+      `Restored project "${project.name}" from archive`,
+      { projectName: project.name }
+    );
+
+    // Populate the project with user details
+    await project.populate("owner", "name email avatar color");
+    await project.populate("members.user", "name email avatar color");
+
+    res.json({
+      success: true,
+      message: "Project restored successfully",
+      project,
+    });
+  } catch (error) {
+    console.error("Restore project error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while restoring project",
+    });
+  }
+};
+
+// @route   DELETE /api/projects/:id/permanent
+// @desc    Permanently delete project
+// @access  Private (Admin only)
+const permanentDeleteProject = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    // Only admin can permanently delete projects
+    if (userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only admins can permanently delete projects.",
+      });
+    }
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
       });
     }
 
@@ -729,19 +886,18 @@ const deleteProject = async (req, res) => {
     } = require("../services/projectCleanupService");
     scheduleProjectCleanup(projectId);
 
-    // Delete the project immediately (synchronous)
+    // Delete the project permanently
     await Project.findByIdAndDelete(projectId);
 
     res.json({
       success: true,
-      message:
-        "Project deleted successfully. Related data cleanup is in progress.",
+      message: "Project permanently deleted. Related data cleanup is in progress.",
     });
   } catch (error) {
-    console.error("Delete project error:", error);
+    console.error("Permanent delete project error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error while deleting project",
+      message: "Server error while permanently deleting project",
     });
   }
 };
@@ -1111,4 +1267,7 @@ module.exports = {
   deleteProject,
   addMember,
   removeMember,
+  getArchivedProjects,
+  restoreProject,
+  permanentDeleteProject,
 };

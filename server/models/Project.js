@@ -131,6 +131,20 @@ const projectSchema = new mongoose.Schema(
       enum: ["active", "archived", "completed"],
       default: "active",
     },
+    // Soft delete (archive) fields
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    archivedAt: {
+      type: Date,
+      default: null,
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     color: {
       type: String,
       default: "blue",
@@ -155,5 +169,6 @@ const projectSchema = new mongoose.Schema(
 projectSchema.index({ owner: 1 });
 projectSchema.index({ "members.user": 1 });
 projectSchema.index({ status: 1 });
+projectSchema.index({ isArchived: 1 });
 
 module.exports = mongoose.model("Project", projectSchema);
