@@ -12,6 +12,7 @@ const {
   toggleComplete,
   getCardsDueToday,
   getCardsBackDate,
+  getCardsUpcoming,
   assignUser,
   unassignUser,
   addComment,
@@ -42,6 +43,11 @@ router.get("/due-today", getCardsDueToday);
 // @desc    Get cards assigned to current user that are past due (before today)
 // @access  Private
 router.get("/back-date", getCardsBackDate);
+
+// @route   GET /api/cards/upcoming
+// @desc    Get cards assigned to current user that are due in the future
+// @access  Private
+router.get("/upcoming", getCardsUpcoming);
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project

@@ -160,6 +160,7 @@ export const cardAPI = {
   getCard: (id) => api.get(`/cards/${id}`),
   getCardsDueToday: () => api.get("/cards/due-today"),
   getCardsBackDate: () => api.get("/cards/back-date"),
+  getCardsUpcoming: () => api.get("/cards/upcoming"),
   createCard: (cardData) => api.post("/cards", cardData),
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
   archiveCard: (id) => api.put(`/cards/${id}/archive`),
