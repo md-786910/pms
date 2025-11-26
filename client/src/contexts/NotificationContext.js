@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { notificationAPI } from "../utils/api";
+import { useSocket } from "./SocketContext";
 
 const NotificationContext = createContext();
 
@@ -16,10 +17,54 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [toasts, setToasts] = useState([]);
+  const { socket } = useSocket();
+
+  const showToast = useCallback((message, type = "info") => {
+    const id = Date.now().toString();
+    const toast = { id, message, type };
+    setToasts((prev) => [...prev, toast]);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (data) => {
+      console.log("📬 New notification received:", data);
+      const newNotification = data.notification;
+      
+      // Add new notification to the beginning of the list
+      setNotifications((prev) => {
+        // Check if notification already exists to avoid duplicates
+        const exists = prev.some((n) => n._id === newNotification._id);
+        if (exists) {
+          return prev;
+        }
+        return [newNotification, ...prev];
+      });
+
+      // Show toast notification
+      showToast(
+        newNotification.message || newNotification.title || "New notification",
+        "info"
+      );
+    };
+
+    socket.on("new-notification", handleNewNotification);
+
+    return () => {
+      socket.off("new-notification", handleNewNotification);
+    };
+  }, [socket, showToast]);
 
   const fetchNotifications = async () => {
     try {
@@ -73,16 +118,6 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  const showToast = (message, type = "info") => {
-    const id = Date.now().toString();
-    const toast = { id, message, type };
-    setToasts((prev) => [...prev, toast]);
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
-  };
 
   const removeToast = (id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

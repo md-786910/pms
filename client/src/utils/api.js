@@ -158,12 +158,18 @@ export const cardAPI = {
     return api.get(`/projects/${projectId}/cards${params}`);
   },
   getCard: (id) => api.get(`/cards/${id}`),
+  getCardsDueToday: () => api.get("/cards/due-today"),
+  getCardsBackDate: () => api.get("/cards/back-date"),
+  getCardsUpcoming: () => api.get("/cards/upcoming"),
   createCard: (cardData) => api.post("/cards", cardData),
   updateCard: (id, cardData) => api.put(`/cards/${id}`, cardData),
   archiveCard: (id) => api.put(`/cards/${id}/archive`),
   restoreCard: (id) => api.put(`/cards/${id}/restore`),
   deleteCard: (id) => api.delete(`/cards/${id}`),
+  markAsRead: (id) => api.put(`/cards/${id}/read`),
   updateStatus: (id, status) => api.put(`/cards/${id}/status`, { status }),
+  reorderCards: (cardOrders) => api.put(`/cards/reorder`, { cardOrders }),
+  toggleComplete: (id) => api.put(`/cards/${id}/complete`),
   moveAllCards: (projectId, sourceStatus, targetStatus) =>
     api.post(`/projects/${projectId}/cards/move-all`, {
       sourceStatus,

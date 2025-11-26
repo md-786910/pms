@@ -360,10 +360,11 @@ const AdminPanel = () => {
       {/* Modals */}
       {showCreateModal && (
         <CreateProjectModal
-          onClose={() => {
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
             setShowCreateModal(false);
-            // Force refresh projects after modal closes to ensure latest data
-            console.log("🔄 AdminPanel: Refreshing projects after modal close");
+            // Only refresh projects after successful creation
+            console.log("🔄 AdminPanel: Refreshing projects after project creation");
             fetchProjects();
           }}
         />

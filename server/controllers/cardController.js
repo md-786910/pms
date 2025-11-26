@@ -12,6 +12,7 @@ const {
 const { deleteFile, getFilePathFromUrl } = require("../middleware/upload");
 const { ensureArchiveColumn } = require("./columnController");
 const { getIO } = require("../config/socket");
+const cacheService = require("../services/cacheService");
 
 // Helper function to get status label from column
 const getStatusLabel = async (projectId, statusValue) => {
@@ -84,23 +85,39 @@ const getCards = async (req, res) => {
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
+      .populate("readBy.user", "name email avatar color")
       .populate("archivedBy", "name email avatar color")
-      .sort({ updatedAt: -1 });
+      .sort({ order: 1, updatedAt: -1 });
 
-    // Sort comments in each card with latest at top
-    cards.forEach((card) => {
-      if (card.comments && card.comments.length > 0) {
-        card.comments.sort((a, b) => {
+    // Fetch all columns for this project to create status -> column name mapping
+    const columns = await Column.find({ project: projectId }).select("status name");
+    const statusToLabelMap = {};
+    columns.forEach((col) => {
+      statusToLabelMap[col.status] = col.name;
+    });
+
+    // Sort comments in each card with latest at top and add statusLabel
+    const cardsWithLabels = cards.map((card) => {
+      const cardObj = card.toObject();
+
+      // Add statusLabel from column mapping
+      cardObj.statusLabel = statusToLabelMap[card.status] || card.status;
+
+      // Sort comments
+      if (cardObj.comments && cardObj.comments.length > 0) {
+        cardObj.comments.sort((a, b) => {
           const aTime = a.updatedAt || a.timestamp || a.createdAt;
           const bTime = b.updatedAt || b.timestamp || b.createdAt;
           return new Date(bTime) - new Date(aTime);
         });
       }
+
+      return cardObj;
     });
 
     res.json({
       success: true,
-      cards,
+      cards: cardsWithLabels,
     });
   } catch (error) {
     console.error("Get cards error:", error);
@@ -124,6 +141,7 @@ const getCard = async (req, res) => {
       .populate("assignees", "name email avatar color")
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
+      .populate("readBy.user", "name email avatar color")
       .populate("project", "name");
 
     if (!card) {
@@ -156,9 +174,17 @@ const getCard = async (req, res) => {
       });
     }
 
+    // Add statusLabel from column
+    const cardObj = card.toObject();
+    const column = await Column.findOne({
+      project: card.project._id,
+      status: card.status,
+    }).select("name");
+    cardObj.statusLabel = column ? column.name : card.status;
+
     res.json({
       success: true,
-      card,
+      card: cardObj,
     });
   } catch (error) {
     console.error("Get card error:", error);
@@ -273,6 +299,22 @@ const createCard = async (req, res) => {
         });
 
         await notification.save();
+
+        // Populate the notification with related data
+        await notification.populate("sender", "name email avatar color");
+        await notification.populate("relatedProject", "name");
+        await notification.populate("relatedCard", "title");
+
+        // Emit Socket.IO event for real-time notification
+        try {
+          const io = getIO();
+          io.to(`user-${assigneeId}`).emit("new-notification", {
+            notification,
+          });
+          console.log(`📬 Real-time notification sent to user ${assigneeId}`);
+        } catch (socketError) {
+          console.error("Socket.IO error while sending notification:", socketError);
+        }
       }
     }
 
@@ -621,8 +663,11 @@ const archiveCard = async (req, res) => {
       });
     }
 
-    // Ensure archive column exists
+    // Ensure archive column exists (may create new Archive column)
     await ensureArchiveColumn(card.project, userId);
+
+    // Invalidate columns cache since Archive column might be newly created
+    cacheService.invalidateColumns(card.project);
 
     // Store original status before archiving
     card.originalStatus = card.status;
@@ -916,6 +961,273 @@ const updateStatus = async (req, res) => {
   }
 };
 
+// @route   PUT /api/cards/reorder
+// @desc    Update card order and optionally status (for drag-and-drop)
+// @access  Private
+const reorderCards = async (req, res) => {
+  try {
+    const { cardOrders } = req.body; // Array of { cardId, order, status? }
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    console.log("Reorder cards request:", {
+      userId,
+      cardOrdersCount: cardOrders?.length,
+      cardOrders: cardOrders,
+    });
+
+    if (!Array.isArray(cardOrders) || cardOrders.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "cardOrders array is required",
+      });
+    }
+
+    // Get the first card to check project access
+    const firstCard = await Card.findById(cardOrders[0].cardId);
+    if (!firstCard) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(firstCard.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Get user information for activity comments
+    const user = await User.findById(userId).select("name");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update all cards
+    const updatedCards = [];
+    for (const { cardId, order, status } of cardOrders) {
+      if (!cardId) {
+        console.warn("Skipping card order update: cardId is missing");
+        continue;
+      }
+
+      const card = await Card.findById(cardId);
+      if (!card) {
+        console.warn(`Card not found: ${cardId}`);
+        continue;
+      }
+
+      // Verify card belongs to same project
+      if (card.project.toString() !== firstCard.project.toString()) {
+        console.warn(`Card ${cardId} does not belong to project ${firstCard.project}`);
+        continue;
+      }
+
+      const oldStatus = card.status;
+      const oldOrder = card.order || 0;
+
+      // Update order (ensure it's a number)
+      card.order = typeof order === "number" ? order : parseInt(order, 10) || 0;
+
+      // Update status if provided and different
+      if (status && status !== oldStatus) {
+        card.status = status;
+
+        try {
+          // Add automatic comment for status change
+          const previousStatusLabel = await getStatusLabel(card.project, oldStatus);
+          const newStatusLabel = await getStatusLabel(card.project, status);
+
+          card.comments.push({
+            user: userId,
+            text: `<p><strong>${user.name}</strong> moved this card from <span style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${previousStatusLabel}</span> to <span style="background-color: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${newStatusLabel}</span></p>`,
+            timestamp: new Date(),
+          });
+
+          // Add activity log entry
+          card.activityLog.push({
+            action: "status_changed",
+            user: userId,
+            timestamp: new Date(),
+            details: `Status changed from ${oldStatus} to ${status}`,
+          });
+        } catch (labelError) {
+          console.error("Error getting status labels:", labelError);
+          // Continue without comment if label fetch fails
+        }
+      } else if (order !== oldOrder) {
+        // Add activity log entry for order change
+        card.activityLog.push({
+          action: "reordered",
+          user: userId,
+          timestamp: new Date(),
+          details: `Card order changed from ${oldOrder} to ${card.order}`,
+        });
+      }
+
+      try {
+        await card.save();
+        await card.populate("assignees", "name email avatar color");
+        await card.populate("createdBy", "name email avatar color");
+        updatedCards.push(card);
+      } catch (saveError) {
+        console.error(`Error saving card ${cardId}:`, saveError);
+        // Continue with other cards even if one fails
+      }
+    }
+
+    if (updatedCards.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No cards were updated",
+      });
+    }
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${firstCard.project}`).emit("cards-reordered", {
+        cards: updatedCards,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Cards reordered successfully",
+      cards: updatedCards,
+    });
+  } catch (error) {
+    console.error("Reorder cards error:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Request body:", req.body);
+    res.status(500).json({
+      success: false,
+      message: "Server error while reordering cards",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+  }
+};
+
+// @route   PUT /api/cards/:id/complete
+// @desc    Toggle card completion status
+// @access  Private
+const toggleComplete = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Toggle completion status
+    const wasCompleted = card.isComplete;
+    card.isComplete = !card.isComplete;
+
+    if (card.isComplete) {
+      // Mark as complete
+      card.completedAt = new Date();
+      card.completedBy = userId;
+    } else {
+      // Mark as incomplete
+      card.completedAt = null;
+      card.completedBy = null;
+    }
+
+    // Get user information for activity comment
+    const user = await User.findById(userId).select("name");
+
+    // Add automatic comment for completion change
+    if (card.isComplete) {
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> marked this card as <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">complete</span></p>`,
+        timestamp: new Date(),
+      });
+    } else {
+      card.comments.push({
+        user: userId,
+        text: `<p><strong>${user.name}</strong> marked this card as <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">incomplete</span></p>`,
+        timestamp: new Date(),
+      });
+    }
+
+    // Add activity log entry
+    card.activityLog.push({
+      action: card.isComplete ? "marked_complete" : "marked_incomplete",
+      user: userId,
+      timestamp: new Date(),
+      details: `Card marked as ${card.isComplete ? "complete" : "incomplete"}`,
+    });
+
+    await card.save();
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+    await card.populate("completedBy", "name email avatar color");
+
+    // Emit Socket.IO event for real-time updates
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-completion-toggled", {
+        card,
+        userId: userId.toString(),
+      });
+    } catch (socketError) {
+      console.error("Socket.IO error:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: `Card marked as ${card.isComplete ? "complete" : "incomplete"}`,
+      card,
+    });
+  } catch (error) {
+    console.error("Toggle complete error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while toggling card completion",
+    });
+  }
+};
+
 // @route   POST /api/cards/:id/assign
 // @desc    Assign user to card
 // @access  Private
@@ -993,6 +1305,22 @@ const assignUser = async (req, res) => {
       });
 
       await notification.save();
+
+      // Populate the notification with related data
+      await notification.populate("sender", "name email avatar color");
+      await notification.populate("relatedProject", "name");
+      await notification.populate("relatedCard", "title");
+
+      // Emit Socket.IO event for real-time notification
+      try {
+        const io = getIO();
+        io.to(`user-${assigneeId}`).emit("new-notification", {
+          notification,
+        });
+        console.log(`📬 Real-time notification sent to user ${assigneeId}`);
+      } catch (socketError) {
+        console.error("Socket.IO error while sending notification:", socketError);
+      }
     }
 
     // Populate the card with user details
@@ -1115,6 +1443,22 @@ const unassignUser = async (req, res) => {
       });
 
       await notification.save();
+
+      // Populate the notification with related data
+      await notification.populate("sender", "name email avatar color");
+      await notification.populate("relatedProject", "name");
+      await notification.populate("relatedCard", "title");
+
+      // Emit Socket.IO event for real-time notification
+      try {
+        const io = getIO();
+        io.to(`user-${assigneeId}`).emit("new-notification", {
+          notification,
+        });
+        console.log(`📬 Real-time notification sent to user ${assigneeId}`);
+      } catch (socketError) {
+        console.error("Socket.IO error while sending notification:", socketError);
+      }
     }
 
     // Populate the card with user details
@@ -2135,6 +2479,192 @@ const moveAllCards = async (req, res) => {
   }
 };
 
+// @route   GET /api/cards/due-today
+// @desc    Get cards assigned to current user that are due today
+// @access  Private
+const getCardsDueToday = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get start and end of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Find cards assigned to user, due today, not completed, not archived
+    const cards = await Card.find({
+      assignees: userId,
+      dueDate: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      isComplete: false,
+      isArchived: false,
+    })
+      .populate("project", "name")
+      .populate("assignees", "name email avatar color")
+      .populate("createdBy", "name email avatar color")
+      .sort({ dueDate: 1 });
+
+    res.json({
+      success: true,
+      cards,
+      count: cards.length,
+    });
+  } catch (error) {
+    console.error("Get cards due today error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching cards due today",
+    });
+  }
+};
+
+// @route   GET /api/cards/back-date
+// @desc    Get cards assigned to current user that are past due (before today)
+// @access  Private
+const getCardsBackDate = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get start of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Find cards assigned to user, due before today, not completed, not archived
+    const cards = await Card.find({
+      assignees: userId,
+      dueDate: {
+        $lt: startOfDay,
+      },
+      isComplete: false,
+      isArchived: false,
+    })
+      .populate("project", "name")
+      .populate("assignees", "name email avatar color")
+      .populate("createdBy", "name email avatar color")
+      .sort({ dueDate: -1 });
+
+    res.json({
+      success: true,
+      cards,
+      count: cards.length,
+    });
+  } catch (error) {
+    console.error("Get cards back date error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching cards back date",
+    });
+  }
+};
+
+// @route   GET /api/cards/upcoming
+// @desc    Get cards assigned to current user that are due in the future (after today)
+// @access  Private
+const getCardsUpcoming = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get end of today
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Find cards assigned to user, due after today, not completed, not archived
+    const cards = await Card.find({
+      assignees: userId,
+      dueDate: {
+        $gt: endOfDay,
+      },
+      isComplete: false,
+      isArchived: false,
+    })
+      .populate("project", "name")
+      .populate("assignees", "name email avatar color")
+      .populate("createdBy", "name email avatar color")
+      .sort({ dueDate: 1 });
+
+    res.json({
+      success: true,
+      cards,
+      count: cards.length,
+    });
+  } catch (error) {
+    console.error("Get cards upcoming error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching upcoming cards",
+    });
+  }
+};
+
+// @route   PUT /api/cards/:id/read
+// @desc    Mark card as read by current user
+// @access  Private
+const markCardAsRead = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return res.status(404).json({
+        success: false,
+        message: "Card not found",
+      });
+    }
+
+    // Check if user has access to this card's project
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+
+    if (!isOwner && !isMember && userRole !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You are not a member of this project.",
+      });
+    }
+
+    // Check if user has already read this card
+    const alreadyRead = card.readBy.some(
+      (readEntry) => readEntry.user.toString() === userId.toString()
+    );
+
+    if (!alreadyRead) {
+      // Add user to readBy array
+      card.readBy.push({
+        user: userId,
+        readAt: new Date(),
+      });
+      await card.save();
+    }
+
+    // Populate the card with user details
+    await card.populate("assignees", "name email avatar color");
+    await card.populate("createdBy", "name email avatar color");
+    await card.populate("readBy.user", "name email avatar color");
+
+    res.json({
+      success: true,
+      message: "Card marked as read",
+      card,
+    });
+  } catch (error) {
+    console.error("Mark card as read error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while marking card as read",
+    });
+  }
+};
+
 module.exports = {
   getCards,
   getCard,
@@ -2143,6 +2673,11 @@ module.exports = {
   archiveCard,
   restoreCard,
   updateStatus,
+  reorderCards,
+  toggleComplete,
+  getCardsDueToday,
+  getCardsBackDate,
+  getCardsUpcoming,
   assignUser,
   unassignUser,
   addComment,
@@ -2154,4 +2689,5 @@ module.exports = {
   uploadFiles,
   moveAllCards,
   deleteCard,
+  markCardAsRead,
 };

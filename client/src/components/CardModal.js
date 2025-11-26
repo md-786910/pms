@@ -219,13 +219,49 @@ const CardModal = ({
   const cardIdRef = useRef(card._id);
   const dateInputRef = useRef(null);
 
+  // Mark card as read when modal opens
+  useEffect(() => {
+    const markCardAsRead = async () => {
+      if (!card || !card._id || !user) return;
+
+      // Check if card is already read by current user
+      const isRead = card.readBy?.some(
+        (readEntry) =>
+          (readEntry.user?._id || readEntry.user) === (user._id || user.id)
+      );
+
+      if (!isRead) {
+        try {
+          const { cardAPI } = await import("../utils/api");
+          const response = await cardAPI.markAsRead(card._id);
+          if (response.data.success && onCardUpdated) {
+            // Update card with read status
+            onCardUpdated(response.data.card);
+          }
+        } catch (error) {
+          console.error("Error marking card as read:", error);
+          // Don't show error toast, just log it
+        }
+      }
+    };
+
+    markCardAsRead();
+  }, [card._id, user, onCardUpdated]); // Only run when card ID or user changes
+
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Don't close if clicking on confirmation modal or its children
+      const confirmationModal = document.querySelector('[class*="z-[100]"]');
+      if (confirmationModal && confirmationModal.contains(event.target)) {
+        return;
+      }
+
       if (modalRef.current && !modalRef.current.contains(event.target)) {
-        // Don't close modal if confirmation modal is open
+        // Don't close modal if any confirmation modal is open
         if (
           !showDeleteConfirm &&
+          !showDeleteCardConfirm &&
           !showAssignModal &&
           !showImageModal &&
           !showFormattingHelp &&
@@ -243,6 +279,7 @@ const CardModal = ({
   }, [
     onClose,
     showDeleteConfirm,
+    showDeleteCardConfirm,
     showAssignModal,
     showImageModal,
     showFormattingHelp,
@@ -526,7 +563,7 @@ const CardModal = ({
   if (card.status && !statusOptions.find((s) => s.value === card.status)) {
     allStatusOptions.push({
       value: card.status,
-      label: card.status,
+      label: card.statusLabel || card.status,
       color: "gray",
     });
   }
@@ -637,6 +674,25 @@ const CardModal = ({
     } catch (error) {
       console.error("Error updating status:", error);
       showToast("Failed to update status", "error");
+    }
+  };
+
+  const handleCompleteToggle = async () => {
+    try {
+      const response = await cardAPI.toggleComplete(card._id);
+
+      if (response.data.success) {
+        onCardUpdated(response.data.card);
+        showToast(
+          response.data.card.isComplete
+            ? "Card marked as complete!"
+            : "Card marked as incomplete!",
+          "success"
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling completion:", error);
+      showToast("Failed to toggle completion", "error");
     }
   };
 
@@ -1092,29 +1148,49 @@ const CardModal = ({
   };
 
   const confirmDelete = async () => {
+    if (!card || !card._id) {
+      showToast("Card ID is missing", "error");
+      setShowDeleteCardConfirm(false);
+      return;
+    }
+
+    if (!card.isArchived) {
+      showToast("Only archived cards can be permanently deleted", "error");
+      setShowDeleteCardConfirm(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log("Deleting card:", card._id);
       const response = await cardAPI.deleteCard(card._id);
-      if (response.data.success) {
-        // Close modal first
-        onClose();
+
+      if (response && response.data && response.data.success) {
+        // Close confirmation modal
         setShowDeleteCardConfirm(false);
-        
+
+        // Close card modal
+        onClose();
+
         // Notify parent to remove card from state
         if (onCardPermanentlyDeleted) {
           await onCardPermanentlyDeleted(card._id);
         } else if (onCardDeleted) {
           await onCardDeleted(card._id);
         }
-        
+
         showToast("Card deleted permanently", "success");
+      } else {
+        throw new Error("Delete request failed");
       }
     } catch (error) {
       console.error("Error deleting card:", error);
-      showToast(
-        error.response?.data?.message || "Failed to delete card",
-        "error"
-      );
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete card. Please try again.";
+      showToast(errorMessage, "error");
+      // Keep modal open on error so user can try again
     } finally {
       setLoading(false);
     }
@@ -1450,11 +1526,11 @@ const CardModal = ({
           {/* Modal Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <div className="flex items-center space-x-4 flex-1 min-w-0">
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-xl">📋</span>
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h2
                     className="text-xl font-bold cursor-pointer"
                     onClick={() => setIsEditing(true)}
@@ -1466,7 +1542,7 @@ const CardModal = ({
                         onChange={(e) =>
                           setFormData({ ...formData, title: e.target.value })
                         }
-                        className="bg-transparent border-none outline-none focus:outline-none text-xl font-bold text-white placeholder-white placeholder-opacity-70"
+                        className="bg-transparent border-none outline-none focus:outline-none text-xl font-bold text-white placeholder-white placeholder-opacity-70 w-full px-2 py-1"
                         placeholder="Card title..."
                         autoFocus
                       />
@@ -1522,23 +1598,56 @@ const CardModal = ({
                 <div className="sticky top-0 z-50 bg-white pb-4">
                   {/* Status/Due Row */}
                   <div className="flex items-center gap-2">
+                    {/* Completion Toggle - Hidden when archived */}
+                    {!isArchived && (
+                      <button
+                        onClick={handleCompleteToggle}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                          card.isComplete
+                            ? "bg-green-500 border-green-500 hover:bg-green-600"
+                            : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
+                        } cursor-pointer`}
+                        title={
+                          card.isComplete
+                            ? "Mark as incomplete"
+                            : "Mark as complete"
+                        }
+                      >
+                        {card.isComplete && (
+                          <svg
+                            className="w-5 h-5 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                     <button
                       className={`btn px-5 py-0.5 rounded-md ${
                         card.cardNumber || card._id?.slice(-4) || "0000"
                           ? "bg-[#2bcbba]  "
                           : "bg-gray-200  border-gray-200"
                       }`}
-                      title="Due date"
+                      title="Card number"
                     >
                       #{card.cardNumber || card._id?.slice(-4) || "0000"}
                     </button>
                     {(() => {
                       const colors = getCardStatusColors(card.status);
-                      const label =
-                        allStatusOptions.find((s) => s.value === card.status)
-                          ?.label ||
-                        colors.label ||
-                        card.status;
+                      const label = card?.statusLabel;
+                      // card.statusLabel ||
+                      // allStatusOptions.find((s) => s.value === card.status)
+                      //   ?.label ||
+                      // colors.label ||
+                      // card.status;
                       return (
                         <button
                           className={`btn px-5 py-0.5 text-[15px] bg-[tomato] rounded-md text-black ${colors.borderColor}`}
@@ -2479,14 +2588,17 @@ const CardModal = ({
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={handleArchive}
-                      className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
-                      title="Archive card"
-                    >
-                      <Archive className="w-4 h-4" />
-                      <span>Archive Card</span>
-                    </button>
+                    // Hide Archive button when card is complete
+                    !card.isComplete && (
+                      <button
+                        onClick={handleArchive}
+                        className="w-full bg-[#4b6584] text-white hover:bg-[#778ca3] font-medium py-1 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
+                        title="Archive card"
+                      >
+                        <Archive className="w-4 h-4" />
+                        <span>Archive Card</span>
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -2627,17 +2739,33 @@ const CardModal = ({
       />
 
       {/* Delete Card Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showDeleteCardConfirm}
-        onClose={() => setShowDeleteCardConfirm(false)}
-        onConfirm={confirmDelete}
-        title="Delete Card"
-        message="Are you sure you want to delete this?"
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="danger"
-        isLoading={loading}
-      />
+      {showDeleteCardConfirm && (
+        <ConfirmationModal
+          isOpen={showDeleteCardConfirm}
+          onClose={(e) => {
+            // Prevent event propagation to card modal
+            if (e) {
+              e.stopPropagation();
+            }
+            if (!loading) {
+              setShowDeleteCardConfirm(false);
+            }
+          }}
+          onConfirm={(e) => {
+            // Prevent event propagation to card modal
+            if (e) {
+              e.stopPropagation();
+            }
+            confirmDelete();
+          }}
+          title="Permanently Delete Card"
+          message={`Are you sure you want to permanently delete "${card.title}"? This action cannot be undone and will remove the card from the database.`}
+          confirmText="Delete Permanently"
+          cancelText="Cancel"
+          type="danger"
+          isLoading={loading}
+        />
+      )}
 
       {/* Labels Modal */}
       <LabelsModal

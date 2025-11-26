@@ -4,6 +4,52 @@ const Project = require("../models/Project");
 const Card = require("../models/Card");
 const { validationResult } = require("express-validator");
 const { getIO } = require("../config/socket");
+const cacheService = require("../services/cacheService");
+
+// Default columns configuration
+const DEFAULT_COLUMNS = [
+  { name: "Backlog", status: "backlog", color: "gray", position: 0 },
+  { name: "To-Do", status: "todo", color: "blue", position: 1 },
+  { name: "In-Progress", status: "in-progress", color: "yellow", position: 2 },
+  { name: "In-Review", status: "in-review", color: "purple", position: 3 },
+  { name: "Ready for Release", status: "ready-for-release", color: "indigo", position: 4 },
+  { name: "Completed", status: "completed", color: "green", position: 5 },
+  { name: "On Hold", status: "on-hold", color: "red", position: 6 },
+];
+
+// Helper function to create default columns for a new project (async)
+const createDefaultColumns = async (projectId, userId) => {
+  try {
+    console.log(`Creating default columns for project ${projectId}`);
+
+    // Check if columns already exist for this project
+    const existingColumns = await Column.countDocuments({ project: projectId });
+    if (existingColumns > 0) {
+      console.log(`Project ${projectId} already has columns, skipping default column creation`);
+      return;
+    }
+
+    // Create all default columns
+    // Note: isDefault is set to false because the unique index only allows one isDefault: true per project
+    const columnsToCreate = DEFAULT_COLUMNS.map((col) => ({
+      name: col.name,
+      project: projectId,
+      status: col.status,
+      color: col.color,
+      position: col.position,
+      isDefault: false,
+      createdBy: userId,
+    }));
+
+    await Column.insertMany(columnsToCreate);
+    console.log(`Successfully created ${columnsToCreate.length} default columns for project ${projectId}`);
+
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
+  } catch (error) {
+    console.error(`Error creating default columns for project ${projectId}:`, error);
+  }
+};
 
 // Helper function to clean up duplicate archive columns
 const cleanupDuplicateArchiveColumns = async (projectId) => {
@@ -202,6 +248,21 @@ const getColumns = async (req, res) => {
       });
     }
 
+    // Check cache first
+    const cacheKey = cacheService.getColumnsKey(projectId);
+    const cachedColumns = cacheService.get(cacheKey);
+
+    if (cachedColumns) {
+      console.log(`Cache hit for columns: ${projectId}`);
+      return res.json({
+        success: true,
+        columns: cachedColumns,
+        fromCache: true,
+      });
+    }
+
+    console.log(`Cache miss for columns: ${projectId}`);
+
     // Get all columns (excluding archive column for now)
     const columns = await Column.find({
       project: projectId,
@@ -228,6 +289,9 @@ const getColumns = async (req, res) => {
         sortedColumns.push(archiveColumn);
       }
     }
+
+    // Cache the columns (TTL: 5 minutes)
+    cacheService.set(cacheKey, sortedColumns);
 
     res.json({
       success: true,
@@ -312,6 +376,9 @@ const createColumn = async (req, res) => {
     });
 
     await column.save();
+
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
 
     // Populate the createdBy field
     await column.populate("createdBy", "name email avatar color");
@@ -409,6 +476,9 @@ const updateColumn = async (req, res) => {
 
     await column.save();
 
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
+
     // Populate the createdBy field
     await column.populate("createdBy", "name email avatar color");
 
@@ -505,6 +575,9 @@ const deleteColumn = async (req, res) => {
     // Delete the column (only possible if no cards exist)
     await Column.findByIdAndDelete(columnId);
 
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
+
     res.json({
       success: true,
       message: "Column deleted successfully",
@@ -577,6 +650,9 @@ const reorderColumns = async (req, res) => {
       );
     }
 
+    // Invalidate columns cache for this project
+    cacheService.invalidateColumns(projectId);
+
     res.json({
       success: true,
       message: "Columns reordered successfully",
@@ -598,4 +674,5 @@ module.exports = {
   reorderColumns,
   ensureArchiveColumn,
   cleanupDuplicateArchiveColumns,
+  createDefaultColumns,
 };

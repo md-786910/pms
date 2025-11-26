@@ -8,6 +8,11 @@ const {
   archiveCard,
   restoreCard,
   updateStatus,
+  reorderCards,
+  toggleComplete,
+  getCardsDueToday,
+  getCardsBackDate,
+  getCardsUpcoming,
   assignUser,
   unassignUser,
   addComment,
@@ -19,6 +24,7 @@ const {
   uploadFiles,
   moveAllCards,
   deleteCard,
+  markCardAsRead,
 } = require("../controllers/cardController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
@@ -27,6 +33,21 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(auth);
+
+// @route   GET /api/cards/due-today
+// @desc    Get cards assigned to current user that are due today
+// @access  Private
+router.get("/due-today", getCardsDueToday);
+
+// @route   GET /api/cards/back-date
+// @desc    Get cards assigned to current user that are past due (before today)
+// @access  Private
+router.get("/back-date", getCardsBackDate);
+
+// @route   GET /api/cards/upcoming
+// @desc    Get cards assigned to current user that are due in the future
+// @access  Private
+router.get("/upcoming", getCardsUpcoming);
 
 // @route   GET /api/projects/:projectId/cards
 // @desc    Get all cards for a project
@@ -51,6 +72,46 @@ router.post(
       .withMessage("Target status must be a string"),
   ],
   moveAllCards
+);
+
+// @route   PUT /api/cards/reorder
+// @desc    Reorder cards (for drag-and-drop)
+// @access  Private
+router.put(
+  "/reorder",
+  [
+    body("cardOrders")
+      .isArray()
+      .withMessage("cardOrders must be an array")
+      .notEmpty()
+      .withMessage("cardOrders cannot be empty"),
+    body("cardOrders.*.cardId")
+      .isMongoId()
+      .withMessage("Each cardId must be a valid MongoDB ID"),
+    body("cardOrders.*.order")
+      .custom((value) => {
+        // Accept both numbers and numeric strings
+        return typeof value === "number" || !isNaN(Number(value));
+      })
+      .withMessage("Each order must be a number"),
+    body("cardOrders.*.status")
+      .optional()
+      .isString()
+      .withMessage("Status must be a string"),
+  ],
+  (req, res, next) => {
+    // Check validation errors before controller
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
+    next();
+  },
+  reorderCards
 );
 
 // @route   GET /api/cards/:id
@@ -161,6 +222,11 @@ router.put("/:id/archive", archiveCard);
 // @access  Private
 router.put("/:id/restore", restoreCard);
 
+// @route   PUT /api/cards/:id/read
+// @desc    Mark card as read by current user
+// @access  Private
+router.put("/:id/read", markCardAsRead);
+
 // @route   DELETE /api/cards/:id
 // @desc    Permanently delete a card (only for archived cards)
 // @access  Private
@@ -180,6 +246,11 @@ router.put(
   ],
   updateStatus
 );
+
+// @route   PUT /api/cards/:id/complete
+// @desc    Toggle card completion status
+// @access  Private
+router.put("/:id/complete", toggleComplete);
 
 // @route   POST /api/cards/:id/assign
 // @desc    Assign user to card

@@ -2,6 +2,7 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 const Project = require("../models/Project");
 const Card = require("../models/Card");
+const { getIO } = require("../config/socket");
 
 // @route   GET /api/notifications
 // @desc    Get all notifications for a user
@@ -213,6 +214,18 @@ const createNotification = async (req, res) => {
     await notification.populate("sender", "name email avatar color");
     await notification.populate("relatedProject", "name");
     await notification.populate("relatedCard", "title");
+
+    // Emit Socket.IO event for real-time notification
+    try {
+      const io = getIO();
+      io.to(`user-${user}`).emit("new-notification", {
+        notification,
+      });
+      console.log(`📬 Real-time notification sent to user ${user}`);
+    } catch (socketError) {
+      console.error("Socket.IO error while sending notification:", socketError);
+      // Don't fail the request if socket fails
+    }
 
     res.status(201).json({
       success: true,

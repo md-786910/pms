@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Settings, Shield, Users } from "lucide-react";
+import { X, Settings, Shield, Users, Zap, Sliders } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 
@@ -27,7 +27,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
     {
       name: "Preferences",
       href: "/settings",
-      icon: Settings,
+      icon: Sliders,
       show: true,
       key: "settings",
       title: "Preferences",
@@ -48,7 +48,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-1 rounded-lg bg-white bg-opacity-20">
-                <Settings className="w-5 h-5 text-white" />
+                <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white">Quick Access</h3>

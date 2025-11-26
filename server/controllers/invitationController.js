@@ -3,6 +3,7 @@ const Project = require("../models/Project");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const { auth } = require("../middleware/auth");
+const { getIO } = require("../config/socket");
 
 // @route   GET /api/invitations/:token
 // @desc    Get invitation details by token
@@ -181,6 +182,21 @@ const acceptInvitation = async (req, res) => {
     });
 
     await notification.save();
+
+    // Populate the notification with related data
+    await notification.populate("sender", "name email avatar color");
+    await notification.populate("relatedProject", "name");
+
+    // Emit Socket.IO event for real-time notification
+    try {
+      const io = getIO();
+      io.to(`user-${user._id}`).emit("new-notification", {
+        notification,
+      });
+      console.log(`📬 Real-time notification sent to user ${user._id}`);
+    } catch (socketError) {
+      console.error("Socket.IO error while sending notification:", socketError);
+    }
 
     // Populate project data
     await project.populate("owner", "name email avatar color");

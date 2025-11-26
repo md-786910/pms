@@ -48,6 +48,7 @@ const FilterPanel = ({
     dueInNextMonth: false,
   });
   const [labelFilters, setLabelFilters] = useState([]);
+  const [readStatusFilter, setReadStatusFilter] = useState("all"); // "all", "read", "unread"
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [showLabelDropdown, setShowLabelDropdown] = useState(false);
   const memberDropdownRef = useRef(null);
@@ -165,7 +166,7 @@ const FilterPanel = ({
   useEffect(() => {
     applyFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyword, memberFilters, dueDateFilters, labelFilters]);
+  }, [keyword, memberFilters, dueDateFilters, labelFilters, readStatusFilter]);
 
   const applyFilters = () => {
     let filteredCards = [...cards];
@@ -173,7 +174,17 @@ const FilterPanel = ({
     // Keyword filter
     if (keyword.trim()) {
       const searchTerm = keyword.toLowerCase();
+      const searchTermTrimmed = keyword.trim();
+      const searchTermWithoutHash = searchTermTrimmed.replace(/^#/, "");
+      
       filteredCards = filteredCards.filter((card) => {
+        // Check if query matches card number (handle "#27" or "27")
+        const cardNumberStr = card.cardNumber?.toString() || "";
+        const cardNumberMatch = 
+          cardNumberStr === searchTermWithoutHash ||
+          cardNumberStr.includes(searchTermWithoutHash) ||
+          `#${cardNumberStr}`.toLowerCase().includes(searchTerm);
+        
         const titleMatch = card.title?.toLowerCase().includes(searchTerm);
         const descriptionMatch = card.description
           ?.toLowerCase()
@@ -188,7 +199,7 @@ const FilterPanel = ({
         const labelMatch = card.labels?.some((label) =>
           label.name?.toLowerCase().includes(searchTerm)
         );
-        return titleMatch || descriptionMatch || assigneeMatch || labelMatch;
+        return cardNumberMatch || titleMatch || descriptionMatch || assigneeMatch || labelMatch;
       });
     }
 
@@ -266,6 +277,24 @@ const FilterPanel = ({
       );
     }
 
+    // Read/Unread filter
+    if (readStatusFilter !== "all" && user) {
+      filteredCards = filteredCards.filter((card) => {
+        // Check if card is read by current user
+        const isRead = card.readBy?.some(
+          (readEntry) =>
+            (readEntry.user?._id || readEntry.user) === (user._id || user.id)
+        );
+
+        if (readStatusFilter === "read") {
+          return isRead;
+        } else if (readStatusFilter === "unread") {
+          return !isRead;
+        }
+        return true;
+      });
+    }
+
     onFilterChange(filteredCards);
   };
 
@@ -301,6 +330,7 @@ const FilterPanel = ({
       dueInNextMonth: false,
     });
     setLabelFilters([]);
+    setReadStatusFilter("all");
   };
 
   const hasActiveFilters = () => {
@@ -314,7 +344,8 @@ const FilterPanel = ({
       dueDateFilters.dueInNextDay ||
       dueDateFilters.dueInNextWeek ||
       dueDateFilters.dueInNextMonth ||
-      labelFilters.length > 0
+      labelFilters.length > 0 ||
+      readStatusFilter !== "all"
     );
   };
 
@@ -386,6 +417,27 @@ const FilterPanel = ({
     ).length;
   };
 
+  // Get read/unread counts
+  const getReadCount = () => {
+    if (!user) return 0;
+    return cards.filter((card) => {
+      return card.readBy?.some(
+        (readEntry) =>
+          (readEntry.user?._id || readEntry.user) === (user._id || user.id)
+      );
+    }).length;
+  };
+
+  const getUnreadCount = () => {
+    if (!user) return cards.length;
+    return cards.filter((card) => {
+      return !card.readBy?.some(
+        (readEntry) =>
+          (readEntry.user?._id || readEntry.user) === (user._id || user.id)
+      );
+    }).length;
+  };
+
   return (
     <>
       {/* Filter Modal */}
@@ -426,7 +478,7 @@ const FilterPanel = ({
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Search cards, members, labels, and more.
+                  Search cards (#27), members, labels, and more.
                 </p>
               </div>
 
@@ -639,6 +691,71 @@ const FilterPanel = ({
                       </span>
                     )}
                   </label>
+                </div>
+              </div>
+
+              {/* Read/Unread Status */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Read Status
+                </label>
+                
+                {/* Modern Segmented Control */}
+                <div className="bg-gray-100 p-1 rounded-lg inline-flex w-full">
+                  <button
+                    type="button"
+                    onClick={() => setReadStatusFilter("all")}
+                    className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                      readStatusFilter === "all"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    All Cards
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReadStatusFilter("read")}
+                    className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                      readStatusFilter === "read"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Read
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReadStatusFilter("unread")}
+                    className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                      readStatusFilter === "unread"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    Unread
+                  </button>
+                </div>
+                
+                {/* Status Count Display */}
+                <div className="mt-3 px-1">
+                  <div className="text-xs text-gray-500 font-medium">
+                    {readStatusFilter === "all" && (
+                      <span>
+                        Showing all cards ({cards.length} total)
+                      </span>
+                    )}
+                    {readStatusFilter === "read" && (
+                      <span>
+                        {getReadCount()} read card{getReadCount() !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {readStatusFilter === "unread" && (
+                      <span>
+                        {getUnreadCount()} unread card{getUnreadCount() !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

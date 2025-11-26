@@ -9,7 +9,7 @@ const {
   addMember,
   removeMember,
 } = require("../controllers/projectController");
-const { auth, projectMemberAuth } = require("../middleware/auth");
+const { auth, projectMemberAuth, adminAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
@@ -27,6 +27,7 @@ router.get("/", getProjects);
 // @access  Private
 router.post(
   "/",
+  adminAuth,
   [
     body("name")
       .trim()

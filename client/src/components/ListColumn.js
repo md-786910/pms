@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MoreVertical, Edit2, Trash2, Plus, ArrowRight } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import CardItem from "./CardItem";
 import ConfirmationModal from "./ConfirmationModal";
 
-const ListColumn = ({
+const ListColumn = React.memo(({
   title,
   status,
   cards,
@@ -69,14 +74,34 @@ const ListColumn = ({
     setShowDeleteConfirm(false);
   };
 
-  const handleAddCard = () => {
-    onAddCard(status);
-    setShowMenu(false);
-  };
-
   textColor = `text-${color}-700`;
   bgColor = `bg-${color}-50`;
   borderColor = `border-${color}-200`;
+
+  // Droppable component for column
+  const ColumnDroppable = ({ status, children }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: status,
+      data: {
+        type: "column",
+        droppableType: "column",
+        status: status,
+      },
+    });
+
+    return (
+      <div
+        ref={setNodeRef}
+        className={`transition-all duration-200 ${
+          isOver
+            ? "bg-blue-50 border-2 border-blue-400 border-dashed rounded-lg"
+            : ""
+        }`}
+      >
+        {children}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -204,30 +229,37 @@ const ListColumn = ({
       </div>
 
       {/* Cards List */}
-      <div className="p-3 space-y-3 h-[580px] overflow-y-auto">
-        {cards.map((card) => (
-          <CardItem
-            key={card._id || card.id}
-            card={card}
-            onCardUpdated={onCardUpdated}
-            onCardDeleted={onCardDeleted}
-            onCardRestored={onCardRestored}
-            onStatusChange={onStatusChange}
-            onCardClick={onCardClick}
-            projectId={projectId}
-          />
-        ))}
+      <ColumnDroppable status={status}>
+        <SortableContext
+          items={cards.map((card) => card._id || card.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="p-3 space-y-3 h-[580px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            {cards.map((card) => (
+              <CardItem
+                key={card._id || card.id}
+                card={card}
+                onCardUpdated={onCardUpdated}
+                onCardDeleted={onCardDeleted}
+                onCardRestored={onCardRestored}
+                onStatusChange={onStatusChange}
+                onCardClick={onCardClick}
+                projectId={projectId}
+              />
+            ))}
 
-        {/* Empty state for when no cards */}
-        {cards.length === 0 && (
-          <div className="text-center py-8">
-            <div className="w-8 h-8 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
-              <span className="text-lg text-gray-400">📋</span>
-            </div>
-            <p className="text-xs text-gray-400">No cards yet</p>
+            {/* Empty state for when no cards */}
+            {cards.length === 0 && (
+              <div className="text-center py-8">
+                <div className="w-8 h-8 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <span className="text-lg text-gray-400">📋</span>
+                </div>
+                <p className="text-xs text-gray-400">No cards yet</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </SortableContext>
+      </ColumnDroppable>
 
       {/* Add Card Button - Always Visible (except for Archive column) */}
       {status !== "archive" && (
@@ -257,6 +289,41 @@ const ListColumn = ({
       />
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  // Compare primitive props
+  if (
+    prevProps.title !== nextProps.title ||
+    prevProps.status !== nextProps.status ||
+    prevProps.color !== nextProps.color ||
+    prevProps.projectId !== nextProps.projectId
+  ) {
+    return false;
+  }
+
+  // Compare cards array - check if same cards in same order
+  if (prevProps.cards.length !== nextProps.cards.length) {
+    return false;
+  }
+
+  // Compare each card by ID and key properties that affect rendering
+  for (let i = 0; i < prevProps.cards.length; i++) {
+    const prevCard = prevProps.cards[i];
+    const nextCard = nextProps.cards[i];
+    if (
+      prevCard._id !== nextCard._id ||
+      prevCard.order !== nextCard.order ||
+      prevCard.title !== nextCard.title ||
+      prevCard.status !== nextCard.status ||
+      prevCard.isArchived !== nextCard.isArchived ||
+      prevCard.updatedAt !== nextCard.updatedAt
+    ) {
+      return false;
+    }
+  }
+
+  // Props are equal, don't re-render
+  return true;
+});
 
 export default ListColumn;

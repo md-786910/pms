@@ -147,6 +147,34 @@ const cardSchema = new mongoose.Schema(
       type: String,
       default: "todo",
     },
+    isComplete: {
+      type: Boolean,
+      default: false,
+    },
+    completedAt: {
+      type: Date,
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    readBy: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        readAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    order: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -155,6 +183,7 @@ const cardSchema = new mongoose.Schema(
 
 // Index for better query performance
 cardSchema.index({ project: 1, status: 1 });
+cardSchema.index({ project: 1, status: 1, order: 1 });
 cardSchema.index({ assignees: 1 });
 cardSchema.index({ dueDate: 1 });
 cardSchema.index({ project: 1, isArchived: 1 });

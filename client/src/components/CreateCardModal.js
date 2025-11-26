@@ -123,7 +123,7 @@ const CreateCardModal = ({
                 });
               }}
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] resize-y"
-              placeholder="Enter card description (use @ to mention someone, # for tags)"
+              placeholder="Enter card description"
               rows={4}
             />
           </div>
