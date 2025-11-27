@@ -148,7 +148,8 @@ const getProjects = async (req, res) => {
       // Admin can see all active (non-archived) projects
       projects = await Project.find({ status: "active", isArchived: { $ne: true } })
         .populate("owner", "name email avatar color")
-        .populate("members.user", "name email avatar color")
+        .populate("members.user", "name email avatar color role")
+        .populate("credentialAccess.user", "name email avatar color")
         .sort({ createdAt: -1 });
     } else {
       // Members can only see projects they're part of (non-archived)
@@ -158,7 +159,8 @@ const getProjects = async (req, res) => {
         isArchived: { $ne: true },
       })
         .populate("owner", "name email avatar color")
-        .populate("members.user", "name email avatar color")
+        .populate("members.user", "name email avatar color role")
+        .populate("credentialAccess.user", "name email avatar color")
         .sort({ createdAt: -1 });
     }
 
@@ -197,7 +199,8 @@ const getProject = async (req, res) => {
 
     const project = await Project.findById(projectId)
       .populate("owner", "name email avatar color")
-      .populate("members.user", "name email avatar color");
+      .populate("members.user", "name email avatar color role")
+      .populate("credentialAccess.user", "name email avatar color");
 
     if (!project) {
       return res.status(404).json({
@@ -316,7 +319,8 @@ const createProject = async (req, res) => {
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color");
-    await project.populate("members.user", "name email avatar color");
+    await project.populate("members.user", "name email avatar color role");
+    await project.populate("credentialAccess.user", "name email avatar color");
 
     res.status(201).json({
       success: true,
@@ -677,7 +681,8 @@ const updateProject = async (req, res) => {
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color role");
-    await project.populate("members.user", "name email avatar color");
+    await project.populate("members.user", "name email avatar color role");
+    await project.populate("credentialAccess.user", "name email avatar color");
 
     res.json({
       success: true,
@@ -770,8 +775,9 @@ const getArchivedProjects = async (req, res) => {
 
     const projects = await Project.find({ isArchived: true })
       .populate("owner", "name email avatar color")
-      .populate("members.user", "name email avatar color")
+      .populate("members.user", "name email avatar color role")
       .populate("archivedBy", "name email avatar color")
+      .populate("credentialAccess.user", "name email avatar color")
       .sort({ archivedAt: -1 });
 
     res.json({
@@ -838,7 +844,8 @@ const restoreProject = async (req, res) => {
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color");
-    await project.populate("members.user", "name email avatar color");
+    await project.populate("members.user", "name email avatar color role");
+    await project.populate("credentialAccess.user", "name email avatar color");
 
     res.json({
       success: true,
@@ -1008,7 +1015,8 @@ const addMember = async (req, res) => {
 
       // Populate the project with user details
       await project.populate("owner", "name email avatar color");
-      await project.populate("members.user", "name email avatar color");
+      await project.populate("members.user", "name email avatar color role");
+      await project.populate("credentialAccess.user", "name email avatar color");
 
       return res.json({
         success: true,
@@ -1243,7 +1251,8 @@ const removeMember = async (req, res) => {
 
     // Populate the project with user details
     await project.populate("owner", "name email avatar color");
-    await project.populate("members.user", "name email avatar color");
+    await project.populate("members.user", "name email avatar color role");
+    await project.populate("credentialAccess.user", "name email avatar color");
 
     res.json({
       success: true,

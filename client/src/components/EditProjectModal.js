@@ -10,17 +10,30 @@ import {
   User,
   MessageSquare,
   Pencil,
+  Plus,
+  Key,
+  UserPlus,
+  UserMinus,
+  Info,
+  Shield,
+  Lock,
 } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
+import { useUser } from "../contexts/UserContext";
+import { useSocket } from "../contexts/SocketContext";
 import { projectAPI, activityAPI } from "../utils/api";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 import Avatar from "./Avatar";
+import ConfirmationModal from "./ConfirmationModal";
 
 const EditProjectModal = ({ project, onClose }) => {
   const { updateProject } = useProject();
   const { showToast } = useNotification();
+  const { user } = useUser();
+  const { socket } = useSocket();
+  const isAdmin = user?.role === "admin";
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -32,6 +45,27 @@ const EditProjectModal = ({ project, onClose }) => {
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [showActivities, setShowActivities] = useState(false);
   const [editMode, setEditMode] = useState(true);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState("info"); // "info" or "credentials"
+
+  // Credentials state
+  const [credentials, setCredentials] = useState([]);
+  const [credentialAccess, setCredentialAccess] = useState([]);
+  const [newCredential, setNewCredential] = useState({ label: "", value: "" });
+  const [editingCredentialId, setEditingCredentialId] = useState(null);
+  const [credentialLoading, setCredentialLoading] = useState(false);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: "danger",
+    title: "",
+    message: "",
+    onConfirm: null,
+    confirmText: "Confirm",
+  });
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -120,12 +154,25 @@ const EditProjectModal = ({ project, onClose }) => {
           }))
         );
       }
+
+      // Set credentials from project
+      if (project.credentials) {
+        setCredentials(project.credentials);
+      }
+      // Set credential access list
+      if (project.credentialAccess) {
+        setCredentialAccess(project.credentialAccess);
+      }
     }
   }, [project]);
 
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Don't close if confirmation modal is open
+      if (confirmModal.isOpen) {
+        return;
+      }
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         onClose();
       }
@@ -135,12 +182,50 @@ const EditProjectModal = ({ project, onClose }) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [onClose]);
+  }, [onClose, confirmModal.isOpen]);
 
   // Fetch activities when component mounts
   useEffect(() => {
     fetchActivities();
   }, [project]);
+
+  // Listen for real-time credential access events
+  useEffect(() => {
+    if (!socket || !project?._id) return;
+
+    // Handle credential access granted
+    const handleCredentialAccessGranted = (data) => {
+      if (data.projectId === project._id) {
+        // Update credentials and access list
+        if (data.project?.credentials) {
+          setCredentials(data.project.credentials);
+        }
+        if (data.project?.credentialAccess) {
+          setCredentialAccess(data.project.credentialAccess);
+        }
+        showToast("You have been granted credential access", "success");
+      }
+    };
+
+    // Handle credential access revoked
+    const handleCredentialAccessRevoked = (data) => {
+      if (data.projectId === project._id) {
+        // Clear credentials and switch to info tab
+        setCredentials([]);
+        setCredentialAccess([]);
+        setActiveTab("info");
+        showToast("Your credential access has been revoked", "warning");
+      }
+    };
+
+    socket.on("credential-access-granted", handleCredentialAccessGranted);
+    socket.on("credential-access-revoked", handleCredentialAccessRevoked);
+
+    return () => {
+      socket.off("credential-access-granted", handleCredentialAccessGranted);
+      socket.off("credential-access-revoked", handleCredentialAccessRevoked);
+    };
+  }, [socket, project?._id, showToast]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -352,6 +437,175 @@ const EditProjectModal = ({ project, onClose }) => {
     window.open(file.url, "_blank");
   };
 
+  // Credentials Handlers
+  const handleAddCredential = async () => {
+    if (!newCredential.label.trim()) {
+      showToast("Label is required", "error");
+      return;
+    }
+
+    setCredentialLoading(true);
+    try {
+      const response = await projectAPI.addCredential(project._id, newCredential);
+      if (response.data.success) {
+        setCredentials(response.data.project.credentials);
+        setCredentialAccess(response.data.project.credentialAccess || []);
+        setNewCredential({ label: "", value: "" });
+        showToast("Credential added successfully", "success");
+      }
+    } catch (error) {
+      console.error("Add credential error:", error);
+      showToast(error.response?.data?.message || "Failed to add credential", "error");
+    } finally {
+      setCredentialLoading(false);
+    }
+  };
+
+  const handleUpdateCredential = async (credentialId, updates) => {
+    setCredentialLoading(true);
+    try {
+      const response = await projectAPI.updateCredential(project._id, credentialId, updates);
+      if (response.data.success) {
+        setCredentials(response.data.project.credentials);
+        setEditingCredentialId(null);
+        showToast("Credential updated successfully", "success");
+      }
+    } catch (error) {
+      console.error("Update credential error:", error);
+      showToast(error.response?.data?.message || "Failed to update credential", "error");
+    } finally {
+      setCredentialLoading(false);
+    }
+  };
+
+  const handleDeleteCredential = (credentialId) => {
+    const credential = credentials.find((c) => c._id === credentialId);
+    setConfirmModal({
+      isOpen: true,
+      type: "danger",
+      title: "Delete Credential",
+      message: `Are you sure you want to delete the credential "${credential?.label || "this credential"}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        setCredentialLoading(true);
+        try {
+          const response = await projectAPI.deleteCredential(project._id, credentialId);
+          if (response.data.success) {
+            setCredentials(response.data.project.credentials);
+            showToast("Credential deleted successfully", "success");
+          }
+        } catch (error) {
+          console.error("Delete credential error:", error);
+          showToast(error.response?.data?.message || "Failed to delete credential", "error");
+        } finally {
+          setCredentialLoading(false);
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  // Credential Access Handlers
+  const handleGrantAccess = async (memberId) => {
+    setCredentialLoading(true);
+    try {
+      const response = await projectAPI.grantCredentialAccess(project._id, memberId);
+      if (response.data.success) {
+        setCredentialAccess(response.data.project.credentialAccess);
+        showToast(response.data.message, "success");
+      }
+    } catch (error) {
+      console.error("Grant access error:", error);
+      showToast(error.response?.data?.message || "Failed to grant access", "error");
+    } finally {
+      setCredentialLoading(false);
+    }
+  };
+
+  const handleRevokeAccess = (memberId) => {
+    // Find user details for the confirmation message
+    const userDetails = getCredentialAccessUserDetails(
+      credentialAccess.find((ca) => (ca.user?._id || ca.user) === memberId)
+    );
+
+    setConfirmModal({
+      isOpen: true,
+      type: "danger",
+      title: "Revoke Credential Access",
+      message: `Are you sure you want to revoke credential access for "${userDetails?.name || "this member"}"? They will no longer be able to view project credentials.`,
+      confirmText: "Revoke Access",
+      onConfirm: async () => {
+        setCredentialLoading(true);
+        try {
+          const response = await projectAPI.revokeCredentialAccess(project._id, memberId);
+          if (response.data.success) {
+            setCredentialAccess(response.data.project.credentialAccess);
+            showToast(response.data.message, "success");
+          }
+        } catch (error) {
+          console.error("Revoke access error:", error);
+          showToast(error.response?.data?.message || "Failed to revoke access", "error");
+        } finally {
+          setCredentialLoading(false);
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  // Helper to close confirmation modal
+  const closeConfirmModal = () => {
+    if (!credentialLoading) {
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+    }
+  };
+
+  // Helper function to get user details from credentialAccess
+  // The user might be populated (object) or just an ID (string)
+  const getCredentialAccessUserDetails = (access) => {
+    if (!access) return { name: "Unknown User", email: "", color: "#6B7280" };
+
+    // If user is already populated with details
+    if (access.user && typeof access.user === 'object' && access.user.name) {
+      return access.user;
+    }
+
+    // Get user ID (could be object with _id or just string)
+    const userId = access.user?._id || access.user;
+    const userIdStr = userId?.toString ? userId.toString() : userId;
+
+    // Look up user from project members
+    const member = project?.members?.find((m) => {
+      if (!m.user) return false;
+      const memberId = m.user._id?.toString ? m.user._id.toString() : m.user._id;
+      return memberId === userIdStr;
+    });
+
+    if (member?.user) {
+      return member.user;
+    }
+
+    return { _id: userId, name: "Unknown User", email: "", color: "#6B7280" };
+  };
+
+  // Check if current user has credential access
+  const hasCredentialAccess = isAdmin || credentialAccess.some(
+    (ca) => ca.user && (ca.user._id === user?._id || ca.user === user?._id)
+  );
+
+  // Get members without credential access (for granting)
+  const membersWithoutAccess = project?.members?.filter(
+    (member) =>
+      member.user &&
+      member.user.role !== "admin" &&
+      !credentialAccess.some(
+        (ca) => {
+          const caUserId = ca.user?._id || ca.user;
+          return caUserId && (caUserId === member.user._id || caUserId?.toString() === member.user._id?.toString());
+        }
+      )
+  ) || [];
+
   if (!project) return null;
 
   return (
@@ -392,17 +646,55 @@ const EditProjectModal = ({ project, onClose }) => {
               <Save className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Edit Project</h2>
+              <h2 className="text-xl font-bold">Project Details</h2>
               <p className="text-primary-100 text-md">
-                Update project details and manage attachments
+                Manage project information and credentials
               </p>
             </div>
           </div>
         </div>
 
+        {/* Tabs Navigation */}
+        <div className="flex border-b border-gray-200 bg-white flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab("info")}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "info"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <Info className="w-4 h-4" />
+            Project Information
+          </button>
+          {(isAdmin || hasCredentialAccess) && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("credentials")}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "credentials"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              <Key className="w-4 h-4" />
+              Credentials
+              {isAdmin && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">
+                  {credentials.length}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+
         {/* Modal Content - Scrollable */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4">
+            {/* PROJECT INFORMATION TAB */}
+            {activeTab === "info" && (
+              <>
             <form
               id="edit-project-form"
               onSubmit={handleSubmit}
@@ -875,6 +1167,331 @@ const EditProjectModal = ({ project, onClose }) => {
                 </div>
               )}
             </div>
+              </>
+            )}
+
+            {/* CREDENTIALS TAB */}
+            {activeTab === "credentials" && (isAdmin || hasCredentialAccess) && (
+              <div className="space-y-6">
+                {/* Access Notice for Members */}
+                {!isAdmin && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                      <Shield className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">
+                          Credential Access Granted
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          You have been granted access to view these credentials. Please handle them securely.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin: Add New Credential */}
+                {isAdmin && (
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center mb-4">
+                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                        <Key className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Add Credential
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Store sensitive project information securely
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                      <div className="md:col-span-4">
+                        <input
+                          type="text"
+                          placeholder="Label (e.g., API Key, Password) *"
+                          value={newCredential.label}
+                          onChange={(e) =>
+                            setNewCredential((prev) => ({ ...prev, label: e.target.value }))
+                          }
+                          className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          disabled={credentialLoading}
+                        />
+                      </div>
+                      <div className="md:col-span-6">
+                        <input
+                          type="text"
+                          placeholder="Value"
+                          value={newCredential.value}
+                          onChange={(e) =>
+                            setNewCredential((prev) => ({ ...prev, value: e.target.value }))
+                          }
+                          className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          disabled={credentialLoading}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <button
+                          type="button"
+                          onClick={handleAddCredential}
+                          disabled={credentialLoading || !newCredential.label.trim()}
+                          className="w-full h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                        >
+                          {credentialLoading ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          ) : (
+                            <>
+                              <Plus className="w-4 h-4" />
+                              <span>Add</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Credentials List */}
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center mr-3">
+                      <Lock className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Stored Credentials
+                    </h3>
+                  </div>
+
+                  {credentials.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {credentials.map((credential) => (
+                        <div
+                          key={credential._id}
+                          className={`bg-white rounded-lg border border-gray-200 p-3 ${
+                            editingCredentialId === credential._id ? "md:col-span-2" : ""
+                          }`}
+                        >
+                          {editingCredentialId === credential._id && isAdmin ? (
+                            // Edit Mode - Full width
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                              <div className="md:col-span-4">
+                                <input
+                                  type="text"
+                                  defaultValue={credential.label}
+                                  id={`edit-cred-label-${credential._id}`}
+                                  className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                  disabled={credentialLoading}
+                                />
+                              </div>
+                              <div className="md:col-span-5">
+                                <input
+                                  type="text"
+                                  defaultValue={credential.value}
+                                  id={`edit-cred-value-${credential._id}`}
+                                  className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                  disabled={credentialLoading}
+                                />
+                              </div>
+                              <div className="md:col-span-3 flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const labelInput = document.getElementById(
+                                      `edit-cred-label-${credential._id}`
+                                    );
+                                    const valueInput = document.getElementById(
+                                      `edit-cred-value-${credential._id}`
+                                    );
+                                    handleUpdateCredential(credential._id, {
+                                      label: labelInput.value,
+                                      value: valueInput.value,
+                                    });
+                                  }}
+                                  disabled={credentialLoading}
+                                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 text-sm"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCredentialId(null)}
+                                  disabled={credentialLoading}
+                                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors disabled:opacity-50 text-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            // View Mode - Card style
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-3 flex-1 min-w-0">
+                                <div className="flex-shrink-0">
+                                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                    <Key className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-700 truncate">
+                                    {credential.label}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mt-1 font-mono bg-gray-50 px-2 py-1 rounded truncate">
+                                    {credential.value || (
+                                      <span className="text-gray-400 italic">No value set</span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                              {isAdmin && (
+                                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingCredentialId(credential._id)}
+                                    disabled={credentialLoading}
+                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Edit credential"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteCredential(credential._id)}
+                                    disabled={credentialLoading}
+                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Delete credential"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center p-6 text-gray-500">
+                      <Key className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p>
+                        {isAdmin
+                          ? "No credentials yet. Add your first credential above."
+                          : "No credentials available."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Admin: Manage Access */}
+                {isAdmin && (
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center mb-4">
+                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                        <Shield className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Manage Credential Access
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Grant or revoke access for project members
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Members with Access */}
+                    {credentialAccess.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          Members with Access
+                        </h4>
+                        <div className="space-y-2">
+                          {credentialAccess.map((access) => {
+                            const userDetails = getCredentialAccessUserDetails(access);
+                            const userId = access.user?._id || access.user;
+                            return (
+                              <div
+                                key={userId}
+                                className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Avatar user={userDetails} size="sm" />
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-800">
+                                      {userDetails.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {userDetails.email}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevokeAccess(userId)}
+                                  disabled={credentialLoading}
+                                  className="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
+                                  title="Revoke access"
+                                >
+                                  <UserMinus className="w-4 h-4" />
+                                  <span>Revoke</span>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Members without Access */}
+                    {membersWithoutAccess.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          Grant Access To
+                        </h4>
+                        <div className="space-y-2">
+                          {membersWithoutAccess.map((member) => (
+                            <div
+                              key={member.user._id}
+                              className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Avatar user={member.user} size="sm" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">
+                                    {member.user.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {member.user.email}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleGrantAccess(member.user._id)}
+                                disabled={credentialLoading}
+                                className="flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
+                                title="Grant access"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                                <span>Grant</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {credentialAccess.length === 0 && membersWithoutAccess.length === 0 && (
+                      <div className="text-center p-4 text-gray-500">
+                        <User className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm">No project members to manage access for.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -887,26 +1504,40 @@ const EditProjectModal = ({ project, onClose }) => {
               className="px-8 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-all duration-200 rounded-xl hover:bg-gray-100 border border-gray-300"
               disabled={loading}
             >
-              Cancel
+              {activeTab === "info" ? "Cancel" : "Close"}
             </button>
-            <button
-              type="submit"
-              form="edit-project-form"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
-              disabled={loading || editMode}
-            >
-              {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </button>
+            {activeTab === "info" && (
+              <button
+                type="submit"
+                form="edit-project-form"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+                disabled={loading || editMode}
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        type={confirmModal.type}
+        isLoading={credentialLoading}
+      />
     </div>
   );
 };

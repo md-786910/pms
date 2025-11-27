@@ -159,6 +159,47 @@ const projectSchema = new mongoose.Schema(
         default: "todo",
       },
     },
+    // Credentials - custom fields with label/value pairs (admin only can manage)
+    credentials: [
+      {
+        label: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: [100, "Label cannot be more than 100 characters"],
+        },
+        value: {
+          type: String,
+          trim: true,
+          maxlength: [1000, "Value cannot be more than 1000 characters"],
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
+    // Members who have access to view credentials (admin always has access)
+    credentialAccess: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        grantedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        grantedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -23,6 +23,8 @@ const notificationSchema = new mongoose.Schema(
         "comment_added",
         "comment_mention",
         "due_date_reminder",
+        "credential_access",
+        "credential_access_revoked",
         "system",
       ],
       required: true,

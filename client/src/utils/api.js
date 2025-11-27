@@ -154,6 +154,20 @@ export const projectAPI = {
       `/projects/${projectId}/attachments/${attachmentId}`
     );
   },
+
+  // Credentials API (admin manages, specific members can view)
+  addCredential: (projectId, credentialData) =>
+    api.post(`/projects/${projectId}/credentials`, credentialData),
+  updateCredential: (projectId, credentialId, credentialData) =>
+    api.put(`/projects/${projectId}/credentials/${credentialId}`, credentialData),
+  deleteCredential: (projectId, credentialId) =>
+    api.delete(`/projects/${projectId}/credentials/${credentialId}`),
+
+  // Credential Access Management (admin only)
+  grantCredentialAccess: (projectId, memberId) =>
+    api.post(`/projects/${projectId}/credential-access/${memberId}`),
+  revokeCredentialAccess: (projectId, memberId) =>
+    api.delete(`/projects/${projectId}/credential-access/${memberId}`),
 };
 
 export const cardAPI = {

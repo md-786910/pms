@@ -464,6 +464,438 @@ router.post(
 // @access  Private
 router.delete("/:id/members/:memberId", removeMember);
 
+// =============================================
+// CREDENTIALS ROUTES (Admin manages, specific members can view)
+// =============================================
+
+// @route   POST /api/projects/:id/credentials
+// @desc    Add a credential to project
+// @access  Private (Admin only)
+router.post(
+  "/:id/credentials",
+  adminAuth,
+  [
+    body("label")
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Label must be between 1 and 100 characters"),
+    body("value")
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage("Value cannot be more than 1000 characters"),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: errors.array(),
+        });
+      }
+
+      const Project = require("../models/Project");
+      const projectId = req.params.id;
+      const userId = req.user._id;
+      const { label, value } = req.body;
+
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Add new credential
+      const newCredential = {
+        label,
+        value: value || "",
+        createdAt: new Date(),
+        createdBy: userId,
+      };
+
+      project.credentials.push(newCredential);
+      await project.save();
+
+      // Populate and return
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+      await project.populate("credentials.createdBy", "name email");
+      await project.populate("credentialAccess.user", "name email avatar color");
+      await project.populate("credentialAccess.grantedBy", "name email");
+
+      res.status(201).json({
+        success: true,
+        message: "Credential added successfully",
+        project,
+        credential: project.credentials[project.credentials.length - 1],
+      });
+    } catch (error) {
+      console.error("Add credential error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while adding credential",
+      });
+    }
+  }
+);
+
+// @route   PUT /api/projects/:id/credentials/:credentialId
+// @desc    Update a credential
+// @access  Private (Admin only)
+router.put(
+  "/:id/credentials/:credentialId",
+  adminAuth,
+  [
+    body("label")
+      .optional()
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Label must be between 1 and 100 characters"),
+    body("value")
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage("Value cannot be more than 1000 characters"),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: errors.array(),
+        });
+      }
+
+      const Project = require("../models/Project");
+      const projectId = req.params.id;
+      const credentialId = req.params.credentialId;
+      const { label, value } = req.body;
+
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Find the credential
+      const credentialIndex = project.credentials.findIndex(
+        (c) => c._id.toString() === credentialId
+      );
+
+      if (credentialIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: "Credential not found",
+        });
+      }
+
+      // Update the credential
+      if (label !== undefined) project.credentials[credentialIndex].label = label;
+      if (value !== undefined) project.credentials[credentialIndex].value = value;
+
+      await project.save();
+
+      // Populate and return
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+      await project.populate("credentials.createdBy", "name email");
+      await project.populate("credentialAccess.user", "name email avatar color");
+
+      res.json({
+        success: true,
+        message: "Credential updated successfully",
+        project,
+        credential: project.credentials[credentialIndex],
+      });
+    } catch (error) {
+      console.error("Update credential error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while updating credential",
+      });
+    }
+  }
+);
+
+// @route   DELETE /api/projects/:id/credentials/:credentialId
+// @desc    Delete a credential
+// @access  Private (Admin only)
+router.delete("/:id/credentials/:credentialId", adminAuth, async (req, res) => {
+  try {
+    const Project = require("../models/Project");
+    const projectId = req.params.id;
+    const credentialId = req.params.credentialId;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    // Find and remove the credential
+    const credentialIndex = project.credentials.findIndex(
+      (c) => c._id.toString() === credentialId
+    );
+
+    if (credentialIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Credential not found",
+      });
+    }
+
+    project.credentials.splice(credentialIndex, 1);
+    await project.save();
+
+    // Populate and return
+    await project.populate("owner", "name email avatar color");
+    await project.populate("members.user", "name email avatar color");
+
+    res.json({
+      success: true,
+      message: "Credential deleted successfully",
+      project,
+    });
+  } catch (error) {
+    console.error("Delete credential error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while deleting credential",
+    });
+  }
+});
+
+// @route   POST /api/projects/:id/credential-access/:memberId
+// @desc    Grant credential access to a project member
+// @access  Private (Admin only)
+router.post("/:id/credential-access/:memberId", adminAuth, async (req, res) => {
+  try {
+    const Project = require("../models/Project");
+    const User = require("../models/User");
+    const Notification = require("../models/Notification");
+    const { sendCredentialAccessEmail } = require("../config/email");
+    const { getIO } = require("../config/socket");
+
+    const projectId = req.params.id;
+    const memberId = req.params.memberId;
+    const userId = req.user._id;
+
+    const project = await Project.findById(projectId).populate(
+      "members.user",
+      "name email avatar color"
+    );
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    // Check if user is a member of the project
+    const isMember = project.members.some(
+      (m) => m.user && m.user._id.toString() === memberId
+    );
+
+    if (!isMember) {
+      return res.status(400).json({
+        success: false,
+        message: "User is not a member of this project",
+      });
+    }
+
+    // Check if already has access
+    const alreadyHasAccess = project.credentialAccess.some(
+      (ca) => ca.user && ca.user.toString() === memberId
+    );
+
+    if (alreadyHasAccess) {
+      return res.status(400).json({
+        success: false,
+        message: "User already has credential access",
+      });
+    }
+
+    // Grant access
+    project.credentialAccess.push({
+      user: memberId,
+      grantedAt: new Date(),
+      grantedBy: userId,
+    });
+
+    await project.save();
+
+    // Get the member details for notification
+    const memberUser = await User.findById(memberId);
+    const grantedByUser = await User.findById(userId);
+
+    // Create notification for the member
+    const notification = new Notification({
+      user: memberId,
+      sender: userId,
+      type: "credential_access",
+      title: "Credential Access Granted",
+      message: `You have been granted access to view credentials for project "${project.name}"`,
+      relatedProject: projectId,
+    });
+
+    await notification.save();
+
+    // Populate notification
+    await notification.populate("sender", "name email avatar color");
+    await notification.populate("relatedProject", "name");
+
+    // Send real-time notification
+    try {
+      const io = getIO();
+      io.to(`user-${memberId}`).emit("new-notification", { notification });
+
+      // Emit credential access granted event to the member
+      io.to(`user-${memberId}`).emit("credential-access-granted", {
+        projectId,
+        project: {
+          _id: project._id,
+          name: project.name,
+          credentials: project.credentials,
+          credentialAccess: project.credentialAccess,
+        },
+      });
+    } catch (socketError) {
+      console.error("Socket error:", socketError);
+    }
+
+    // Send email notification
+    setImmediate(async () => {
+      try {
+        await sendCredentialAccessEmail(memberUser, project, grantedByUser);
+        console.log(`Credential access email sent to ${memberUser.email}`);
+      } catch (emailError) {
+        console.error("Error sending credential access email:", emailError);
+      }
+    });
+
+    // Populate and return
+    await project.populate("owner", "name email avatar color");
+    await project.populate("credentialAccess.user", "name email avatar color");
+    await project.populate("credentialAccess.grantedBy", "name email");
+
+    res.json({
+      success: true,
+      message: `Credential access granted to ${memberUser.name}`,
+      project,
+    });
+  } catch (error) {
+    console.error("Grant credential access error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while granting credential access",
+    });
+  }
+});
+
+// @route   DELETE /api/projects/:id/credential-access/:memberId
+// @desc    Revoke credential access from a project member
+// @access  Private (Admin only)
+router.delete(
+  "/:id/credential-access/:memberId",
+  adminAuth,
+  async (req, res) => {
+    try {
+      const Project = require("../models/Project");
+      const User = require("../models/User");
+      const Notification = require("../models/Notification");
+      const { getIO } = require("../config/socket");
+
+      const projectId = req.params.id;
+      const memberId = req.params.memberId;
+      const userId = req.user._id;
+
+      const project = await Project.findById(projectId);
+
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Check if has access
+      const accessIndex = project.credentialAccess.findIndex(
+        (ca) => ca.user && ca.user.toString() === memberId
+      );
+
+      if (accessIndex === -1) {
+        return res.status(400).json({
+          success: false,
+          message: "User does not have credential access",
+        });
+      }
+
+      // Revoke access
+      project.credentialAccess.splice(accessIndex, 1);
+      await project.save();
+
+      // Get member details
+      const memberUser = await User.findById(memberId);
+
+      // Create notification
+      const notification = new Notification({
+        user: memberId,
+        sender: userId,
+        type: "credential_access_revoked",
+        title: "Credential Access Revoked",
+        message: `Your credential access for project "${project.name}" has been revoked`,
+        relatedProject: projectId,
+      });
+
+      await notification.save();
+      await notification.populate("sender", "name email avatar color");
+      await notification.populate("relatedProject", "name");
+
+      // Send real-time notification
+      try {
+        const io = getIO();
+        io.to(`user-${memberId}`).emit("new-notification", { notification });
+
+        // Emit credential access revoked event to the member
+        io.to(`user-${memberId}`).emit("credential-access-revoked", {
+          projectId,
+          memberId,
+        });
+      } catch (socketError) {
+        console.error("Socket error:", socketError);
+      }
+
+      // Populate and return
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+      await project.populate("credentialAccess.user", "name email avatar color");
+
+      res.json({
+        success: true,
+        message: `Credential access revoked from ${memberUser?.name || "user"}`,
+        project,
+      });
+    } catch (error) {
+      console.error("Revoke credential access error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while revoking credential access",
+      });
+    }
+  }
+);
+
 // @route   GET /api/projects/:id/cards
 // @desc    Get all cards for a project
 // @access  Private
