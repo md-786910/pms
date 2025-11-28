@@ -186,10 +186,12 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                   <>
                     <div className="relative group max-h-[65vh] overflow-y-auto space-y-3 pr-2">
                       {displayNotifications.map((n) => {
-                        const redirectUri =
-                          n.type === "project_activity"
-                            ? `/project/${n.relatedProject?._id}/edit`
-                            : `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`;
+                        const redirectUri = [
+                          "credential_access_revoked",
+                          "project_activity",
+                        ]?.includes(n.type)
+                          ? `/project/${n.relatedProject?._id}/edit`
+                          : `/project/${n.relatedProject?._id}/card/${n.relatedCard?._id}`;
 
                         return (
                           <div
@@ -198,7 +200,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                               e.stopPropagation();
                               markAsRead(n._id);
                               setOpen(false);
-                              navigate(redirectUri);
+                              // navigate(redirectUri);
                             }}
                             className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${
                               !n.read

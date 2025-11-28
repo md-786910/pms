@@ -745,7 +745,7 @@ const sendCredentialAccessEmail = async (member, project, grantedBy) => {
 
     const projectUrl = `${
       process.env.CLIENT_URL || "http://localhost:3000"
-    }/project/${project._id}`;
+    }/project/${project._id}/edit`;
 
     const template = {
       subject: `Credential Access Granted: "${project.name}" - Project Management System`,

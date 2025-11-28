@@ -32,7 +32,7 @@ const EditProjectModal = ({ project, onClose }) => {
   const { updateProject } = useProject();
   const { showToast } = useNotification();
   const { user } = useUser();
-  const { socket } = useSocket();
+  const { socket, joinProject, leaveProject } = useSocket();
   const isAdmin = user?.role === "admin";
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -166,6 +166,20 @@ const EditProjectModal = ({ project, onClose }) => {
     }
   }, [project]);
 
+  // Join project room for real-time updates
+  useEffect(() => {
+    if (project?._id) {
+      joinProject(project._id);
+    }
+
+    // Leave project room on unmount or project change
+    return () => {
+      if (project?._id) {
+        leaveProject(project._id);
+      }
+    };
+  }, [project?._id, joinProject, leaveProject]);
+
   // Handle click outside to close modal
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -193,7 +207,7 @@ const EditProjectModal = ({ project, onClose }) => {
   useEffect(() => {
     if (!socket || !project?._id) return;
 
-    // Handle credential access granted
+    // Handle credential access granted (for the specific user)
     const handleCredentialAccessGranted = (data) => {
       if (data.projectId === project._id) {
         // Update credentials and access list
@@ -207,7 +221,7 @@ const EditProjectModal = ({ project, onClose }) => {
       }
     };
 
-    // Handle credential access revoked
+    // Handle credential access revoked (for the specific user)
     const handleCredentialAccessRevoked = (data) => {
       if (data.projectId === project._id) {
         // Clear credentials and switch to info tab
@@ -218,12 +232,31 @@ const EditProjectModal = ({ project, onClose }) => {
       }
     };
 
+    // Handle project-wide credential access updates (for all viewers)
+    const handleProjectCredentialAccessUpdated = (data) => {
+      if (data.projectId === project._id) {
+        // Update credential access list for all viewers
+        if (data.credentialAccess) {
+          setCredentialAccess(data.credentialAccess);
+        }
+
+        // Show toast notification to admins and other viewers
+        const actionText = data.action === "granted" ? "granted to" : "revoked from";
+        showToast(
+          `Credential access ${actionText} ${data.memberName}`,
+          data.action === "granted" ? "info" : "warning"
+        );
+      }
+    };
+
     socket.on("credential-access-granted", handleCredentialAccessGranted);
     socket.on("credential-access-revoked", handleCredentialAccessRevoked);
+    socket.on("project-credential-access-updated", handleProjectCredentialAccessUpdated);
 
     return () => {
       socket.off("credential-access-granted", handleCredentialAccessGranted);
       socket.off("credential-access-revoked", handleCredentialAccessRevoked);
+      socket.off("project-credential-access-updated", handleProjectCredentialAccessUpdated);
     };
   }, [socket, project?._id, showToast]);
 

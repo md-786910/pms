@@ -770,6 +770,15 @@ router.post("/:id/credential-access/:memberId", adminAuth, async (req, res) => {
           credentialAccess: project.credentialAccess,
         },
       });
+
+      // Emit to project room so all viewers see the update
+      io.to(`project-${projectId}`).emit("project-credential-access-updated", {
+        projectId,
+        memberId,
+        memberName: memberUser.name,
+        action: "granted",
+        credentialAccess: project.credentialAccess,
+      });
     } catch (socketError) {
       console.error("Socket error:", socketError);
     }
@@ -871,6 +880,15 @@ router.delete(
         io.to(`user-${memberId}`).emit("credential-access-revoked", {
           projectId,
           memberId,
+        });
+
+        // Emit to project room so all viewers see the update
+        io.to(`project-${projectId}`).emit("project-credential-access-updated", {
+          projectId,
+          memberId,
+          memberName: memberUser?.name || "User",
+          action: "revoked",
+          credentialAccess: project.credentialAccess,
         });
       } catch (socketError) {
         console.error("Socket error:", socketError);
