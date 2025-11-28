@@ -729,6 +729,15 @@ const ProjectBoard = () => {
     if (over.data.current?.droppableType === "column") {
       const newStatus = targetStatus;
 
+      // Prevent dropping cards into archive column
+      if (newStatus === "archive") {
+        showToast(
+          "Cards cannot be moved to Archive. Use the Archive button in the card details.",
+          "warning"
+        );
+        return;
+      }
+
       // Get cards in the target column
       const targetCards = getCardsByStatus(newStatus);
 
@@ -785,6 +794,12 @@ const ProjectBoard = () => {
 
     if (sourceIndex === -1 || overIndex === -1) return;
 
+    // Prevent any drag-and-drop operations in archive column
+    if (sourceStatus === "archive" || targetStatus === "archive") {
+      showToast("Unable to move the card to the Archive list.", "warning");
+      return;
+    }
+
     // Same column reordering
     if (sourceStatus === targetStatus) {
       const reorderedCards = arrayMove(sourceCards, sourceIndex, overIndex);
@@ -829,6 +844,16 @@ const ProjectBoard = () => {
       }
     } else {
       // Moving between columns
+
+      // Prevent dropping cards into archive column
+      if (targetStatus === "archive") {
+        showToast(
+          "Cards cannot be moved to Archive. Use the Archive button in the card details.",
+          "warning"
+        );
+        return;
+      }
+
       const newTargetCards = [...targetCards];
       newTargetCards.splice(overIndex, 0, sourceCards[sourceIndex]);
 
