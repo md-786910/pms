@@ -1198,12 +1198,69 @@ const CardModal = ({
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
-
+    console.log({ commentText });
     try {
+      // Extract mentions from the actual comment text
+      const mentionRegex = /@([A-Za-z0-9._]+)/g;
+      const mentionMatches = [...commentText.matchAll(mentionRegex)];
+
+      console.log("Comment text:", commentText);
+      console.log("Mention matches:", mentionMatches);
+      console.log("Current project members:", currentProject?.members);
+
+      // Find users for each mention in the text
+      const actualMentions = mentionMatches
+        .map((match) => {
+          const username = match[1].toLowerCase();
+          console.log("Looking for username:", username);
+
+          // Find the user in project members
+          const member = currentProject?.members?.find((m) => {
+            if (!m.user) return false;
+            const memberUsername = m.user.name
+              .toLowerCase()
+              .replace(/\s+/g, "");
+            console.log(
+              "Comparing with member:",
+              memberUsername,
+              "against:",
+              username
+            );
+            return memberUsername === username;
+          });
+
+          if (member && member.user) {
+            console.log("Found member:", member.user);
+            // Return user object with required fields
+            return {
+              id: ["allmembersonthecard", "allmembersontheboard"].includes(
+                username
+              )
+                ? "card"
+                : member.user._id,
+              name: member.user.name,
+              email: member.user.email,
+              avatar: member.user.avatar,
+              color: member.user.color,
+              type: ["allmembersonthecard", "allmembersontheboard"].includes(
+                username
+              )
+                ? "group"
+                : "user",
+            };
+          }
+
+          console.log("Member not found for username:", username);
+          return null;
+        })
+        .filter((user) => user !== null); // Remove null entries
+
+      console.log("Actual mentions to send:", actualMentions);
+
       const response = await cardAPI.addComment(
         card._id,
         commentText,
-        mentions
+        actualMentions
       );
 
       if (response.data.success) {

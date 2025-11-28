@@ -90,7 +90,9 @@ const getCards = async (req, res) => {
       .sort({ order: 1, updatedAt: -1 });
 
     // Fetch all columns for this project to create status -> column name mapping
-    const columns = await Column.find({ project: projectId }).select("status name");
+    const columns = await Column.find({ project: projectId }).select(
+      "status name"
+    );
     const statusToLabelMap = {};
     columns.forEach((col) => {
       statusToLabelMap[col.status] = col.name;
@@ -313,7 +315,10 @@ const createCard = async (req, res) => {
           });
           console.log(`📬 Real-time notification sent to user ${assigneeId}`);
         } catch (socketError) {
-          console.error("Socket.IO error while sending notification:", socketError);
+          console.error(
+            "Socket.IO error while sending notification:",
+            socketError
+          );
         }
       }
     }
@@ -1031,7 +1036,9 @@ const reorderCards = async (req, res) => {
 
       // Verify card belongs to same project
       if (card.project.toString() !== firstCard.project.toString()) {
-        console.warn(`Card ${cardId} does not belong to project ${firstCard.project}`);
+        console.warn(
+          `Card ${cardId} does not belong to project ${firstCard.project}`
+        );
         continue;
       }
 
@@ -1047,7 +1054,10 @@ const reorderCards = async (req, res) => {
 
         try {
           // Add automatic comment for status change
-          const previousStatusLabel = await getStatusLabel(card.project, oldStatus);
+          const previousStatusLabel = await getStatusLabel(
+            card.project,
+            oldStatus
+          );
           const newStatusLabel = await getStatusLabel(card.project, status);
 
           card.comments.push({
@@ -1319,7 +1329,10 @@ const assignUser = async (req, res) => {
         });
         console.log(`📬 Real-time notification sent to user ${assigneeId}`);
       } catch (socketError) {
-        console.error("Socket.IO error while sending notification:", socketError);
+        console.error(
+          "Socket.IO error while sending notification:",
+          socketError
+        );
       }
     }
 
@@ -1457,7 +1470,10 @@ const unassignUser = async (req, res) => {
         });
         console.log(`📬 Real-time notification sent to user ${assigneeId}`);
       } catch (socketError) {
-        console.error("Socket.IO error while sending notification:", socketError);
+        console.error(
+          "Socket.IO error while sending notification:",
+          socketError
+        );
       }
     }
 
@@ -2276,7 +2292,8 @@ const deleteCard = async (req, res) => {
     if (!card.isArchived) {
       return res.status(400).json({
         success: false,
-        message: "Only archived cards can be permanently deleted. Please archive the card first.",
+        message:
+          "Only archived cards can be permanently deleted. Please archive the card first.",
       });
     }
 

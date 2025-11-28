@@ -98,23 +98,19 @@ const SimpleCommentEditor = ({
       const beforeMention = editorValue.substring(0, startPos);
       const afterMention = editorValue.substring(endPos);
 
-      // Insert the mention
-      const mentionText = `@${mention.name} `;
+      // Convert name to username format (remove spaces, lowercase)
+      const username = mention.name.replace(/\s+/g, "").toLowerCase();
+
+      // Insert the mention with space after
+      const mentionText = `@${username} `;
       const newValue = beforeMention + mentionText + afterMention;
 
       setEditorValue(newValue);
 
-      // Set cursor position after the mention
-      const newCursorPos = startPos + mentionText.length;
-
-      // Update cursor position immediately and focus
-      requestAnimationFrame(() => {
-        textarea.focus();
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-        // Trigger a change event to update the display layer
-        const event = new Event("input", { bubbles: true });
-        textarea.dispatchEvent(event);
-      });
+      // Notify parent of change
+      if (onChange) {
+        onChange(newValue);
+      }
 
       // Call callback if provided
       if (onMentionSelect) {
@@ -124,8 +120,18 @@ const SimpleCommentEditor = ({
       setShowMentions(false);
       setMentionQuery("");
       setMentionStartIndex(-1);
+
+      // Set cursor position after the mention
+      const newCursorPos = startPos + mentionText.length;
+
+      setTimeout(() => {
+        if (textarea) {
+          textarea.focus();
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }, 0);
     },
-    [mentionStartIndex, editorValue, onMentionSelect]
+    [mentionStartIndex, editorValue, onMentionSelect, onChange]
   );
 
   // Close mentions dropdown
@@ -172,136 +178,25 @@ const SimpleCommentEditor = ({
     [showMentions, closeMentions, handleSend]
   );
 
-  // Render styled text with colored mentions
-  const renderStyledText = useCallback(
-    (text) => {
-      if (!text) return "";
-
-      // Split text by mentions (@username)
-      const parts = text.split(/(@\w+)/g);
-      console.log(
-        "Rendering text:",
-        text,
-        "Parts:",
-        parts,
-        "Project members:",
-        projectMembers
-      );
-
-      return parts.map((part, index) => {
-        if (part.startsWith("@")) {
-          const username = part.substring(1);
-          console.log("Looking for user:", username);
-
-          const user = projectMembers.find((member) => {
-            const memberUsername = member.user.name
-              .toLowerCase()
-              .replace(/\s+/g, "");
-            console.log(
-              "Comparing:",
-              username.toLowerCase(),
-              "with",
-              memberUsername
-            );
-            return memberUsername === username.toLowerCase();
-          });
-
-          console.log("Found mention:", part, "User:", user);
-
-          if (user) {
-            const userColor = user.user.color || "#3b82f6";
-            // Convert hex to RGB for better opacity control
-            const rgb = hexToRgb(userColor);
-            const backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`;
-
-            return (
-              <span
-                key={index}
-                className="mention-styled"
-                style={{
-                  backgroundColor: backgroundColor,
-                  color: userColor,
-                  padding: "2px 8px",
-                  borderRadius: "6px",
-                  fontWeight: "600",
-                  display: "inline-block",
-                  margin: "0 2px",
-                  fontSize: "14px",
-                  lineHeight: "1.2",
-                  border: `1px solid ${userColor}20`,
-                  boxShadow: `0 1px 2px ${userColor}20`,
-                  verticalAlign: "baseline",
-                  textDecoration: "none",
-                }}
-              >
-                {part}
-              </span>
-            );
-          } else {
-            // Show unstyled mention if user not found
-            return (
-              <span key={index} style={{ color: "#ef4444", fontWeight: "500" }}>
-                {part}
-              </span>
-            );
-          }
-        }
-        return part;
-      });
-    },
-    [projectMembers]
-  );
-
-  // Helper function to convert hex to RGB
-  const hexToRgb = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 59, g: 130, b: 246 }; // Default blue
-  };
-
   return (
     <div className="relative">
-      {/* Display layer for styled mentions */}
-      <div
-        className="absolute inset-0 pointer-events-none z-10 whitespace-pre-wrap break-words overflow-hidden"
-        style={{
-          fontFamily:
-            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-          fontSize: "14px",
-          lineHeight: "1.5",
-          minHeight: "100px",
-          maxHeight: "200px",
-          padding: "12px",
-          border: "1px solid transparent",
-          borderRadius: "8px",
-          color: "#374151",
-          boxSizing: "border-box",
-          backgroundColor: "transparent",
-          wordWrap: "break-word",
-          overflowWrap: "break-word",
-        }}
-      >
-        {renderStyledText(editorValue)}
-      </div>
-
-      {/* Actual textarea for input */}
+      {/* Simple textarea - no overlay */}
       <textarea
         ref={textareaRef}
         value={editorValue}
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        dir="ltr"
         className="w-full min-h-[100px] max-h-[200px] p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-200 relative z-20"
         rows={4}
+        spellCheck="false"
+        autoCorrect="off"
+        autoCapitalize="off"
+        autoComplete="off"
         style={{
-          backgroundColor: "transparent",
-          color: "transparent",
-          caretColor: "#000",
+          backgroundColor: "#fff",
+          color: "#374151",
           fontSize: "14px",
           lineHeight: "1.5",
           fontFamily:
@@ -309,9 +204,6 @@ const SimpleCommentEditor = ({
           padding: "12px",
           paddingRight: "48px",
           boxSizing: "border-box",
-          wordWrap: "break-word",
-          overflowWrap: "break-word",
-          spellCheck: false, // Disable spell check
         }}
       />
 
