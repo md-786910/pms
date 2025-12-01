@@ -17,6 +17,16 @@ import {
   Info,
   Shield,
   Lock,
+  Globe,
+  Server,
+  Database,
+  FileCode,
+  HardDrive,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Check,
+  EyeOff,
 } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
@@ -55,6 +65,164 @@ const EditProjectModal = ({ project, onClose }) => {
   const [newCredential, setNewCredential] = useState({ label: "", value: "" });
   const [editingCredentialId, setEditingCredentialId] = useState(null);
   const [credentialLoading, setCredentialLoading] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [copiedField, setCopiedField] = useState(null);
+  const [visiblePasswords, setVisiblePasswords] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+
+  // Credential categories and templates
+  const credentialCategories = {
+    domain: {
+      name: "Domain & Project",
+      icon: Globe,
+      color: "blue",
+      fields: [
+        { label: "Project URL", key: "project_url" },
+        { label: "Domain", key: "domain" },
+        { label: "Domain Username", key: "domain_username" },
+        { label: "Domain Password", key: "domain_password", isPassword: true },
+      ],
+    },
+    hosting: {
+      name: "Hosting",
+      icon: Server,
+      color: "green",
+      fields: [
+        { label: "Hosting Provider", key: "hosting" },
+        { label: "Hosting Username", key: "hosting_username" },
+        { label: "Hosting Password", key: "hosting_password", isPassword: true },
+      ],
+    },
+    cms: {
+      name: "CMS",
+      icon: FileCode,
+      color: "purple",
+      fields: [
+        { label: "CMS URL", key: "cms_url" },
+        { label: "CMS Username", key: "cms_username" },
+        { label: "CMS Password", key: "cms_password", isPassword: true },
+      ],
+    },
+    database: {
+      name: "Database",
+      icon: Database,
+      color: "orange",
+      fields: [
+        { label: "Database URL", key: "database_url" },
+        { label: "Database Name", key: "database_name" },
+        { label: "Database Password", key: "database_password", isPassword: true },
+      ],
+    },
+    ftp: {
+      name: "FTP",
+      icon: HardDrive,
+      color: "cyan",
+      fields: [
+        { label: "FTP Hostname", key: "ftp_hostname" },
+        { label: "FTP Username", key: "ftp_username" },
+        { label: "FTP Password", key: "ftp_password", isPassword: true },
+      ],
+    },
+    ssl: {
+      name: "SSL",
+      icon: Shield,
+      color: "emerald",
+      fields: [
+        { label: "SSL Certificate", key: "ssl" },
+      ],
+    },
+    other: {
+      name: "Other Credentials",
+      icon: Key,
+      color: "gray",
+      fields: [],
+    },
+  };
+
+  // Get all predefined field labels
+  const getPredefinedLabels = () => {
+    const labels = [];
+    Object.values(credentialCategories).forEach((cat) => {
+      cat.fields.forEach((field) => labels.push(field.label.toLowerCase()));
+    });
+    return labels;
+  };
+
+  // Categorize credentials
+  const categorizeCredentials = () => {
+    const categorized = {};
+    const predefinedLabels = getPredefinedLabels();
+
+    Object.keys(credentialCategories).forEach((key) => {
+      categorized[key] = [];
+    });
+
+    credentials.forEach((cred) => {
+      const labelLower = cred.label.toLowerCase();
+      let matched = false;
+
+      for (const [catKey, cat] of Object.entries(credentialCategories)) {
+        if (catKey === "other") continue;
+        for (const field of cat.fields) {
+          if (labelLower.includes(field.key.replace(/_/g, " ")) ||
+              labelLower.includes(field.label.toLowerCase()) ||
+              field.label.toLowerCase().includes(labelLower)) {
+            categorized[catKey].push(cred);
+            matched = true;
+            break;
+          }
+        }
+        if (matched) break;
+      }
+
+      if (!matched) {
+        categorized.other.push(cred);
+      }
+    });
+
+    return categorized;
+  };
+
+  // Copy to clipboard
+  const handleCopy = async (text, fieldId) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldId);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      showToast("Failed to copy", "error");
+    }
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = (fieldId) => {
+    setVisiblePasswords((prev) => ({
+      ...prev,
+      [fieldId]: !prev[fieldId],
+    }));
+  };
+
+  // Toggle category expansion
+  const toggleCategory = (catKey) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [catKey]: !prev[catKey],
+    }));
+  };
+
+  // Get color classes - distinct professional colors for each category
+  const getColorClasses = (color) => {
+    const colors = {
+      blue: { bg: "bg-blue-100", icon: "bg-gradient-to-br from-blue-500 to-blue-600", text: "text-blue-700", border: "border-blue-200" },
+      green: { bg: "bg-emerald-100", icon: "bg-gradient-to-br from-emerald-500 to-emerald-600", text: "text-emerald-700", border: "border-emerald-200" },
+      purple: { bg: "bg-violet-100", icon: "bg-gradient-to-br from-violet-500 to-violet-600", text: "text-violet-700", border: "border-violet-200" },
+      orange: { bg: "bg-amber-100", icon: "bg-gradient-to-br from-amber-500 to-orange-500", text: "text-amber-700", border: "border-amber-200" },
+      cyan: { bg: "bg-cyan-100", icon: "bg-gradient-to-br from-cyan-500 to-teal-500", text: "text-cyan-700", border: "border-cyan-200" },
+      emerald: { bg: "bg-teal-100", icon: "bg-gradient-to-br from-teal-500 to-green-500", text: "text-teal-700", border: "border-teal-200" },
+      gray: { bg: "bg-slate-100", icon: "bg-gradient-to-br from-slate-500 to-slate-600", text: "text-slate-700", border: "border-slate-200" },
+    };
+    return colors[color] || colors.gray;
+  };
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState({
@@ -1205,75 +1373,100 @@ const EditProjectModal = ({ project, onClose }) => {
 
             {/* CREDENTIALS TAB */}
             {activeTab === "credentials" && (isAdmin || hasCredentialAccess) && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {/* Access Notice for Members */}
                 {!isAdmin && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-800">
-                          Credential Access Granted
-                        </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          You have been granted access to view these credentials. Please handle them securely.
-                        </p>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg">
+                    <Shield className="w-4 h-4 text-slate-500" />
+                    <p className="text-xs text-slate-600">You have view access to credentials</p>
                   </div>
                 )}
 
                 {/* Admin: Add New Credential */}
                 {isAdmin && (
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div className="flex items-center mb-4">
-                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-                        <Key className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          Add Credential
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Store sensitive project information securely
-                        </p>
-                      </div>
+                  <div className="bg-slate-50 rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold text-slate-700">Add New Credential</h3>
+                      <select
+                        value={selectedTemplate}
+                        onChange={(e) => {
+                          const selected = e.target.value;
+                          setSelectedTemplate(selected);
+                          if (selected) {
+                            setNewCredential((prev) => ({ ...prev, label: selected }));
+                          }
+                        }}
+                        className="text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-600 cursor-pointer"
+                      >
+                        <option value="">Select template...</option>
+                        <optgroup label="Domain & Project">
+                          <option value="Project URL">Project URL</option>
+                          <option value="Domain">Domain</option>
+                          <option value="Domain Username">Domain Username</option>
+                          <option value="Domain Password">Domain Password</option>
+                        </optgroup>
+                        <optgroup label="Hosting">
+                          <option value="Hosting Provider">Hosting Provider</option>
+                          <option value="Hosting Username">Hosting Username</option>
+                          <option value="Hosting Password">Hosting Password</option>
+                        </optgroup>
+                        <optgroup label="CMS">
+                          <option value="CMS URL">CMS URL</option>
+                          <option value="CMS Username">CMS Username</option>
+                          <option value="CMS Password">CMS Password</option>
+                        </optgroup>
+                        <optgroup label="Database">
+                          <option value="Database URL">Database URL</option>
+                          <option value="Database Name">Database Name</option>
+                          <option value="Database Password">Database Password</option>
+                        </optgroup>
+                        <optgroup label="FTP">
+                          <option value="FTP Hostname">FTP Hostname</option>
+                          <option value="FTP Username">FTP Username</option>
+                          <option value="FTP Password">FTP Password</option>
+                        </optgroup>
+                        <optgroup label="SSL">
+                          <option value="SSL Certificate">SSL Certificate</option>
+                        </optgroup>
+                      </select>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                      <div className="md:col-span-4">
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Label</label>
                         <input
                           type="text"
-                          placeholder="Label (e.g., API Key, Password) *"
+                          placeholder="e.g., API Key, Password"
                           value={newCredential.label}
-                          onChange={(e) =>
-                            setNewCredential((prev) => ({ ...prev, label: e.target.value }))
-                          }
-                          className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          onChange={(e) => {
+                            setNewCredential((prev) => ({ ...prev, label: e.target.value }));
+                            setSelectedTemplate("");
+                          }}
+                          className="w-full h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
                           disabled={credentialLoading}
                         />
                       </div>
-                      <div className="md:col-span-6">
+                      <div className="flex-[2]">
+                        <label className="block text-xs font-medium text-slate-500 mb-1.5">Value</label>
                         <input
                           type="text"
-                          placeholder="Value"
+                          placeholder="Enter credential value"
                           value={newCredential.value}
                           onChange={(e) =>
                             setNewCredential((prev) => ({ ...prev, value: e.target.value }))
                           }
-                          className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
                           disabled={credentialLoading}
                         />
                       </div>
-                      <div className="md:col-span-2">
+                      <div className="flex items-end">
                         <button
                           type="button"
                           onClick={handleAddCredential}
                           disabled={credentialLoading || !newCredential.label.trim()}
-                          className="w-full h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                          className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm hover:shadow"
                         >
                           {credentialLoading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                           ) : (
                             <>
                               <Plus className="w-4 h-4" />
@@ -1286,241 +1479,284 @@ const EditProjectModal = ({ project, onClose }) => {
                   </div>
                 )}
 
-                {/* Credentials List */}
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center mr-3">
-                      <Lock className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      Stored Credentials
-                    </h3>
-                  </div>
+                {/* Credentials Display */}
+                {credentials.length > 0 ? (
+                  <div className="space-y-4">
+                    {Object.entries(categorizeCredentials()).map(([catKey, catCredentials]) => {
+                      if (catCredentials.length === 0) return null;
+                      const category = credentialCategories[catKey];
+                      const IconComponent = category.icon;
+                      const colors = getColorClasses(category.color);
+                      const isExpanded = expandedCategories[catKey] !== false;
 
-                  {credentials.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {credentials.map((credential) => (
-                        <div
-                          key={credential._id}
-                          className={`bg-white rounded-lg border border-gray-200 p-3 ${
-                            editingCredentialId === credential._id ? "md:col-span-2" : ""
-                          }`}
-                        >
-                          {editingCredentialId === credential._id && isAdmin ? (
-                            // Edit Mode - Full width
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                              <div className="md:col-span-4">
-                                <input
-                                  type="text"
-                                  defaultValue={credential.label}
-                                  id={`edit-cred-label-${credential._id}`}
-                                  className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                  disabled={credentialLoading}
-                                />
+                      return (
+                        <div key={catKey} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                          {/* Category Header */}
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(catKey)}
+                            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 ${colors.icon} rounded-lg flex items-center justify-center shadow-sm`}>
+                                <IconComponent className="w-4 h-4 text-white" />
                               </div>
-                              <div className="md:col-span-5">
-                                <input
-                                  type="text"
-                                  defaultValue={credential.value}
-                                  id={`edit-cred-value-${credential._id}`}
-                                  className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                  disabled={credentialLoading}
-                                />
-                              </div>
-                              <div className="md:col-span-3 flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const labelInput = document.getElementById(
-                                      `edit-cred-label-${credential._id}`
-                                    );
-                                    const valueInput = document.getElementById(
-                                      `edit-cred-value-${credential._id}`
-                                    );
-                                    handleUpdateCredential(credential._id, {
-                                      label: labelInput.value,
-                                      value: valueInput.value,
-                                    });
-                                  }}
-                                  disabled={credentialLoading}
-                                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 text-sm"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingCredentialId(null)}
-                                  disabled={credentialLoading}
-                                  className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors disabled:opacity-50 text-sm"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
+                              <span className="text-sm font-semibold text-slate-700">{category.name}</span>
+                              <span className={`text-xs ${colors.text} ${colors.bg} px-2 py-0.5 rounded-full font-medium`}>
+                                {catCredentials.length}
+                              </span>
                             </div>
-                          ) : (
-                            // View Mode - Card style
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-start space-x-3 flex-1 min-w-0">
-                                <div className="flex-shrink-0">
-                                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                                    <Key className="w-4 h-4 text-blue-600" />
+                            {isExpanded ? (
+                              <ChevronUp className="w-5 h-5 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5 text-slate-400" />
+                            )}
+                          </button>
+
+                          {/* Credentials Table */}
+                          {isExpanded && (
+                            <div className="divide-y divide-slate-100">
+                              {catCredentials.map((credential) => {
+                                const isPassword = credential.label.toLowerCase().includes("password");
+                                const isVisible = visiblePasswords[credential._id];
+                                const isCopied = copiedField === credential._id;
+
+                                return editingCredentialId === credential._id && isAdmin ? (
+                                  // Edit Mode
+                                  <div key={credential._id} className="px-4 py-3 bg-blue-50">
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="text"
+                                        defaultValue={credential.label}
+                                        id={`edit-cred-label-${credential._id}`}
+                                        className="w-40 h-9 px-3 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        disabled={credentialLoading}
+                                      />
+                                      <input
+                                        type="text"
+                                        defaultValue={credential.value}
+                                        id={`edit-cred-value-${credential._id}`}
+                                        className="flex-1 h-9 px-3 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                        disabled={credentialLoading}
+                                      />
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const labelInput = document.getElementById(`edit-cred-label-${credential._id}`);
+                                            const valueInput = document.getElementById(`edit-cred-value-${credential._id}`);
+                                            handleUpdateCredential(credential._id, {
+                                              label: labelInput.value,
+                                              value: valueInput.value,
+                                            });
+                                          }}
+                                          disabled={credentialLoading}
+                                          className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                        >
+                                          Save
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingCredentialId(null)}
+                                          className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-600 text-sm font-medium rounded-lg border border-slate-200 transition-colors"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-700 truncate">
-                                    {credential.label}
-                                  </p>
-                                  <p className="text-sm text-gray-600 mt-1 font-mono bg-gray-50 px-2 py-1 rounded truncate">
-                                    {credential.value || (
-                                      <span className="text-gray-400 italic">No value set</span>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-                              {isAdmin && (
-                                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingCredentialId(credential._id)}
-                                    disabled={credentialLoading}
-                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Edit credential"
+                                ) : (
+                                  // View Mode
+                                  <div
+                                    key={credential._id}
+                                    className="flex items-center px-4 py-3 hover:bg-slate-50 transition-colors group"
                                   >
-                                    <Pencil className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteCredential(credential._id)}
-                                    disabled={credentialLoading}
-                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Delete credential"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              )}
+                                    <div className="w-40 flex-shrink-0">
+                                      <span className="text-sm font-medium text-slate-600">
+                                        {credential.label}
+                                      </span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-sm font-mono text-slate-800">
+                                        {credential.value ? (
+                                          isPassword && !isVisible ? (
+                                            <span className="text-slate-400">••••••••••••</span>
+                                          ) : (
+                                            credential.value
+                                          )
+                                        ) : (
+                                          <span className="text-slate-300 italic">Not set</span>
+                                        )}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {isPassword && credential.value && (
+                                        <button
+                                          type="button"
+                                          onClick={() => togglePasswordVisibility(credential._id)}
+                                          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                          title={isVisible ? "Hide" : "Show"}
+                                        >
+                                          {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                      )}
+                                      {credential.value && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCopy(credential.value, credential._id)}
+                                          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                          title="Copy"
+                                        >
+                                          {isCopied ? (
+                                            <Check className="w-4 h-4 text-green-500" />
+                                          ) : (
+                                            <Copy className="w-4 h-4" />
+                                          )}
+                                        </button>
+                                      )}
+                                      {isAdmin && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingCredentialId(credential._id)}
+                                            disabled={credentialLoading}
+                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Edit"
+                                          >
+                                            <Pencil className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteCredential(credential._id)}
+                                            disabled={credentialLoading}
+                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                      <Key className="w-8 h-8 text-slate-300" />
                     </div>
-                  ) : (
-                    <div className="text-center p-6 text-gray-500">
-                      <Key className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p>
-                        {isAdmin
-                          ? "No credentials yet. Add your first credential above."
-                          : "No credentials available."}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    <p className="text-sm font-medium text-slate-500">No credentials stored</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {isAdmin ? "Add your first credential above" : "No credentials available"}
+                    </p>
+                  </div>
+                )}
 
-                {/* Admin: Manage Access */}
+                {/* Admin: Access Control */}
                 {isAdmin && (
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <div className="flex items-center mb-4">
-                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-                        <Shield className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-800">
-                          Manage Credential Access
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Grant or revoke access for project members
-                        </p>
-                      </div>
+                  <div className="bg-slate-50 rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-sm font-semibold text-slate-700">Access Control</h3>
+                      <span className="text-xs text-slate-500">
+                        {credentialAccess.length} of {credentialAccess.length + membersWithoutAccess.length} members
+                      </span>
                     </div>
 
-                    {/* Members with Access */}
-                    {credentialAccess.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          Members with Access
-                        </h4>
-                        <div className="space-y-2">
-                          {credentialAccess.map((access) => {
-                            const userDetails = getCredentialAccessUserDetails(access);
-                            const userId = access.user?._id || access.user;
-                            return (
-                              <div
-                                key={userId}
-                                className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <Avatar user={userDetails} size="sm" />
-                                  <div>
-                                    <p className="text-sm font-medium text-gray-800">
-                                      {userDetails.name}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {userDetails.email}
-                                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Members with Access */}
+                      <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+                          <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          </div>
+                          <h4 className="text-xs font-semibold text-slate-600">Has Access</h4>
+                          <span className="ml-auto text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            {credentialAccess.length}
+                          </span>
+                        </div>
+                        {credentialAccess.length > 0 ? (
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {credentialAccess.map((access) => {
+                              const userDetails = getCredentialAccessUserDetails(access);
+                              const userId = access.user?._id || access.user;
+                              return (
+                                <div
+                                  key={userId}
+                                  className="flex items-center justify-between p-2 rounded-lg group hover:bg-slate-50 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <Avatar user={userDetails} size="sm" />
+                                    <span className="text-sm text-slate-700 truncate">{userDetails.name}</span>
                                   </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRevokeAccess(userId)}
+                                    disabled={credentialLoading}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                    title="Revoke access"
+                                  >
+                                    <UserMinus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-6 text-slate-400">
+                            <User className="w-8 h-8 text-slate-200 mb-2" />
+                            <p className="text-xs">No members have access</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Grant Access */}
+                      <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                            <UserPlus className="w-3.5 h-3.5 text-blue-600" />
+                          </div>
+                          <h4 className="text-xs font-semibold text-slate-600">Available Members</h4>
+                          <span className="ml-auto text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {membersWithoutAccess.length}
+                          </span>
+                        </div>
+                        {membersWithoutAccess.length > 0 ? (
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {membersWithoutAccess.map((member) => (
+                              <div
+                                key={member.user._id}
+                                className="flex items-center justify-between p-2 rounded-lg group hover:bg-slate-50 transition-colors"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <Avatar user={member.user} size="sm" />
+                                  <span className="text-sm text-slate-700 truncate">{member.user.name}</span>
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => handleRevokeAccess(userId)}
+                                  onClick={() => handleGrantAccess(member.user._id)}
                                   disabled={credentialLoading}
-                                  className="flex items-center gap-1 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
-                                  title="Revoke access"
+                                  className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                  title="Grant access"
                                 >
-                                  <UserMinus className="w-4 h-4" />
-                                  <span>Revoke</span>
+                                  <UserPlus className="w-4 h-4" />
                                 </button>
                               </div>
-                            );
-                          })}
-                        </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-6 text-slate-400">
+                            <Check className="w-8 h-8 text-emerald-200 mb-2" />
+                            <p className="text-xs">All members have access</p>
+                          </div>
+                        )}
                       </div>
-                    )}
-
-                    {/* Members without Access */}
-                    {membersWithoutAccess.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                          Grant Access To
-                        </h4>
-                        <div className="space-y-2">
-                          {membersWithoutAccess.map((member) => (
-                            <div
-                              key={member.user._id}
-                              className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Avatar user={member.user} size="sm" />
-                                <div>
-                                  <p className="text-sm font-medium text-gray-800">
-                                    {member.user.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {member.user.email}
-                                  </p>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleGrantAccess(member.user._id)}
-                                disabled={credentialLoading}
-                                className="flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
-                                title="Grant access"
-                              >
-                                <UserPlus className="w-4 h-4" />
-                                <span>Grant</span>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {credentialAccess.length === 0 && membersWithoutAccess.length === 0 && (
-                      <div className="text-center p-4 text-gray-500">
-                        <User className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm">No project members to manage access for.</p>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
