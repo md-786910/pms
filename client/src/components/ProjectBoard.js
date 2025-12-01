@@ -1295,18 +1295,27 @@ const ProjectBoard = () => {
     );
   }
 
-  if (!currentProject) {
+  // if (!currentProject) {
+  //   return (
+  //     <div className="text-center py-12">
+  //       <h3 className="text-lg font-medium text-secondary-900 mb-2">
+  //         Project not found
+  //       </h3>
+  //       <p className="text-secondary-600 mb-6">
+  //         The project you're looking for doesn't exist.
+  //       </p>
+  //       <Link to="/" className="btn-primary">
+  //         Back to Dashboard
+  //       </Link>
+  //     </div>
+  //   );
+  // }
+
+
+  if (!currentProject){
     return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-secondary-900 mb-2">
-          Project not found
-        </h3>
-        <p className="text-secondary-600 mb-6">
-          The project you're looking for doesn't exist.
-        </p>
-        <Link to="/" className="btn-primary">
-          Back to Dashboard
-        </Link>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
     );
   }

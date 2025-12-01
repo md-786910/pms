@@ -657,7 +657,7 @@ const LabelsModal = ({
                         <input
                           type="text"
                           value={editLabelName}
-                          onChange={(e) => setEditLabelName(e.target.value)}
+                          onChange={(e) => setEditLabelName(e.target.value.toUpperCase())}
                           className="flex-1 p-1 border border-gray-300 rounded text-sm"
                           autoFocus
                         />
@@ -725,7 +725,7 @@ const LabelsModal = ({
                 <input
                   type="text"
                   value={newLabelName}
-                  onChange={(e) => setNewLabelName(e.target.value)}
+                  onChange={(e) => setNewLabelName(e.target.value.toUpperCase())}
                   placeholder="Label name"
                   className="w-full p-2 border border-gray-300 rounded text-sm"
                   autoFocus
