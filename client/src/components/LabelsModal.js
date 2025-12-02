@@ -688,7 +688,11 @@ const LabelsModal = ({
                     ) : (
                       <>
                         <div
-                          className={`flex-1 px-3 py-2 rounded text-sm font-medium ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLabelToggle(label.name, e);
+                          }}
+                          className={`flex-1 px-3 py-2 rounded text-sm font-medium cursor-pointer ${
                             colorConfig?.bg || "bg-blue-500"
                           } ${colorConfig?.text || "text-white"}`}
                         >
