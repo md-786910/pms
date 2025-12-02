@@ -379,6 +379,7 @@ router.get("/:id", projectMemberAuth, getProject);
 // @access  Private
 router.put(
   "/:id",
+  adminAuth,
   [
     body("name")
       .optional()
@@ -420,7 +421,7 @@ router.put(
 // @route   DELETE /api/projects/:id
 // @desc    Delete project
 // @access  Private
-router.delete("/:id", deleteProject);
+router.delete("/:id", adminAuth, deleteProject);
 
 // @route   POST /api/projects/:id/members
 // @desc    Add member to project
@@ -524,7 +525,10 @@ router.post(
       await project.populate("owner", "name email avatar color");
       await project.populate("members.user", "name email avatar color");
       await project.populate("credentials.createdBy", "name email");
-      await project.populate("credentialAccess.user", "name email avatar color");
+      await project.populate(
+        "credentialAccess.user",
+        "name email avatar color"
+      );
       await project.populate("credentialAccess.grantedBy", "name email");
 
       res.status(201).json({
@@ -598,8 +602,10 @@ router.put(
       }
 
       // Update the credential
-      if (label !== undefined) project.credentials[credentialIndex].label = label;
-      if (value !== undefined) project.credentials[credentialIndex].value = value;
+      if (label !== undefined)
+        project.credentials[credentialIndex].label = label;
+      if (value !== undefined)
+        project.credentials[credentialIndex].value = value;
 
       await project.save();
 
@@ -607,7 +613,10 @@ router.put(
       await project.populate("owner", "name email avatar color");
       await project.populate("members.user", "name email avatar color");
       await project.populate("credentials.createdBy", "name email");
-      await project.populate("credentialAccess.user", "name email avatar color");
+      await project.populate(
+        "credentialAccess.user",
+        "name email avatar color"
+      );
 
       res.json({
         success: true,
@@ -883,13 +892,16 @@ router.delete(
         });
 
         // Emit to project room so all viewers see the update
-        io.to(`project-${projectId}`).emit("project-credential-access-updated", {
-          projectId,
-          memberId,
-          memberName: memberUser?.name || "User",
-          action: "revoked",
-          credentialAccess: project.credentialAccess,
-        });
+        io.to(`project-${projectId}`).emit(
+          "project-credential-access-updated",
+          {
+            projectId,
+            memberId,
+            memberName: memberUser?.name || "User",
+            action: "revoked",
+            credentialAccess: project.credentialAccess,
+          }
+        );
       } catch (socketError) {
         console.error("Socket error:", socketError);
       }
@@ -897,7 +909,10 @@ router.delete(
       // Populate and return
       await project.populate("owner", "name email avatar color");
       await project.populate("members.user", "name email avatar color");
-      await project.populate("credentialAccess.user", "name email avatar color");
+      await project.populate(
+        "credentialAccess.user",
+        "name email avatar color"
+      );
 
       res.json({
         success: true,
@@ -909,6 +924,227 @@ router.delete(
       res.status(500).json({
         success: false,
         message: "Server error while revoking credential access",
+      });
+    }
+  }
+);
+
+// =============================================
+// DESCRIPTION ROUTES (Notes/Documentation)
+// =============================================
+
+// @route   POST /api/projects/:id/descriptions
+// @desc    Add a description/note to project
+// @access  Private (Admin only)
+router.post(
+  "/:id/descriptions",
+  adminAuth,
+  [
+    body("content")
+      .trim()
+      .isLength({ min: 1, max: 10000 })
+      .withMessage("Content must be between 1 and 10000 characters"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0].msg,
+        errors: errors.array(),
+      });
+    }
+
+    try {
+      const Project = require("../models/Project");
+      const projectId = req.params.id;
+      const { content } = req.body;
+      const userId = req.user._id;
+
+      const project = await Project.findById(projectId);
+
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Initialize descriptions array if it doesn't exist
+      if (!project.descriptions) {
+        project.descriptions = [];
+      }
+
+      const newDescription = {
+        content,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      project.descriptions.push(newDescription);
+      await project.save();
+
+      // Populate and return
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+      await project.populate(
+        "descriptions.createdBy",
+        "name email avatar color"
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Description added successfully",
+        project,
+        description: project.descriptions[project.descriptions.length - 1],
+      });
+    } catch (error) {
+      console.error("Add description error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while adding description",
+      });
+    }
+  }
+);
+
+// @route   PUT /api/projects/:id/descriptions/:descriptionId
+// @desc    Update a description/note
+// @access  Private (Admin only)
+router.put(
+  "/:id/descriptions/:descriptionId",
+  adminAuth,
+  [
+    body("content")
+      .optional()
+      .trim()
+      .isLength({ min: 1, max: 10000 })
+      .withMessage("Content must be between 1 and 10000 characters"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0].msg,
+        errors: errors.array(),
+      });
+    }
+
+    try {
+      const Project = require("../models/Project");
+      const projectId = req.params.id;
+      const descriptionId = req.params.descriptionId;
+      const { content } = req.body;
+
+      const project = await Project.findById(projectId);
+
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Find the description
+      const descriptionIndex = project.descriptions.findIndex(
+        (d) => d._id.toString() === descriptionId
+      );
+
+      if (descriptionIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: "Description not found",
+        });
+      }
+
+      // Update the description
+      if (content !== undefined) {
+        project.descriptions[descriptionIndex].content = content;
+        project.descriptions[descriptionIndex].updatedAt = new Date();
+      }
+
+      await project.save();
+
+      // Populate and return
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+      await project.populate(
+        "descriptions.createdBy",
+        "name email avatar color"
+      );
+
+      res.json({
+        success: true,
+        message: "Description updated successfully",
+        project,
+        description: project.descriptions[descriptionIndex],
+      });
+    } catch (error) {
+      console.error("Update description error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while updating description",
+      });
+    }
+  }
+);
+
+// @route   DELETE /api/projects/:id/descriptions/:descriptionId
+// @desc    Delete a description/note
+// @access  Private (Admin only)
+router.delete(
+  "/:id/descriptions/:descriptionId",
+  adminAuth,
+  async (req, res) => {
+    try {
+      const Project = require("../models/Project");
+      const projectId = req.params.id;
+      const descriptionId = req.params.descriptionId;
+
+      const project = await Project.findById(projectId);
+
+      if (!project) {
+        return res.status(404).json({
+          success: false,
+          message: "Project not found",
+        });
+      }
+
+      // Find and remove the description
+      const descriptionIndex = project.descriptions.findIndex(
+        (d) => d._id.toString() === descriptionId
+      );
+
+      if (descriptionIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: "Description not found",
+        });
+      }
+
+      project.descriptions.splice(descriptionIndex, 1);
+      await project.save();
+
+      // Populate and return
+      await project.populate("owner", "name email avatar color");
+      await project.populate("members.user", "name email avatar color");
+      await project.populate(
+        "descriptions.createdBy",
+        "name email avatar color"
+      );
+
+      res.json({
+        success: true,
+        message: "Description deleted successfully",
+        project,
+      });
+    } catch (error) {
+      console.error("Delete description error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while deleting description",
       });
     }
   }

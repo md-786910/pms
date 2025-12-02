@@ -200,6 +200,28 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
+    // Project descriptions/notes
+    descriptions: [
+      {
+        content: {
+          type: String,
+          required: true,
+          maxlength: 10000,
+        },
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

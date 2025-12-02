@@ -48,6 +48,24 @@ const SimpleQuillEditor = ({
 
   return (
     <div className="simple-quill-editor">
+      <style>
+        {`
+          .simple-quill-editor .ql-container {
+            height: ${height};
+            overflow-y: auto;
+          }
+          .simple-quill-editor .ql-editor {
+            min-height: ${height};
+          }
+          .simple-quill-editor .ql-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: white;
+            border-bottom: 1px solid #ccc;
+          }
+        `}
+      </style>
       <ReactQuill
         theme="snow"
         value={editorValue}
@@ -55,7 +73,7 @@ const SimpleQuillEditor = ({
         placeholder={placeholder}
         modules={modules}
         formats={formats}
-        style={{ height: height }}
+        readOnly={readOnly}
       />
     </div>
   );
