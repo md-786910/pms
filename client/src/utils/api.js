@@ -168,6 +168,14 @@ export const projectAPI = {
     api.post(`/projects/${projectId}/credential-access/${memberId}`),
   revokeCredentialAccess: (projectId, memberId) =>
     api.delete(`/projects/${projectId}/credential-access/${memberId}`),
+
+  // Descriptions API (admin can add/edit/delete, members can view)
+  addDescription: (projectId, descriptionData) =>
+    api.post(`/projects/${projectId}/descriptions`, descriptionData),
+  updateDescription: (projectId, descriptionId, descriptionData) =>
+    api.put(`/projects/${projectId}/descriptions/${descriptionId}`, descriptionData),
+  deleteDescription: (projectId, descriptionId) =>
+    api.delete(`/projects/${projectId}/descriptions/${descriptionId}`),
 };
 
 export const cardAPI = {

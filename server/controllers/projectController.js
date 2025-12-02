@@ -200,7 +200,8 @@ const getProject = async (req, res) => {
     const project = await Project.findById(projectId)
       .populate("owner", "name email avatar color")
       .populate("members.user", "name email avatar color role")
-      .populate("credentialAccess.user", "name email avatar color");
+      .populate("credentialAccess.user", "name email avatar color")
+      .populate("descriptions.createdBy", "name email avatar color");
 
     if (!project) {
       return res.status(404).json({
