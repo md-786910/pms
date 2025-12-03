@@ -26,6 +26,7 @@ import {
   Copy,
   Check,
   EyeOff,
+  Plus,
 } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
@@ -283,7 +284,7 @@ const EditProjectModal = ({ project, onClose }) => {
     startDate: "",
     endDate: "",
     liveSiteUrl: "",
-    demoSiteUrl: "",
+    demoSiteUrls: [""],
     markupUrl: "",
   });
 
@@ -336,6 +337,16 @@ const EditProjectModal = ({ project, onClose }) => {
 
   useEffect(() => {
     if (project) {
+      // Handle backward compatibility: convert old single demoSiteUrl to array
+      let demoSiteUrls = [""];
+      if (project.demoSiteUrls && Array.isArray(project.demoSiteUrls)) {
+        // If array exists but is empty, use one empty string; otherwise use the array
+        demoSiteUrls = project.demoSiteUrls.length > 0 ? project.demoSiteUrls : [""];
+      } else if (project.demoSiteUrl) {
+        // Backward compatibility: convert old single URL to array
+        demoSiteUrls = [project.demoSiteUrl];
+      }
+
       setFormData({
         name: project.name || "",
         description: project.description || "",
@@ -345,7 +356,7 @@ const EditProjectModal = ({ project, onClose }) => {
         startDate: formatDate(project.startDate),
         endDate: formatDate(project.endDate),
         liveSiteUrl: project.liveSiteUrl || "",
-        demoSiteUrl: project.demoSiteUrl || "",
+        demoSiteUrls: demoSiteUrls,
         markupUrl: project.markupUrl || "",
       });
 
@@ -512,6 +523,8 @@ const EditProjectModal = ({ project, onClose }) => {
 
       const updateData = {
         ...formData,
+        // Filter out empty demo site URLs before sending
+        demoSiteUrls: formData.demoSiteUrls.filter(url => url.trim() !== ""),
         attachments: existingAttachments,
       };
       await updateProject(project._id, updateData);
@@ -592,6 +605,30 @@ const EditProjectModal = ({ project, onClose }) => {
         [name]: value,
       };
     });
+  };
+
+  // Handlers for demo site URLs array
+  const addDemoSiteUrl = () => {
+    setFormData((prev) => ({
+      ...prev,
+      demoSiteUrls: [...prev.demoSiteUrls, ""],
+    }));
+  };
+
+  const removeDemoSiteUrl = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      demoSiteUrls: prev.demoSiteUrls.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleDemoSiteUrlChange = (index, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      demoSiteUrls: prev.demoSiteUrls.map((url, i) =>
+        i === index ? value : url
+      ),
+    }));
   };
 
   // File upload handlers (same as CreateProjectModal)
@@ -760,9 +797,8 @@ const EditProjectModal = ({ project, onClose }) => {
       isOpen: true,
       type: "danger",
       title: "Delete Credential",
-      message: `Are you sure you want to delete the credential "${
-        credential?.label || "this credential"
-      }"? This action cannot be undone.`,
+      message: `Are you sure you want to delete the credential "${credential?.label || "this credential"
+        }"? This action cannot be undone.`,
       confirmText: "Delete",
       onConfirm: async () => {
         setCredentialLoading(true);
@@ -830,9 +866,8 @@ const EditProjectModal = ({ project, onClose }) => {
       isOpen: true,
       type: "danger",
       title: "Revoke Credential Access",
-      message: `Are you sure you want to revoke credential access for "${
-        userDetails?.name || "this member"
-      }"? They will no longer be able to view project credentials.`,
+      message: `Are you sure you want to revoke credential access for "${userDetails?.name || "this member"
+        }"? They will no longer be able to view project credentials.`,
       confirmText: "Revoke Access",
       onConfirm: async () => {
         setCredentialLoading(true);
@@ -1077,11 +1112,10 @@ const EditProjectModal = ({ project, onClose }) => {
           <button
             type="button"
             onClick={() => setActiveTab("info")}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "info"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "info"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             <Info className="w-4 h-4" />
             Project Information
@@ -1090,11 +1124,10 @@ const EditProjectModal = ({ project, onClose }) => {
             <button
               type="button"
               onClick={() => setActiveTab("credentials")}
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "credentials"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "credentials"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
             >
               <Key className="w-4 h-4" />
               Credentials
@@ -1108,11 +1141,10 @@ const EditProjectModal = ({ project, onClose }) => {
           <button
             type="button"
             onClick={() => setActiveTab("descriptions")}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "descriptions"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "descriptions"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             <FileText className="w-4 h-4" />
             Notes
@@ -1351,19 +1383,50 @@ const EditProjectModal = ({ project, onClose }) => {
                         />
                       </div>
                       {/* Demo Site URL */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Demo Site URL
-                        </label>
-                        <input
-                          type="url"
-                          name="demoSiteUrl"
-                          value={formData.demoSiteUrl}
-                          onChange={handleChange}
-                          className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                          placeholder="https://demo.example.com"
-                          disabled={editMode}
-                        />
+                      <div className="relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-semibold text-gray-700">
+                            Demo Site URL
+                          </label>
+                        </div>
+                        <div className="space-y-2">
+                          {formData.demoSiteUrls.map((url, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <input
+                                type="url"
+                                value={url}
+                                onChange={(e) =>
+                                  handleDemoSiteUrlChange(index, e.target.value)
+                                }
+                                className="flex-1 h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="https://demo.example.com"
+                                disabled={editMode}
+                              />
+                              {!editMode && formData.demoSiteUrls.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeDemoSiteUrl(index)}
+                                  className="p-3 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                  title="Remove this URL"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="absolute right-3 top-[38px]">
+                          {!editMode && (
+                            <button
+                              type="button"
+                              onClick={addDemoSiteUrl}
+                              className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 hover:scale-105"
+                              title="Add demo site URL"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {/* Markup URL */}
                       <div>
@@ -1403,11 +1466,10 @@ const EditProjectModal = ({ project, onClose }) => {
                     {/* Drag and Drop Area */}
                     {isAdmin && (
                       <div
-                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
-                          isDragOver
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
+                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${isDragOver
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-300 hover:border-gray-400"
+                          }`}
                         onClick={() => fileInputRef.current?.click()}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
@@ -1448,11 +1510,10 @@ const EditProjectModal = ({ project, onClose }) => {
                           {uploadedFiles.map((file) => (
                             <div
                               key={file.id}
-                              className={`flex items-center justify-between p-3 rounded-lg border ${
-                                file.uploaded
-                                  ? "bg-green-50 border-green-200"
-                                  : "bg-gray-50 border-gray-200"
-                              }`}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${file.uploaded
+                                ? "bg-green-50 border-green-200"
+                                : "bg-gray-50 border-gray-200"
+                                }`}
                             >
                               <div className="flex items-center space-x-3 flex-1 min-w-0">
                                 <div className="flex-shrink-0">
@@ -1678,7 +1739,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                 <input
                                                   type={
                                                     field.isPassword &&
-                                                    !isPasswordVisible
+                                                      !isPasswordVisible
                                                       ? "password"
                                                       : "text"
                                                   }
@@ -1694,11 +1755,10 @@ const EditProjectModal = ({ project, onClose }) => {
                                                     }))
                                                   }
                                                   placeholder="Enter value..."
-                                                  className={`w-full h-10 px-3 ${
-                                                    field.isPassword
-                                                      ? "pr-10"
-                                                      : ""
-                                                  } text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono`}
+                                                  className={`w-full h-10 px-3 ${field.isPassword
+                                                    ? "pr-10"
+                                                    : ""
+                                                    } text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono`}
                                                   disabled={isSaving}
                                                 />
                                                 {field.isPassword && (
@@ -1863,11 +1923,10 @@ const EditProjectModal = ({ project, onClose }) => {
                               newCredential.label?.toLowerCase();
                             return (
                               <div
-                                className={`grid grid-cols-[160px_1fr] gap-3 items-center ${
-                                  categorizeCredentials().other?.length > 0
-                                    ? "pt-3 border-t border-slate-100"
-                                    : ""
-                                }`}
+                                className={`grid grid-cols-[160px_1fr] gap-3 items-center ${categorizeCredentials().other?.length > 0
+                                  ? "pt-3 border-t border-slate-100"
+                                  : ""
+                                  }`}
                               >
                                 <input
                                   type="text"
@@ -2264,14 +2323,14 @@ const EditProjectModal = ({ project, onClose }) => {
                                   {desc.createdBy?.name || "Unknown"} •{" "}
                                   {desc.createdAt
                                     ? new Date(
-                                        desc.createdAt
-                                      ).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })
+                                      desc.createdAt
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
                                     : "No date"}
                                 </p>
                               </div>
@@ -2335,7 +2394,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                       descriptionLoading ||
                                       !editingDescriptionContent.trim() ||
                                       editingDescriptionContent ===
-                                        "<p><br></p>"
+                                      "<p><br></p>"
                                     }
                                     className="px-4 py-2 text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-2"
                                   >

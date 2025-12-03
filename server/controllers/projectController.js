@@ -263,7 +263,7 @@ const createProject = async (req, res) => {
       startDate,
       endDate,
       liveSiteUrl,
-      demoSiteUrl,
+      demoSiteUrls,
       markupUrl,
       attachments = [],
       color = "blue",
@@ -279,7 +279,7 @@ const createProject = async (req, res) => {
       startDate: startDate || new Date(),
       endDate: endDate || null,
       liveSiteUrl,
-      demoSiteUrl,
+      demoSiteUrls,
       markupUrl,
       attachments,
       owner: userId,
@@ -353,7 +353,7 @@ const updateProject = async (req, res) => {
       startDate,
       endDate,
       liveSiteUrl,
-      demoSiteUrl,
+      demoSiteUrls,
       markupUrl,
       attachments,
       color,
@@ -534,16 +534,16 @@ const updateProject = async (req, res) => {
       });
     }
     if (
-      demoSiteUrl !== undefined &&
-      valuesAreDifferent(originalProject.demoSiteUrl, demoSiteUrl)
+      demoSiteUrls !== undefined &&
+      JSON.stringify(originalProject.demoSiteUrls) !== JSON.stringify(demoSiteUrls)
     ) {
-      project.demoSiteUrl = demoSiteUrl;
-      changes.push(`demo site URL`);
+      project.demoSiteUrls = demoSiteUrls;
+      changes.push(`demo site URLs`);
       changeDetails.push({
-        field: "Demo Site URL",
+        field: "Demo Site URLs",
         icon: "🎯",
-        oldValue: formatValue(originalProject.demoSiteUrl),
-        newValue: formatValue(demoSiteUrl),
+        oldValue: formatValue(originalProject.demoSiteUrls?.join(", ") || "Empty"),
+        newValue: formatValue(demoSiteUrls?.join(", ") || "Empty"),
       });
     }
     if (
@@ -562,7 +562,7 @@ const updateProject = async (req, res) => {
     if (
       attachments !== undefined &&
       JSON.stringify(attachments) !==
-        JSON.stringify(originalProject.attachments)
+      JSON.stringify(originalProject.attachments)
     ) {
       // Track individual file changes
       const oldFiles = originalProject.attachments || [];
@@ -671,7 +671,7 @@ const updateProject = async (req, res) => {
             startDate,
             endDate,
             liveSiteUrl,
-            demoSiteUrl,
+            demoSiteUrls,
             markupUrl,
             attachments,
             color,
