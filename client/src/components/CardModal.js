@@ -16,6 +16,7 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Calendar,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -384,7 +385,8 @@ const CardModal = ({
         const updateData = {
           title: formData.title,
           description: formData.description,
-          dueDate: formData.dueDate,
+          // Send null instead of empty string to properly clear the date
+          dueDate: formData.dueDate || null,
         };
 
         const response = await cardAPI.updateCard(
@@ -395,7 +397,10 @@ const CardModal = ({
         if (response.data.success) {
           onCardUpdated(response.data.card);
           initialDueDateRef.current = formData.dueDate;
-          showToast("Due date updated", "success");
+          showToast(
+            formData.dueDate ? "Due date updated" : "Due date cleared",
+            "success"
+          );
         }
       } catch (error) {
         console.error("Error auto-saving due date:", error);
@@ -592,10 +597,10 @@ const CardModal = ({
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
       : { r: 59, g: 130, b: 246 }; // Default blue
   };
 
@@ -1420,8 +1425,8 @@ const CardModal = ({
         }
         return member.user
           ? users.find(
-              (user) => user._id === member.user || user.id === member.user
-            )
+            (user) => user._id === member.user || user.id === member.user
+          )
           : member;
       })
       .filter(Boolean) || [];
@@ -1659,11 +1664,10 @@ const CardModal = ({
                     {!isArchived && (
                       <button
                         onClick={handleCompleteToggle}
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                          card.isComplete
-                            ? "bg-green-500 border-green-500 hover:bg-green-600"
-                            : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
-                        } cursor-pointer`}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${card.isComplete
+                          ? "bg-green-500 border-green-500 hover:bg-green-600"
+                          : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
+                          } cursor-pointer`}
                         title={
                           card.isComplete
                             ? "Mark as incomplete"
@@ -1688,11 +1692,10 @@ const CardModal = ({
                       </button>
                     )}
                     <button
-                      className={`btn px-5 py-0.5 rounded-md ${
-                        card.cardNumber || card._id?.slice(-4) || "0000"
-                          ? "bg-[#2bcbba]  "
-                          : "bg-gray-200  border-gray-200"
-                      }`}
+                      className={`btn px-5 py-0.5 rounded-md ${card.cardNumber || card._id?.slice(-4) || "0000"
+                        ? "bg-[#2bcbba]  "
+                        : "bg-gray-200  border-gray-200"
+                        }`}
                       title="Card number"
                     >
                       #{card.cardNumber || card._id?.slice(-4) || "0000"}
@@ -1718,19 +1721,18 @@ const CardModal = ({
                       );
                     })()}
                     <button
-                      className={`btn px-5 py-0.5 rounded-md ${
-                        card.dueDate
-                          ? "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
-                          : "bg-gray-200"
-                      }`}
+                      className={`btn px-5 py-0.5 rounded-md ${card.dueDate
+                        ? "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
+                        : "bg-gray-200"
+                        }`}
                       title="Due date"
                     >
                       {card.dueDate
                         ? new Date(card.dueDate).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
                         : "No due date"}
                     </button>{" "}
                   </div>
@@ -1839,18 +1841,17 @@ const CardModal = ({
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs text-gray-500 font-medium">
                           {items.length > 0
-                            ? `${
-                                items.filter((item) => item.completed).length
-                              }/${items.length} items`
+                            ? `${items.filter((item) => item.completed).length
+                            }/${items.length} items`
                             : "0 items"}
                         </span>
                         <span className="text-xs text-gray-500 font-medium">
                           {items.length > 0
                             ? `${Math.round(
-                                (items.filter((item) => item.completed).length /
-                                  items.length) *
-                                  100
-                              )}%`
+                              (items.filter((item) => item.completed).length /
+                                items.length) *
+                              100
+                            )}%`
                             : "0%"}
                         </span>
                       </div>
@@ -1858,16 +1859,15 @@ const CardModal = ({
                         <div
                           className="h-full bg-blue-500 transition-all duration-300"
                           style={{
-                            width: `${
-                              items.length > 0
-                                ? Math.round(
-                                    (items.filter((item) => item.completed)
-                                      .length /
-                                      items.length) *
-                                      100
-                                  )
-                                : 0
-                            }%`,
+                            width: `${items.length > 0
+                              ? Math.round(
+                                (items.filter((item) => item.completed)
+                                  .length /
+                                  items.length) *
+                                100
+                              )
+                              : 0
+                              }%`,
                           }}
                         />
                       </div>
@@ -1927,11 +1927,10 @@ const CardModal = ({
                               className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors cursor-pointer"
                             >
                               <div
-                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                                  item.completed
-                                    ? "bg-green-500 border-green-500 text-white"
-                                    : "border-gray-300"
-                                }`}
+                                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${item.completed
+                                  ? "bg-green-500 border-green-500 text-white"
+                                  : "border-gray-300"
+                                  }`}
                               >
                                 {item.completed && (
                                   <CheckSquare className="w-3 h-3" />
@@ -1942,11 +1941,10 @@ const CardModal = ({
                                   e.stopPropagation();
                                   handleStartEditItem(item);
                                 }}
-                                className={`flex-1 text-left text-sm ${
-                                  item.completed
-                                    ? "line-through text-gray-400"
-                                    : "text-gray-700"
-                                }`}
+                                className={`flex-1 text-left text-sm ${item.completed
+                                  ? "line-through text-gray-400"
+                                  : "text-gray-700"
+                                  }`}
                               >
                                 {item.title}
                               </div>
@@ -2146,8 +2144,8 @@ const CardModal = ({
                                   fallback={
                                     comment.user?.name
                                       ? comment.user.name
-                                          .charAt(0)
-                                          .toUpperCase()
+                                        .charAt(0)
+                                        .toUpperCase()
                                       : "U"
                                   }
                                 />
@@ -2155,7 +2153,7 @@ const CardModal = ({
                                   <span className="font-medium text-gray-900">
                                     {comment.user?.name ||
                                       (comment.user &&
-                                      typeof comment.user === "string"
+                                        typeof comment.user === "string"
                                         ? "Loading..."
                                         : "Unknown User")}
                                   </span>
@@ -2165,7 +2163,7 @@ const CardModal = ({
                                     ).toLocaleString()}
                                     {comment.updatedAt &&
                                       comment.updatedAt !==
-                                        comment.timestamp && (
+                                      comment.timestamp && (
                                         <span className="text-gray-400 ml-1">
                                           (edited)
                                         </span>
@@ -2215,18 +2213,17 @@ const CardModal = ({
                               </div>
                             ) : (
                               <div
-                                className={`text-sm text-gray-700 prose prose-sm max-w-none ${
-                                  (comment.text &&
-                                    comment.text.includes(
-                                      "moved this card from"
-                                    )) ||
+                                className={`text-sm text-gray-700 prose prose-sm max-w-none ${(comment.text &&
+                                  comment.text.includes(
+                                    "moved this card from"
+                                  )) ||
                                   (comment.text &&
                                     comment.text.includes("assigned")) ||
                                   (comment.text &&
                                     comment.text.includes("removed"))
-                                    ? "activity-comment"
-                                    : ""
-                                }`}
+                                  ? "activity-comment"
+                                  : ""
+                                  }`}
                                 dangerouslySetInnerHTML={{
                                   __html:
                                     renderCommentWithMentions(comment.text) ||
@@ -2248,11 +2245,10 @@ const CardModal = ({
                   <button
                     onClick={() => handleNavigateToCard(prevCard)}
                     disabled={!prevCard}
-                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${
-                      prevCard
-                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        : "bg-gray-50 text-gray-400 cursor-not-allowed"
-                    }`}
+                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${prevCard
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      }`}
                     title={prevCard ? "Previous card" : "No previous card"}
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -2261,11 +2257,10 @@ const CardModal = ({
                   <button
                     onClick={() => handleNavigateToCard(nextCard)}
                     disabled={!nextCard}
-                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${
-                      nextCard
-                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        : "bg-gray-50 text-gray-400 cursor-not-allowed"
-                    }`}
+                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${nextCard
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      }`}
                     title={nextCard ? "Next card" : "No next card"}
                   >
                     <span>Next card</span>
@@ -2286,9 +2281,8 @@ const CardModal = ({
                   <select
                     value={card.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
-                      isArchived ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
+                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                      }`}
                     disabled={loadingColumns || isArchived}
                   >
                     {loadingColumns ? (
@@ -2342,34 +2336,47 @@ const CardModal = ({
                       </span>
                     )}
                   </div>
-                  <input
-                    ref={dateInputRef}
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dueDate: e.target.value })
-                    }
-                    onClick={(e) => {
-                      if (!isArchived && !autoSaving && dateInputRef.current) {
-                        // Try to show the native date picker
-                        if (dateInputRef.current.showPicker) {
-                          try {
-                            dateInputRef.current.showPicker();
-                          } catch (error) {
-                            // Fallback: just focus the input
-                            dateInputRef.current.focus();
-                          }
-                        } else {
-                          // Fallback: focus the input which should open the picker
-                          dateInputRef.current.focus();
-                        }
+                  <div className="relative">
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      value={formData.dueDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, dueDate: e.target.value })
                       }
-                    }}
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm cursor-pointer ${
-                      isArchived ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                    disabled={autoSaving || isArchived}
-                  />
+                      className={`w-full p-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                        }`}
+                      style={{
+                        colorScheme: formData.dueDate ? 'normal' : 'light',
+                      }}
+                      disabled={autoSaving || isArchived}
+                    />
+                    <style>{`
+                      input[type="date"]::-webkit-calendar-picker-indicator {
+                        opacity: 0;
+                        position: absolute;
+                        right: 0;
+                        width: 100%;
+                        height: 100%;
+                        cursor: pointer;
+                      }
+                    `}</style>
+                    {formData.dueDate && !isArchived ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({ ...formData, dueDate: "" })
+                        }
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Clear due date"
+                        disabled={autoSaving}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    ) : !isArchived ? (
+                      <Calendar className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    ) : null}
+                  </div>
                   {/* <div className="p-2 bg-gray-50 rounded-lg">
                     <p className="text-gray-700 text-sm">
                       {card.dueDate
@@ -2389,15 +2396,14 @@ const CardModal = ({
                       <button
                         key={priority}
                         onClick={() => handleSetPriority(priority)}
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          card.priority === priority
-                            ? priority === "high"
-                              ? "bg-red-100 text-red-700"
-                              : priority === "medium"
+                        className={`px-2 py-1 rounded text-xs font-medium ${card.priority === priority
+                          ? priority === "high"
+                            ? "bg-red-100 text-red-700"
+                            : priority === "medium"
                               ? "bg-yellow-100 text-yellow-700"
                               : "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
                       >
                         {priority.charAt(0).toUpperCase() + priority.slice(1)}
                       </button>
@@ -2443,9 +2449,8 @@ const CardModal = ({
                       return (
                         <span
                           key={label._id || label.id}
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            colorConfig?.bg || "bg-blue-500"
-                          } ${colorConfig?.text || "text-white"}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorConfig?.bg || "bg-blue-500"
+                            } ${colorConfig?.text || "text-white"}`}
                         >
                           {label.name}
                           <button
@@ -2537,8 +2542,8 @@ const CardModal = ({
                             <p className="text-xs text-gray-600">
                               {attachment.uploadedAt
                                 ? new Date(
-                                    attachment.uploadedAt
-                                  ).toLocaleString()
+                                  attachment.uploadedAt
+                                ).toLocaleString()
                                 : "Unknown date"}
                             </p>
                           </div>

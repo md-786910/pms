@@ -1264,22 +1264,22 @@ const EditProjectModal = ({ project, onClose }) => {
                             name="startDate"
                             value={formData.startDate}
                             onChange={handleChange}
-                            onClick={() => {
-                              if (!editMode && startDateInputRef.current) {
-                                // Try to show the native date picker
-                                if (startDateInputRef.current.showPicker) {
-                                  try {
-                                    startDateInputRef.current.showPicker();
-                                  } catch (error) {
-                                    // Fallback: just focus the input
-                                    startDateInputRef.current.focus();
-                                  }
-                                } else {
-                                  // Fallback: focus the input which should open the picker
-                                  startDateInputRef.current.focus();
-                                }
-                              }
-                            }}
+                            // onClick={() => {
+                            //   if (!editMode && startDateInputRef.current) {
+                            //     // Try to show the native date picker
+                            //     if (startDateInputRef.current.showPicker) {
+                            //       try {
+                            //         startDateInputRef.current.showPicker();
+                            //       } catch (error) {
+                            //         // Fallback: just focus the input
+                            //         startDateInputRef.current.focus();
+                            //       }
+                            //     } else {
+                            //       // Fallback: focus the input which should open the picker
+                            //       startDateInputRef.current.focus();
+                            //     }
+                            //   }
+                            // }}
                             className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                             required
                             disabled={editMode}
@@ -1296,22 +1296,22 @@ const EditProjectModal = ({ project, onClose }) => {
                             name="endDate"
                             value={formData.endDate}
                             onChange={handleChange}
-                            onClick={() => {
-                              if (!editMode && endDateInputRef.current) {
-                                // Try to show the native date picker
-                                if (endDateInputRef.current.showPicker) {
-                                  try {
-                                    endDateInputRef.current.showPicker();
-                                  } catch (error) {
-                                    // Fallback: just focus the input
-                                    endDateInputRef.current.focus();
-                                  }
-                                } else {
-                                  // Fallback: focus the input which should open the picker
-                                  endDateInputRef.current.focus();
-                                }
-                              }
-                            }}
+                            // onClick={() => {
+                            //   if (!editMode && endDateInputRef.current) {
+                            //     // Try to show the native date picker
+                            //     if (endDateInputRef.current.showPicker) {
+                            //       try {
+                            //         endDateInputRef.current.showPicker();
+                            //       } catch (error) {
+                            //         // Fallback: just focus the input
+                            //         endDateInputRef.current.focus();
+                            //       }
+                            //     } else {
+                            //       // Fallback: focus the input which should open the picker
+                            //       endDateInputRef.current.focus();
+                            //     }
+                            //   }
+                            // }}
                             className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                             disabled={editMode}
                           />

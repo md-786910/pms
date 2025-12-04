@@ -392,7 +392,9 @@ const updateCard = async (req, res) => {
     // Update card fields
     const { title, description, status, priority, assignees, labels } =
       req.body;
-    let dueDate = req.body?.dueDate || new Date();
+
+    // Don't default to current date - allow null for clearing the date
+    let dueDate = req.body.hasOwnProperty('dueDate') ? req.body.dueDate : undefined;
 
     // Store previous values for comparison
     const previousStatus = card.status;
@@ -406,12 +408,12 @@ const updateCard = async (req, res) => {
     if (priority) card.priority = priority;
     if (assignees) card.assignees = assignees;
     if (labels) card.labels = labels;
-    const previousDueDate = card.dueDate || new Date();
+    const previousDueDate = card.dueDate;
 
-    // Update due date
-
+    // Update due date - handle clearing (null or empty string)
     if (dueDate !== undefined) {
-      card.dueDate = dueDate ? new Date(dueDate) : null;
+      // If dueDate is null, empty string, or falsy, set to null to clear it
+      card.dueDate = dueDate && dueDate !== '' ? new Date(dueDate) : null;
     }
 
     // Fetch user
@@ -420,32 +422,40 @@ const updateCard = async (req, res) => {
     const user = await User.findById(userId).select("name");
 
     // Add comment if due date changed
-    if (
-      dueDate !== undefined &&
-      new Date(dueDate).toISOString().slice(0, 10) !==
-        (previousDueDate
-          ? new Date(previousDueDate).toISOString().slice(0, 10)
-          : null)
-    ) {
-      const formattedNewDate = new Date(dueDate).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
+    if (dueDate !== undefined) {
+      // Normalize dates for comparison (handle null and empty string)
+      const normalizeDate = (date) => {
+        if (!date || date === '') return null;
+        return new Date(date).toISOString().slice(0, 10);
+      };
 
-      const formattedOldDate = previousDueDate
-        ? new Date(previousDueDate).toLocaleDateString("en-US", {
+      const normalizedNewDate = normalizeDate(dueDate);
+      const normalizedOldDate = normalizeDate(previousDueDate);
+
+      // Only add comment if the dates actually changed
+      if (normalizedNewDate !== normalizedOldDate) {
+        const formattedNewDate = normalizedNewDate
+          ? new Date(dueDate).toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
             day: "numeric",
           })
-        : "No due date";
+          : "Cleared";
 
-      card.comments.push({
-        user: userId,
-        text: `<p><strong>${user.name}</strong> changed the due date from <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedOldDate}</span> to <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedNewDate}</span></p>`,
-        timestamp: new Date(),
-      });
+        const formattedOldDate = normalizedOldDate
+          ? new Date(previousDueDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+          : "No due date";
+
+        card.comments.push({
+          user: userId,
+          text: `<p><strong>${user.name}</strong> changed the due date from <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedOldDate}</span> to <span style="background-color: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: 500;">${formattedNewDate}</span></p>`,
+          timestamp: new Date(),
+        });
+      }
     }
 
     // Add automatic comments for description changes
