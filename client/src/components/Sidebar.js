@@ -54,9 +54,8 @@ const Sidebar = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${
-          isCollapsed ? "w-16" : "w-72"
-        } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${isCollapsed ? "w-16" : "w-72"
+          } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           {!isCollapsed && (
@@ -86,15 +85,13 @@ const Sidebar = ({
           <Link
             to="/"
             onClick={onClose}
-            className={`flex items-center ${
-              isCollapsed
+            className={`flex items-center ${isCollapsed
                 ? "justify-center px-2 py-3"
                 : "justify-between px-3 py-3"
-            } rounded-lg transition-colors duration-200 ${
-              !isOnProjectPage && location.pathname === "/"
+              } rounded-lg transition-colors duration-200 ${!isOnProjectPage && location.pathname === "/"
                 ? "bg-blue-100 text-blue-700 border border-blue-200"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
+              }`}
             title={isCollapsed ? "Dashboard" : ""}
           >
             <div className="flex items-center space-x-3">
@@ -111,15 +108,13 @@ const Sidebar = ({
                   if (!isCollapsed)
                     setShowProjectsSubmenu(!showProjectsSubmenu);
                 }}
-                className={`w-full flex items-center ${
-                  isCollapsed
+                className={`w-full flex items-center ${isCollapsed
                     ? "justify-center px-2 py-3"
                     : "justify-between px-3 py-3"
-                } rounded-lg transition-colors duration-200 ${
-                  isOnProjectPage
+                  } rounded-lg transition-colors duration-200 ${isOnProjectPage
                     ? "bg-blue-100 text-blue-700 border border-blue-200"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                  }`}
                 title={isCollapsed ? "Projects" : ""}
               >
                 <div className="flex items-center space-x-3">
@@ -142,26 +137,27 @@ const Sidebar = ({
                 projects &&
                 projects.length > 0 && (
                   <div className="mt-2 ml-2 pl-3 border-l-2 border-gray-200 space-y-1">
-                    {projects.map((project) => {
-                      const isProjectActive =
-                        location.pathname === `/project/${project._id}`;
-                      return (
-                        <Link
-                          key={project._id}
-                          to={`/project/${project._id}`}
-                          onClick={onClose}
-                          className={`block px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                            isProjectActive
-                              ? "bg-blue-600 text-white font-semibold shadow-sm"
-                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                          }`}
-                        >
-                          <span className="text-sm truncate block">
-                            {project.name}
-                          </span>
-                        </Link>
-                      );
-                    })}
+                    {[...projects]
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((project) => {
+                        const isProjectActive =
+                          location.pathname === `/project/${project._id}`;
+                        return (
+                          <Link
+                            key={project._id}
+                            to={`/project/${project._id}`}
+                            onClick={onClose}
+                            className={`block px-3 py-2.5 rounded-lg transition-all duration-200 ${isProjectActive
+                                ? "bg-blue-600 text-white font-semibold shadow-sm"
+                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              }`}
+                          >
+                            <span className="text-sm truncate block">
+                              {project.name}
+                            </span>
+                          </Link>
+                        );
+                      })}
                   </div>
                 )}
             </div>
@@ -175,9 +171,8 @@ const Sidebar = ({
             onClick={() => setShowSettingsModal(true)}
           >
             <div
-              className={`flex items-center ${
-                isCollapsed ? "justify-center" : "space-x-3"
-              }`}
+              className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-3"
+                }`}
             >
               <Settings className="w-5 h-5 text-gray-600" />
               {!isCollapsed && (

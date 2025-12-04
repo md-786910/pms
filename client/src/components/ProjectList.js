@@ -344,9 +344,11 @@ const ProjectList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {projects.map((project) => (
-            <ProjectCard key={project._id} project={project} />
-          ))}
+          {[...projects]
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((project) => (
+              <ProjectCard key={project._id} project={project} />
+            ))}
         </div>
       )}
 
