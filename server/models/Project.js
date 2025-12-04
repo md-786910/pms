@@ -55,16 +55,18 @@ const projectSchema = new mongoose.Schema(
         message: "Live site URL must be a valid URL",
       },
     },
-    demoSiteUrl: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: function (v) {
-          return !v || /^https?:\/\/.+/.test(v);
+    demoSiteUrls: [
+      {
+        type: String,
+        trim: true,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/.+/.test(v);
+          },
+          message: "Demo site URL must be a valid URL",
         },
-        message: "Demo site URL must be a valid URL",
       },
-    },
+    ],
     markupUrl: {
       type: String,
       trim: true,

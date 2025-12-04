@@ -16,7 +16,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
     startDate: "",
     endDate: "",
     liveSiteUrl: "",
-    demoSiteUrl: "",
+    demoSiteUrls: [""],
     markupUrl: "",
   });
   const [loading, setLoading] = useState(false);
@@ -66,6 +66,8 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
       // Create the project first using ProjectContext to ensure state updates
       const projectData = {
         ...formData,
+        // Filter out empty demo site URLs before sending
+        demoSiteUrls: formData.demoSiteUrls.filter(url => url.trim() !== ""),
         attachments: [], // Will be uploaded separately
       };
       console.log(
@@ -134,10 +136,9 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
       }
 
       showToast(
-        `Project created successfully${
-          uploadedFiles.length > 0
-            ? ` with ${uploadedFiles.length} file(s)`
-            : ""
+        `Project created successfully${uploadedFiles.length > 0
+          ? ` with ${uploadedFiles.length} file(s)`
+          : ""
         }!`,
         "success"
       );
@@ -177,6 +178,31 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
       };
     });
   };
+
+  // Handlers for demo site URLs array
+  const addDemoSiteUrl = () => {
+    setFormData((prev) => ({
+      ...prev,
+      demoSiteUrls: [...prev.demoSiteUrls, ""],
+    }));
+  };
+
+  const removeDemoSiteUrl = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      demoSiteUrls: prev.demoSiteUrls.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleDemoSiteUrlChange = (index, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      demoSiteUrls: prev.demoSiteUrls.map((url, i) =>
+        i === index ? value : url
+      ),
+    }));
+  };
+
 
   // File upload handlers
   const handleFileUpload = async (files) => {
@@ -395,23 +421,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         name="startDate"
                         value={formData.startDate}
                         onChange={handleChange}
-                        onClick={(e) => {
-                          if (startDateInputRef.current) {
-                            // Try to show the native date picker
-                            if (startDateInputRef.current.showPicker) {
-                              try {
-                                startDateInputRef.current.showPicker();
-                              } catch (error) {
-                                // Fallback: just focus the input
-                                startDateInputRef.current.focus();
-                              }
-                            } else {
-                              // Fallback: focus the input which should open the picker
-                              startDateInputRef.current.focus();
-                            }
-                          }
-                        }}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         required
                       />
                     </div>
@@ -426,23 +436,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         name="endDate"
                         value={formData.endDate}
                         onChange={handleChange}
-                        onClick={(e) => {
-                          if (endDateInputRef.current) {
-                            // Try to show the native date picker
-                            if (endDateInputRef.current.showPicker) {
-                              try {
-                                endDateInputRef.current.showPicker();
-                              } catch (error) {
-                                // Fallback: just focus the input
-                                endDateInputRef.current.focus();
-                              }
-                            } else {
-                              // Fallback: focus the input which should open the picker
-                              endDateInputRef.current.focus();
-                            }
-                          }
-                        }}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -496,18 +490,47 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                     />
                   </div>
                   {/* Demo Site URL */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Demo Site URL
-                    </label>
-                    <input
-                      type="url"
-                      name="demoSiteUrl"
-                      value={formData.demoSiteUrl}
-                      onChange={handleChange}
-                      className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="https://demo.example.com"
-                    />
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Demo Site URL
+                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      {formData.demoSiteUrls.map((url, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                            type="url"
+                            value={url}
+                            onChange={(e) =>
+                              handleDemoSiteUrlChange(index, e.target.value)
+                            }
+                            className="flex-1 h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="https://demo.example.com"
+                          />
+                          {formData.demoSiteUrls.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeDemoSiteUrl(index)}
+                              className="p-3 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                              title="Remove this URL"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="absolute right-3 top-[38px]">
+                      <button
+                        type="button"
+                        onClick={addDemoSiteUrl}
+                        className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 hover:scale-105"
+                        title="Add demo site URL"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                   {/* Markup URL */}
                   <div>
@@ -539,11 +562,10 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
 
                 {/* Drag and Drop Area */}
                 <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
-                    isDragOver
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${isDragOver
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400"
+                    }`}
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -582,11 +604,10 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                       {uploadedFiles.map((file) => (
                         <div
                           key={file.id}
-                          className={`flex items-center justify-between p-3 rounded-lg border ${
-                            file.uploaded
-                              ? "bg-green-50 border-green-200"
-                              : "bg-gray-50 border-gray-200"
-                          }`}
+                          className={`flex items-center justify-between p-3 rounded-lg border ${file.uploaded
+                            ? "bg-green-50 border-green-200"
+                            : "bg-gray-50 border-gray-200"
+                            }`}
                         >
                           <div className="flex items-center space-x-3 flex-1 min-w-0">
                             <div className="flex-shrink-0">
