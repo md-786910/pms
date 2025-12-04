@@ -27,13 +27,15 @@ import {
   Check,
   EyeOff,
   Plus,
+  ExternalLink,
+  Folder,
 } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useUser } from "../contexts/UserContext";
 import { useSocket } from "../contexts/SocketContext";
-import { projectAPI, activityAPI } from "../utils/api";
+import { projectAPI, activityAPI, categoryAPI } from "../utils/api";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 import Avatar from "./Avatar";
 import ConfirmationModal from "./ConfirmationModal";
@@ -69,6 +71,8 @@ const EditProjectModal = ({ project, onClose }) => {
   const [copiedField, setCopiedField] = useState(null);
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [localValues, setLocalValues] = useState({}); // Local state for input values to prevent reset on save/delete
+  const [newCmsField, setNewCmsField] = useState({ label: "", value: "" }); // CMS custom field state
+  const [showCmsCustomField, setShowCmsCustomField] = useState(false); // Toggle CMS custom field form
 
   // Description notes state
   const [descriptions, setDescriptions] = useState([]);
@@ -77,6 +81,9 @@ const EditProjectModal = ({ project, onClose }) => {
   const [editingDescriptionContent, setEditingDescriptionContent] =
     useState("");
   const [descriptionLoading, setDescriptionLoading] = useState(false);
+
+  // Categories state
+  const [categories, setCategories] = useState([]);
 
   // Credential categories and templates
   const credentialCategories = {
@@ -167,6 +174,14 @@ const EditProjectModal = ({ project, onClose }) => {
 
       for (const [catKey, cat] of Object.entries(credentialCategories)) {
         if (catKey === "other") continue;
+
+        // Check if label starts with category name (e.g., "CMS Custom Field" -> cms category)
+        if (labelLower.startsWith(catKey + " ") || labelLower.startsWith(cat.name.toLowerCase() + " ")) {
+          categorized[catKey].push(cred);
+          matched = true;
+          break;
+        }
+
         for (const field of cat.fields) {
           if (
             labelLower.includes(field.key.replace(/_/g, " ")) ||
@@ -281,6 +296,7 @@ const EditProjectModal = ({ project, onClose }) => {
     clientName: "",
     projectStatus: "new",
     projectType: "",
+    category: "",
     startDate: "",
     endDate: "",
     liveSiteUrl: "",
@@ -335,6 +351,19 @@ const EditProjectModal = ({ project, onClose }) => {
     }
   };
 
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryAPI.getCategories();
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     if (project) {
       // Handle backward compatibility: convert old single demoSiteUrl to array
@@ -353,6 +382,7 @@ const EditProjectModal = ({ project, onClose }) => {
         clientName: project.clientName || "",
         projectStatus: project.projectStatus || "new",
         projectType: project.projectType || "maintenance",
+        category: project.category?._id || project.category || "",
         startDate: formatDate(project.startDate),
         endDate: formatDate(project.endDate),
         liveSiteUrl: project.liveSiteUrl || "",
@@ -1318,6 +1348,30 @@ const EditProjectModal = ({ project, onClose }) => {
                         </div>
                       </div>
 
+                      {/* Category */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Category
+                        </label>
+                        <div className="relative">
+                          <Folder className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <select
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className="w-full h-12 pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
+                            disabled={editMode}
+                          >
+                            <option value="">No Category</option>
+                            {categories.map((cat) => (
+                              <option key={cat._id} value={cat._id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
                       {/* Description */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1834,7 +1888,145 @@ const EditProjectModal = ({ project, onClose }) => {
                                     </div>
                                   );
                                 })}
+
+                                {/* CMS Only: Display Custom CMS Fields */}
+                                {catKey === "cms" && (() => {
+                                  const customCmsCredentials = categorizeCredentials().cms?.filter(
+                                    (cred) => !category.fields.some(
+                                      (f) => f.label.toLowerCase() === cred.label.toLowerCase()
+                                    )
+                                  ) || [];
+
+                                  return customCmsCredentials.map((cred) => {
+                                    const credKey = cred.label.toLowerCase();
+                                    const isSaving = savingCredentialKey === credKey;
+                                    return (
+                                      <div
+                                        key={cred._id}
+                                        className="grid grid-cols-[160px_1fr] gap-3 items-center group"
+                                      >
+                                        <label className="text-sm font-medium text-slate-600">
+                                          {cred.label}
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                          <input
+                                            type="text"
+                                            value={localValues[credKey] ?? ""}
+                                            onChange={(e) =>
+                                              setLocalValues((prev) => ({
+                                                ...prev,
+                                                [credKey]: e.target.value,
+                                              }))
+                                            }
+                                            placeholder="Enter value..."
+                                            className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                            disabled={isSaving}
+                                          />
+                                          <div className="flex items-center">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const value = localValues[credKey] ?? "";
+                                                handleUpdateCredential(cred._id, {
+                                                  label: cred.label,
+                                                  value,
+                                                });
+                                              }}
+                                              disabled={isSaving}
+                                              className="h-10 px-4 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+                                            >
+                                              {isSaving ? "..." : "Save"}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleDeleteCredential(cred._id)}
+                                              disabled={credentialLoading}
+                                              className="h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
+                                              title="Delete"
+                                            >
+                                              <Trash2 className="w-4 h-4 flex-shrink-0" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
                               </div>
+
+                              {/* CMS Only: Add Custom Field */}
+                              {catKey === "cms" && (
+                                <div className="mt-4 pt-4 border-t border-slate-100">
+                                  {!showCmsCustomField ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowCmsCustomField(true)}
+                                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      Add Custom CMS Field
+                                    </button>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      <div className="grid grid-cols-[160px_1fr] gap-3 items-center">
+                                        <input
+                                          type="text"
+                                          value={newCmsField.label}
+                                          onChange={(e) =>
+                                            setNewCmsField((prev) => ({
+                                              ...prev,
+                                              label: e.target.value,
+                                            }))
+                                          }
+                                          placeholder="Field label..."
+                                          className="h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400"
+                                        />
+                                        <input
+                                          type="text"
+                                          value={newCmsField.value}
+                                          onChange={(e) =>
+                                            setNewCmsField((prev) => ({
+                                              ...prev,
+                                              value: e.target.value,
+                                            }))
+                                          }
+                                          placeholder="Field value..."
+                                          className="h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                        />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (newCmsField.label.trim() && newCmsField.value.trim()) {
+                                              handleAddCredential({
+                                                label: `CMS ${newCmsField.label}`,
+                                                value: newCmsField.value,
+                                              });
+                                              setNewCmsField({ label: "", value: "" });
+                                              setShowCmsCustomField(false);
+                                            }
+                                          }}
+                                          disabled={!newCmsField.label.trim() || !newCmsField.value.trim()}
+                                          className="px-4 py-2 text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          Add Field
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setNewCmsField({ label: "", value: "" });
+                                            setShowCmsCustomField(false);
+                                          }}
+                                          className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

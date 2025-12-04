@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { X, Plus, Save, Upload, Eye, Trash2, Link } from "lucide-react";
+import { X, Plus, Save, Upload, Eye, Trash2, Link, Folder } from "lucide-react";
 import { getFileIcon, getFileIconColor } from "../utils/fileIcons";
 import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
-import { projectAPI } from "../utils/api";
+import { projectAPI, categoryAPI } from "../utils/api";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 
 const CreateProjectModal = ({ onClose, onSuccess }) => {
@@ -13,6 +13,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
     clientName: "",
     projectStatus: "new",
     projectType: "",
+    category: "",
     startDate: "",
     endDate: "",
     liveSiteUrl: "",
@@ -22,12 +23,26 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [categories, setCategories] = useState([]);
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
   const startDateInputRef = useRef(null);
   const endDateInputRef = useRef(null);
   const { createProject } = useProject();
   const { showToast } = useNotification();
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryAPI.getCategories();
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Handle click outside to close modal
   useEffect(() => {
@@ -438,6 +453,29 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         onChange={handleChange}
                         className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
+                    </div>
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Category
+                    </label>
+                    <div className="relative">
+                      <Folder className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="w-full h-12 pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
+                      >
+                        <option value="">No Category</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 

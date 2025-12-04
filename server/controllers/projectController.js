@@ -150,6 +150,7 @@ const getProjects = async (req, res) => {
         .populate("owner", "name email avatar color")
         .populate("members.user", "name email avatar color role")
         .populate("credentialAccess.user", "name email avatar color")
+        .populate("category", "name color icon")
         .sort({ createdAt: -1 });
     } else {
       // Members can only see projects they're part of (non-archived)
@@ -161,6 +162,7 @@ const getProjects = async (req, res) => {
         .populate("owner", "name email avatar color")
         .populate("members.user", "name email avatar color role")
         .populate("credentialAccess.user", "name email avatar color")
+        .populate("category", "name color icon")
         .sort({ createdAt: -1 });
     }
 
@@ -201,7 +203,8 @@ const getProject = async (req, res) => {
       .populate("owner", "name email avatar color")
       .populate("members.user", "name email avatar color role")
       .populate("credentialAccess.user", "name email avatar color")
-      .populate("descriptions.createdBy", "name email avatar color");
+      .populate("descriptions.createdBy", "name email avatar color")
+      .populate("category", "name color icon");
 
     if (!project) {
       return res.status(404).json({
@@ -260,6 +263,7 @@ const createProject = async (req, res) => {
       clientName,
       projectType,
       projectStatus,
+      category,
       startDate,
       endDate,
       liveSiteUrl,
@@ -276,6 +280,7 @@ const createProject = async (req, res) => {
       clientName,
       projectType,
       projectStatus,
+      category: category || null,
       startDate: startDate || new Date(),
       endDate: endDate || null,
       liveSiteUrl,
@@ -322,6 +327,7 @@ const createProject = async (req, res) => {
     await project.populate("owner", "name email avatar color");
     await project.populate("members.user", "name email avatar color role");
     await project.populate("credentialAccess.user", "name email avatar color");
+    await project.populate("category", "name color icon");
 
     res.status(201).json({
       success: true,
@@ -350,6 +356,7 @@ const updateProject = async (req, res) => {
       clientName,
       projectType,
       projectStatus,
+      category,
       startDate,
       endDate,
       liveSiteUrl,
@@ -489,6 +496,21 @@ const updateProject = async (req, res) => {
         oldValue: formatValue(originalProject.projectStatus),
         newValue: formatValue(projectStatus),
       });
+    }
+    // Handle category update
+    if (category !== undefined) {
+      const oldCategoryId = originalProject.category ? originalProject.category.toString() : null;
+      const newCategoryId = category || null;
+      if (oldCategoryId !== newCategoryId) {
+        project.category = category || null;
+        changes.push(`category`);
+        changeDetails.push({
+          field: "Category",
+          icon: "📁",
+          oldValue: oldCategoryId ? "Previous Category" : "None",
+          newValue: newCategoryId ? "New Category" : "None",
+        });
+      }
     }
     if (startDate !== undefined) {
       const normalizedOldStartDate = normalizeDate(originalProject.startDate);
@@ -684,6 +706,7 @@ const updateProject = async (req, res) => {
     await project.populate("owner", "name email avatar color role");
     await project.populate("members.user", "name email avatar color role");
     await project.populate("credentialAccess.user", "name email avatar color");
+    await project.populate("category", "name color icon");
 
     res.json({
       success: true,

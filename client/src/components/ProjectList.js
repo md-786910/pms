@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -8,6 +8,9 @@ import {
   MoreVertical,
   Clock,
   CheckCircle2,
+  ChevronDown,
+  Folder,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
@@ -32,6 +35,114 @@ const ProjectList = () => {
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingBackDateCards, setLoadingBackDateCards] = useState(true);
   const [loadingUpcomingCards, setLoadingUpcomingCards] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [sortOrder, setSortOrder] = useState("recent"); // "recent" or "oldest"
+
+  // Get date from project for sorting
+  const getProjectDate = (project) => {
+    if (project.createdAt) return new Date(project.createdAt);
+    if (project.startDate) return new Date(project.startDate);
+    if (project.updatedAt) return new Date(project.updatedAt);
+    return new Date(0); // fallback to epoch if no date
+  };
+
+  // Sort projects by date
+  const sortProjectsByDate = (projectsToSort, order) => {
+    return [...projectsToSort].sort((a, b) => {
+      const dateA = getProjectDate(a);
+      const dateB = getProjectDate(b);
+      return order === "recent" ? dateB - dateA : dateA - dateB;
+    });
+  };
+
+  // Get most recent/oldest date from a list of projects
+  const getCategoryDate = (projectsList, order) => {
+    if (!projectsList || projectsList.length === 0) return new Date(0);
+    const dates = projectsList.map((p) => getProjectDate(p));
+    return order === "recent" ? Math.max(...dates) : Math.min(...dates);
+  };
+
+  // Group projects by category
+  const groupedProjects = useMemo(() => {
+    if (!projects || projects.length === 0)
+      return { allSections: [] };
+
+    const categoryMap = new Map();
+    const uncategorized = [];
+
+    projects.forEach((project) => {
+      if (project.category && project.category._id) {
+        const catId = project.category._id;
+        if (!categoryMap.has(catId)) {
+          categoryMap.set(catId, {
+            ...project.category,
+            projects: [],
+            isUncategorized: false,
+          });
+        }
+        categoryMap.get(catId).projects.push(project);
+      } else {
+        uncategorized.push(project);
+      }
+    });
+
+    // Sort projects within each category by date
+    const categories = Array.from(categoryMap.values());
+    categories.forEach((cat) => {
+      cat.projects = sortProjectsByDate(cat.projects, sortOrder);
+    });
+
+    // Sort uncategorized projects by date
+    const sortedUncategorized = sortProjectsByDate(uncategorized, sortOrder);
+
+    // Create allSections array that includes both categories and uncategorized
+    const allSections = [...categories];
+
+    // Add uncategorized as a section if it has projects
+    if (sortedUncategorized.length > 0) {
+      allSections.push({
+        _id: "uncategorized",
+        name: "Uncategorized",
+        color: "#9ca3af", // gray-400
+        projects: sortedUncategorized,
+        isUncategorized: true,
+      });
+    }
+
+    // Sort all sections by the most recent/oldest project date
+    allSections.sort((a, b) => {
+      const dateA = getCategoryDate(a.projects, sortOrder);
+      const dateB = getCategoryDate(b.projects, sortOrder);
+      return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
+    });
+
+    return { allSections };
+  }, [projects, sortOrder]);
+
+  // Initialize all categories as expanded
+  useEffect(() => {
+    if (groupedProjects.allSections.length > 0) {
+      setExpandedCategories((prev) => {
+        const initialExpanded = { ...prev };
+        let hasChanges = false;
+        groupedProjects.allSections.forEach((section) => {
+          if (initialExpanded[section._id] === undefined) {
+            initialExpanded[section._id] = true;
+            hasChanges = true;
+          }
+        });
+        return hasChanges ? initialExpanded : prev;
+      });
+    }
+  }, [groupedProjects.allSections]);
+
+  // Toggle category expansion
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
 
   // Fetch cards due today
   useEffect(() => {
@@ -321,7 +432,25 @@ const ProjectList = () => {
         </div>
       </div>
 
-      {/* Projects Grid */}
+      {/* Filter Bar */}
+      {projects.length > 0 && (
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">All Projects</h2>
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-gray-500" />
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+            >
+              <option value="recent">Recent First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Projects Grid - Grouped by Category */}
       {projects.length === 0 ? (
         <div className="text-center py-12">
           <FolderOpen className="w-16 h-16 text-secondary-300 mx-auto mb-4" />
@@ -343,12 +472,55 @@ const ProjectList = () => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {[...projects]
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((project) => (
-              <ProjectCard key={project._id} project={project} />
-            ))}
+        <div className="space-y-6">
+          {/* All Sections (Categories + Uncategorized) - Sorted by date */}
+          {groupedProjects.allSections.map((section) => (
+            <div
+              key={section._id}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              {/* Section Header */}
+              <button
+                onClick={() => toggleCategory(section._id)}
+                className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: section.color || "#6366f1" }}
+                  >
+                    <Folder className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {section.name}
+                  </h2>
+                  <span className="text-sm text-gray-500">
+                    ({section.projects.length})
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                    expandedCategories[section._id] ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Section Projects */}
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  expandedCategories[section._id]
+                    ? "max-h-[2000px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+              >
+                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {section.projects.map((project) => (
+                    <ProjectCard key={project._id} project={project} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -375,7 +547,7 @@ const ProjectCard = ({ project }) => {
   return (
     <Link
       to={`/project/${project._id}`}
-      className="group block bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
+      className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
     >
       {/* Card Header with Gradient */}
       <div className="p-4 text-white bg-gradient-to-r from-blue-600 to-blue-700">
