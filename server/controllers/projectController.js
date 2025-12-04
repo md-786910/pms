@@ -263,6 +263,7 @@ const createProject = async (req, res) => {
       clientName,
       projectType,
       projectStatus,
+      category,
       startDate,
       endDate,
       liveSiteUrl,
@@ -279,6 +280,7 @@ const createProject = async (req, res) => {
       clientName,
       projectType,
       projectStatus,
+      category: category || null,
       startDate: startDate || new Date(),
       endDate: endDate || null,
       liveSiteUrl,
@@ -325,6 +327,7 @@ const createProject = async (req, res) => {
     await project.populate("owner", "name email avatar color");
     await project.populate("members.user", "name email avatar color role");
     await project.populate("credentialAccess.user", "name email avatar color");
+    await project.populate("category", "name color icon");
 
     res.status(201).json({
       success: true,
