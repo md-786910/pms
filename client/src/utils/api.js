@@ -178,6 +178,17 @@ export const projectAPI = {
     api.delete(`/projects/${projectId}/descriptions/${descriptionId}`),
 };
 
+// Category API
+export const categoryAPI = {
+  getCategories: () => api.get("/categories"),
+  getCategoriesWithCounts: () => api.get("/categories/with-counts"),
+  getCategory: (id) => api.get(`/categories/${id}`),
+  createCategory: (categoryData) => api.post("/categories", categoryData),
+  updateCategory: (id, categoryData) => api.put(`/categories/${id}`, categoryData),
+  deleteCategory: (id) => api.delete(`/categories/${id}`),
+  getProjectsByCategory: (id) => api.get(`/categories/${id}/projects`),
+};
+
 export const cardAPI = {
   getCards: (projectId, includeArchived = false) => {
     const params = includeArchived ? "?includeArchived=true" : "";

@@ -36,6 +36,11 @@ const projectSchema = new mongoose.Schema(
       enum: ["new", "ongoing", "completed", "cancelled"],
       default: "new",
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+    },
     startDate: {
       type: Date,
       required: [true, "Start date is required"],

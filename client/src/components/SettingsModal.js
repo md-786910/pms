@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Settings, Shield, Users, Zap, Sliders, Archive } from "lucide-react";
+import { X, Settings, Shield, Users, Zap, Sliders, Archive, FolderCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 
@@ -31,6 +31,14 @@ const SettingsModal = ({ isOpen, onClose }) => {
       show: user?.role === "admin",
       key: "archived",
       title: "Archived Projects",
+    },
+    {
+      name: "Manage Projects",
+      href: "/manage-projects",
+      icon: FolderCog,
+      show: user?.role === "admin",
+      key: "manage-projects",
+      title: "Manage project categories",
     },
     {
       name: "Preferences",
