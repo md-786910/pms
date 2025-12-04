@@ -176,7 +176,10 @@ const EditProjectModal = ({ project, onClose }) => {
         if (catKey === "other") continue;
 
         // Check if label starts with category name (e.g., "CMS Custom Field" -> cms category)
-        if (labelLower.startsWith(catKey + " ") || labelLower.startsWith(cat.name.toLowerCase() + " ")) {
+        if (
+          labelLower.startsWith(catKey + " ") ||
+          labelLower.startsWith(cat.name.toLowerCase() + " ")
+        ) {
           categorized[catKey].push(cred);
           matched = true;
           break;
@@ -370,7 +373,8 @@ const EditProjectModal = ({ project, onClose }) => {
       let demoSiteUrls = [""];
       if (project.demoSiteUrls && Array.isArray(project.demoSiteUrls)) {
         // If array exists but is empty, use one empty string; otherwise use the array
-        demoSiteUrls = project.demoSiteUrls.length > 0 ? project.demoSiteUrls : [""];
+        demoSiteUrls =
+          project.demoSiteUrls.length > 0 ? project.demoSiteUrls : [""];
       } else if (project.demoSiteUrl) {
         // Backward compatibility: convert old single URL to array
         demoSiteUrls = [project.demoSiteUrl];
@@ -554,7 +558,7 @@ const EditProjectModal = ({ project, onClose }) => {
       const updateData = {
         ...formData,
         // Filter out empty demo site URLs before sending
-        demoSiteUrls: formData.demoSiteUrls.filter(url => url.trim() !== ""),
+        demoSiteUrls: formData.demoSiteUrls.filter((url) => url.trim() !== ""),
         attachments: existingAttachments,
       };
       await updateProject(project._id, updateData);
@@ -827,8 +831,9 @@ const EditProjectModal = ({ project, onClose }) => {
       isOpen: true,
       type: "danger",
       title: "Delete Credential",
-      message: `Are you sure you want to delete the credential "${credential?.label || "this credential"
-        }"? This action cannot be undone.`,
+      message: `Are you sure you want to delete the credential "${
+        credential?.label || "this credential"
+      }"? This action cannot be undone.`,
       confirmText: "Delete",
       onConfirm: async () => {
         setCredentialLoading(true);
@@ -896,8 +901,9 @@ const EditProjectModal = ({ project, onClose }) => {
       isOpen: true,
       type: "danger",
       title: "Revoke Credential Access",
-      message: `Are you sure you want to revoke credential access for "${userDetails?.name || "this member"
-        }"? They will no longer be able to view project credentials.`,
+      message: `Are you sure you want to revoke credential access for "${
+        userDetails?.name || "this member"
+      }"? They will no longer be able to view project credentials.`,
       confirmText: "Revoke Access",
       onConfirm: async () => {
         setCredentialLoading(true);
@@ -1102,7 +1108,7 @@ const EditProjectModal = ({ project, onClose }) => {
           >
             <X className="w-4 h-4 text-gray-600" />
           </button>
-          {isAdmin && (
+          {isAdmin && activeTab === "info" && (
             <button
               className="absolute top-6 right-20 z-10 px-4 py-2 bg-primary-500 hover:bg-primary-400 text-white font-semibold text-base transition-colors duration-200 rounded-md flex items-center justify-center gap-2"
               title="Edit mode"
@@ -1142,10 +1148,11 @@ const EditProjectModal = ({ project, onClose }) => {
           <button
             type="button"
             onClick={() => setActiveTab("info")}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "info"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "info"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
           >
             <Info className="w-4 h-4" />
             Project Information
@@ -1154,10 +1161,11 @@ const EditProjectModal = ({ project, onClose }) => {
             <button
               type="button"
               onClick={() => setActiveTab("credentials")}
-              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "credentials"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "credentials"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
             >
               <Key className="w-4 h-4" />
               Credentials
@@ -1171,10 +1179,11 @@ const EditProjectModal = ({ project, onClose }) => {
           <button
             type="button"
             onClick={() => setActiveTab("descriptions")}
-            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "descriptions"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "descriptions"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
           >
             <FileText className="w-4 h-4" />
             Notes
@@ -1445,7 +1454,10 @@ const EditProjectModal = ({ project, onClose }) => {
                         </div>
                         <div className="space-y-2">
                           {formData.demoSiteUrls.map((url, index) => (
-                            <div key={index} className="flex items-center gap-2">
+                            <div
+                              key={index}
+                              className="flex items-center gap-2"
+                            >
                               <input
                                 type="url"
                                 value={url}
@@ -1456,16 +1468,17 @@ const EditProjectModal = ({ project, onClose }) => {
                                 placeholder="https://demo.example.com"
                                 disabled={editMode}
                               />
-                              {!editMode && formData.demoSiteUrls.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeDemoSiteUrl(index)}
-                                  className="p-3 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
-                                  title="Remove this URL"
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
-                              )}
+                              {!editMode &&
+                                formData.demoSiteUrls.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeDemoSiteUrl(index)}
+                                    className="p-3 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                    title="Remove this URL"
+                                  >
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
+                                )}
                             </div>
                           ))}
                         </div>
@@ -1520,10 +1533,11 @@ const EditProjectModal = ({ project, onClose }) => {
                     {/* Drag and Drop Area */}
                     {isAdmin && (
                       <div
-                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${isDragOver
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-300 hover:border-gray-400"
-                          }`}
+                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
+                          isDragOver
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-300 hover:border-gray-400"
+                        }`}
                         onClick={() => fileInputRef.current?.click()}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
@@ -1564,10 +1578,11 @@ const EditProjectModal = ({ project, onClose }) => {
                           {uploadedFiles.map((file) => (
                             <div
                               key={file.id}
-                              className={`flex items-center justify-between p-3 rounded-lg border ${file.uploaded
-                                ? "bg-green-50 border-green-200"
-                                : "bg-gray-50 border-gray-200"
-                                }`}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                file.uploaded
+                                  ? "bg-green-50 border-green-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
                             >
                               <div className="flex items-center space-x-3 flex-1 min-w-0">
                                 <div className="flex-shrink-0">
@@ -1793,7 +1808,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                 <input
                                                   type={
                                                     field.isPassword &&
-                                                      !isPasswordVisible
+                                                    !isPasswordVisible
                                                       ? "password"
                                                       : "text"
                                                   }
@@ -1809,10 +1824,11 @@ const EditProjectModal = ({ project, onClose }) => {
                                                     }))
                                                   }
                                                   placeholder="Enter value..."
-                                                  className={`w-full h-10 px-3 ${field.isPassword
-                                                    ? "pr-10"
-                                                    : ""
-                                                    } text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono`}
+                                                  className={`w-full h-10 px-3 ${
+                                                    field.isPassword
+                                                      ? "pr-10"
+                                                      : ""
+                                                  } text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono`}
                                                   disabled={isSaving}
                                                 />
                                                 {field.isPassword && (
@@ -1890,68 +1906,82 @@ const EditProjectModal = ({ project, onClose }) => {
                                 })}
 
                                 {/* CMS Only: Display Custom CMS Fields */}
-                                {catKey === "cms" && (() => {
-                                  const customCmsCredentials = categorizeCredentials().cms?.filter(
-                                    (cred) => !category.fields.some(
-                                      (f) => f.label.toLowerCase() === cred.label.toLowerCase()
-                                    )
-                                  ) || [];
+                                {catKey === "cms" &&
+                                  (() => {
+                                    const customCmsCredentials =
+                                      categorizeCredentials().cms?.filter(
+                                        (cred) =>
+                                          !category.fields.some(
+                                            (f) =>
+                                              f.label.toLowerCase() ===
+                                              cred.label.toLowerCase()
+                                          )
+                                      ) || [];
 
-                                  return customCmsCredentials.map((cred) => {
-                                    const credKey = cred.label.toLowerCase();
-                                    const isSaving = savingCredentialKey === credKey;
-                                    return (
-                                      <div
-                                        key={cred._id}
-                                        className="grid grid-cols-[160px_1fr] gap-3 items-center group"
-                                      >
-                                        <label className="text-sm font-medium text-slate-600">
-                                          {cred.label}
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                          <input
-                                            type="text"
-                                            value={localValues[credKey] ?? ""}
-                                            onChange={(e) =>
-                                              setLocalValues((prev) => ({
-                                                ...prev,
-                                                [credKey]: e.target.value,
-                                              }))
-                                            }
-                                            placeholder="Enter value..."
-                                            className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
-                                            disabled={isSaving}
-                                          />
-                                          <div className="flex items-center">
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                const value = localValues[credKey] ?? "";
-                                                handleUpdateCredential(cred._id, {
-                                                  label: cred.label,
-                                                  value,
-                                                });
-                                              }}
+                                    return customCmsCredentials.map((cred) => {
+                                      const credKey = cred.label.toLowerCase();
+                                      const isSaving =
+                                        savingCredentialKey === credKey;
+                                      return (
+                                        <div
+                                          key={cred._id}
+                                          className="grid grid-cols-[160px_1fr] gap-3 items-center group"
+                                        >
+                                          <label className="text-sm font-medium text-slate-600">
+                                            {cred.label}
+                                          </label>
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type="text"
+                                              value={localValues[credKey] ?? ""}
+                                              onChange={(e) =>
+                                                setLocalValues((prev) => ({
+                                                  ...prev,
+                                                  [credKey]: e.target.value,
+                                                }))
+                                              }
+                                              placeholder="Enter value..."
+                                              className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
                                               disabled={isSaving}
-                                              className="h-10 px-4 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
-                                            >
-                                              {isSaving ? "..." : "Save"}
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleDeleteCredential(cred._id)}
-                                              disabled={credentialLoading}
-                                              className="h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
-                                              title="Delete"
-                                            >
-                                              <Trash2 className="w-4 h-4 flex-shrink-0" />
-                                            </button>
+                                            />
+                                            <div className="flex items-center">
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const value =
+                                                    localValues[credKey] ?? "";
+                                                  handleUpdateCredential(
+                                                    cred._id,
+                                                    {
+                                                      label: cred.label,
+                                                      value,
+                                                    }
+                                                  );
+                                                }}
+                                                disabled={isSaving}
+                                                className="h-10 px-4 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+                                              >
+                                                {isSaving ? "..." : "Save"}
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleDeleteCredential(
+                                                    cred._id
+                                                  )
+                                                }
+                                                disabled={credentialLoading}
+                                                className="h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
+                                                title="Delete"
+                                              >
+                                                <Trash2 className="w-4 h-4 flex-shrink-0" />
+                                              </button>
+                                            </div>
                                           </div>
                                         </div>
-                                      </div>
-                                    );
-                                  });
-                                })()}
+                                      );
+                                    });
+                                  })()}
                               </div>
 
                               {/* CMS Only: Add Custom Field */}
@@ -1960,7 +1990,9 @@ const EditProjectModal = ({ project, onClose }) => {
                                   {!showCmsCustomField ? (
                                     <button
                                       type="button"
-                                      onClick={() => setShowCmsCustomField(true)}
+                                      onClick={() =>
+                                        setShowCmsCustomField(true)
+                                      }
                                       className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
                                     >
                                       <Plus className="w-4 h-4" />
@@ -1998,16 +2030,25 @@ const EditProjectModal = ({ project, onClose }) => {
                                         <button
                                           type="button"
                                           onClick={() => {
-                                            if (newCmsField.label.trim() && newCmsField.value.trim()) {
+                                            if (
+                                              newCmsField.label.trim() &&
+                                              newCmsField.value.trim()
+                                            ) {
                                               handleAddCredential({
                                                 label: `CMS ${newCmsField.label}`,
                                                 value: newCmsField.value,
                                               });
-                                              setNewCmsField({ label: "", value: "" });
+                                              setNewCmsField({
+                                                label: "",
+                                                value: "",
+                                              });
                                               setShowCmsCustomField(false);
                                             }
                                           }}
-                                          disabled={!newCmsField.label.trim() || !newCmsField.value.trim()}
+                                          disabled={
+                                            !newCmsField.label.trim() ||
+                                            !newCmsField.value.trim()
+                                          }
                                           className="px-4 py-2 text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           Add Field
@@ -2015,7 +2056,10 @@ const EditProjectModal = ({ project, onClose }) => {
                                         <button
                                           type="button"
                                           onClick={() => {
-                                            setNewCmsField({ label: "", value: "" });
+                                            setNewCmsField({
+                                              label: "",
+                                              value: "",
+                                            });
                                             setShowCmsCustomField(false);
                                           }}
                                           className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -2115,10 +2159,11 @@ const EditProjectModal = ({ project, onClose }) => {
                               newCredential.label?.toLowerCase();
                             return (
                               <div
-                                className={`grid grid-cols-[160px_1fr] gap-3 items-center ${categorizeCredentials().other?.length > 0
-                                  ? "pt-3 border-t border-slate-100"
-                                  : ""
-                                  }`}
+                                className={`grid grid-cols-[160px_1fr] gap-3 items-center ${
+                                  categorizeCredentials().other?.length > 0
+                                    ? "pt-3 border-t border-slate-100"
+                                    : ""
+                                }`}
                               >
                                 <input
                                   type="text"
@@ -2515,14 +2560,14 @@ const EditProjectModal = ({ project, onClose }) => {
                                   {desc.createdBy?.name || "Unknown"} •{" "}
                                   {desc.createdAt
                                     ? new Date(
-                                      desc.createdAt
-                                    ).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })
+                                        desc.createdAt
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
                                     : "No date"}
                                 </p>
                               </div>
@@ -2586,7 +2631,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                       descriptionLoading ||
                                       !editingDescriptionContent.trim() ||
                                       editingDescriptionContent ===
-                                      "<p><br></p>"
+                                        "<p><br></p>"
                                     }
                                     className="px-4 py-2 text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-2"
                                   >
