@@ -130,7 +130,7 @@ const CreateCardModal = ({
             />
           </div>
 
-          <div>
+          {/* <div>
             <label
               htmlFor="dueDate"
               className="block text-sm font-medium text-secondary-700 mb-2"
@@ -177,7 +177,7 @@ const CreateCardModal = ({
                 <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               )}
             </div>
-          </div>
+          </div> */}
 
           <div className="flex items-center justify-end space-x-3 pt-4">
             <button

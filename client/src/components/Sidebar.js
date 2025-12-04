@@ -110,9 +110,8 @@ const Sidebar = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${
-          isCollapsed ? "w-16" : "w-72"
-        } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${isCollapsed ? "w-16" : "w-72"
+          } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           {!isCollapsed && (
@@ -142,15 +141,13 @@ const Sidebar = ({
           <Link
             to="/"
             onClick={onClose}
-            className={`flex items-center ${
-              isCollapsed
+            className={`flex items-center ${isCollapsed
                 ? "justify-center px-2 py-3"
                 : "justify-between px-3 py-3"
-            } rounded-lg transition-colors duration-200 ${
-              !isOnProjectPage && location.pathname === "/"
+              } rounded-lg transition-colors duration-200 ${!isOnProjectPage && location.pathname === "/"
                 ? "bg-blue-100 text-blue-700 border border-blue-200"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
+              }`}
             title={isCollapsed ? "Dashboard" : ""}
           >
             <div className="flex items-center space-x-3">
@@ -353,9 +350,8 @@ const Sidebar = ({
             onClick={() => setShowSettingsModal(true)}
           >
             <div
-              className={`flex items-center ${
-                isCollapsed ? "justify-center" : "space-x-3"
-              }`}
+              className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-3"
+                }`}
             >
               <Settings className="w-5 h-5 text-gray-600" />
               {!isCollapsed && (
