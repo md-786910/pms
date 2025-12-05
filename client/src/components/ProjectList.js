@@ -66,7 +66,7 @@ const ProjectList = () => {
   // Group projects by category
   const groupedProjects = useMemo(() => {
     if (!projects || projects.length === 0)
-      return { allSections: [] };
+      return { allSections: [], uncategorizedProjects: [] };
 
     const categoryMap = new Map();
     const uncategorized = [];
@@ -93,22 +93,15 @@ const ProjectList = () => {
       cat.projects = sortProjectsByDate(cat.projects, sortOrder);
     });
 
-    // Sort uncategorized projects by date
-    const sortedUncategorized = sortProjectsByDate(uncategorized, sortOrder);
+    // Sort uncategorized projects alphabetically by name
+    const sortedUncategorized = [...uncategorized].sort((a, b) => {
+      const nameA = (a.name || "").toLowerCase();
+      const nameB = (b.name || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
-    // Create allSections array that includes both categories and uncategorized
+    // Create allSections array that includes only categories (no uncategorized section)
     const allSections = [...categories];
-
-    // Add uncategorized as a section if it has projects
-    if (sortedUncategorized.length > 0) {
-      allSections.push({
-        _id: "uncategorized",
-        name: "Uncategorized",
-        color: "#9ca3af", // gray-400
-        projects: sortedUncategorized,
-        isUncategorized: true,
-      });
-    }
 
     // Sort all sections by the most recent/oldest project date
     allSections.sort((a, b) => {
@@ -117,7 +110,7 @@ const ProjectList = () => {
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
 
-    return { allSections };
+    return { allSections, uncategorizedProjects: sortedUncategorized };
   }, [projects, sortOrder]);
 
   // Initialize all categories as expanded
@@ -474,7 +467,7 @@ const ProjectList = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* All Sections (Categories + Uncategorized) - Sorted by date */}
+          {/* Categorized Projects - Display in sections */}
           {groupedProjects.allSections.map((section) => (
             <div
               key={section._id}
@@ -520,6 +513,15 @@ const ProjectList = () => {
               </div>
             </div>
           ))}
+
+          {/* Uncategorized Projects - Display as individual cards at the bottom */}
+          {groupedProjects.uncategorizedProjects.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {groupedProjects.uncategorizedProjects.map((project) => (
+                <ProjectCard key={project._id} project={project} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
