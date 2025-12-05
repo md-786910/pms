@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Folder,
   SlidersHorizontal,
+  Save,
 } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
@@ -499,19 +500,17 @@ const ProjectList = () => {
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                    expandedCategories[section._id] ? "rotate-180" : ""
-                  }`}
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${expandedCategories[section._id] ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
               {/* Section Projects */}
               <div
-                className={`overflow-hidden transition-all duration-300 ${
-                  expandedCategories[section._id]
-                    ? "max-h-[2000px] opacity-100"
-                    : "max-h-0 opacity-0"
-                }`}
+                className={`overflow-hidden transition-all duration-300 ${expandedCategories[section._id]
+                  ? "max-h-[2000px] opacity-100"
+                  : "max-h-0 opacity-0"
+                  }`}
               >
                 <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {section.projects.map((project) => (
@@ -536,12 +535,45 @@ const ProjectList = () => {
 };
 
 const ProjectCard = ({ project }) => {
+  const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
+  };
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showDropdown]);
+
+  const handleEditProject = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropdown(false);
+    navigate(`/project/${project._id}/edit`);
+  };
+
+  const handleDropdownToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropdown(!showDropdown);
   };
 
   return (
@@ -562,12 +594,27 @@ const ProjectCard = ({ project }) => {
               </p>
             )} */}
           </div>
-          <button
-            onClick={(e) => e.preventDefault()}
-            className="p-1 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </button>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={handleDropdownToggle}
+              className="p-1 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <button
+                  onClick={handleEditProject}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Project Details</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
