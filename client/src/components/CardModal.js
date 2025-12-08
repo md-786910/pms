@@ -1664,7 +1664,7 @@ const CardModal = ({
                     {!isArchived && (
                       <button
                         onClick={handleCompleteToggle}
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${card.isComplete
+                        className={`mt-6 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${card.isComplete
                           ? "bg-green-500 border-green-500 hover:bg-green-600"
                           : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
                           } cursor-pointer`}
@@ -1691,50 +1691,65 @@ const CardModal = ({
                         )}
                       </button>
                     )}
-                    <button
-                      className={`btn px-5 py-0.5 rounded-md ${card.cardNumber || card._id?.slice(-4) || "0000"
-                        ? "bg-[#2bcbba]  "
-                        : "bg-gray-200  border-gray-200"
-                        }`}
-                      title="Card number"
-                    >
-                      #{card.cardNumber || card._id?.slice(-4) || "0000"}
-                    </button>
-                    {(() => {
-                      const colors = getCardStatusColors(card.status);
-                      const label = card?.statusLabel;
-                      // card.statusLabel ||
-                      // allStatusOptions.find((s) => s.value === card.status)
-                      //   ?.label ||
-                      // colors.label ||
-                      // card.status;
-                      return (
-                        <button
-                          className={`btn px-5 py-0.5 text-[15px] bg-[tomato] rounded-md text-black ${colors.borderColor}`}
-                          title="Current status"
+                    <div className="flex items-center gap-6">
+                      {/* CARD NUMBER */}
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-bold text-gray-500">Card Number</span>
+
+                        <div
+                          className="px-4 py-1.5 rounded-lg bg-blue-500 text-white 
+                                     text-sm font-medium shadow-md text-center"
                         >
-                          <span
-                            className={`mr-1.5 w-1.5 h-1.5 rounded-full`}
-                          ></span>
-                          {label}
-                        </button>
-                      );
-                    })()}
-                    <button
-                      className={`btn px-5 py-0.5 rounded-md ${card.dueDate
-                        ? "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
-                        : "bg-gray-200"
-                        }`}
-                      title="Due date"
-                    >
-                      {card.dueDate
-                        ? new Date(card.dueDate).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })
-                        : "No due date"}
-                    </button>{" "}
+                          #{card.cardNumber || card._id?.slice(-4) || "0000"}
+                        </div>
+                      </div>
+
+                      {/* STATUS */}
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-bold text-gray-500">Status</span>
+
+                        {(() => {
+                          const colors = getCardStatusColors(card.status);
+                          const label = card?.statusLabel;
+                        
+                          return (
+                            <div
+                              className={`
+                                px-4 py-1.5 rounded-lg text-sm font-medium shadow-md
+                                bg-green-600 text-white
+                              `}
+                            >
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: colors.dotColor }}
+                              />
+                              {label}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      
+                      {/* DUE DATE */}
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-bold text-gray-500">Due Date</span>
+                      
+                        <div
+                          className={`px-4 py-1.5 rounded-lg text-sm font-medium shadow-md 
+                            ${card.dueDate
+                              ? "bg-gray-500 text-white"
+                              : "bg-gray-500 text-white"
+                            }`}
+                        >
+                          {card.dueDate
+                            ? new Date(card.dueDate).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "No due date"}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -2134,7 +2149,7 @@ const CardModal = ({
                         return (
                           <div
                             key={comment._id || comment.id}
-                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors duration-200 group"
+                            className="bg-gray-50 rounded-lg p-4 transition-colors duration-200 group"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-3">
