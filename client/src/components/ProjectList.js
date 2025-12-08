@@ -466,7 +466,7 @@ const ProjectList = () => {
           )}
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-11">
           {/* Categorized Projects - Display in sections */}
           {groupedProjects.allSections.map((section) => (
             <div
