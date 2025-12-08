@@ -7,6 +7,7 @@ import { useProject } from "../contexts/ProjectContext";
 import Avatar from "./Avatar";
 import { useNavigate } from "react-router-dom";
 import CreateProjectModal from "./CreateProjectModal";
+import emptyNotification from "../assets/empty-notification.png";
 
 const timeAgo = (dateString) => {
   const now = new Date();
@@ -152,14 +153,12 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                         role="switch"
                         aria-checked={showUnreadOnly}
                         onClick={() => setShowUnreadOnly(!showUnreadOnly)}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          showUnreadOnly ? "bg-blue-600" : "bg-gray-300"
-                        }`}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${showUnreadOnly ? "bg-blue-600" : "bg-gray-300"
+                          }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            showUnreadOnly ? "translate-x-5" : "translate-x-1"
-                          }`}
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showUnreadOnly ? "translate-x-5" : "translate-x-1"
+                            }`}
                         />
                       </button>
                     </label>
@@ -178,10 +177,25 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                 </div>
 
                 {/* Notifications */}
-                {notifications.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    No notifications yet
-                  </p>
+                {filteredNotifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                    {showUnreadOnly ? (
+                      <>
+                        <img
+                          src={emptyNotification}
+                          alt="No unread notifications"
+                          className="w-24 h-24 mb-3 opacity-80"
+                        />
+                        <p className="text-sm font-medium text-gray-600">
+                          Notification is not yet
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        No notifications yet
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <div className="relative group max-h-[65vh] overflow-y-auto space-y-3 pr-2">
@@ -202,11 +216,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                               setOpen(false);
                               // navigate(redirectUri);
                             }}
-                            className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${
-                              !n.read
-                                ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent"
-                                : "bg-white"
-                            }`}
+                            className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${!n.read
+                              ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent"
+                              : "bg-white"
+                              }`}
                           >
                             {/* Project name (Top Priority) */}
                             {n.relatedProject && (
