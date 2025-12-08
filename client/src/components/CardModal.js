@@ -17,6 +17,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
+  AlignLeft,
+  MessageSquare,
+  Tag,
+  Clock4,
+  Paperclip,
+  UserPlus,
+  AlertTriangle,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -1694,7 +1701,7 @@ const CardModal = ({
                     <div className="flex items-center gap-6">
                       {/* CARD NUMBER */}
                       <div className="flex flex-col">
-                        <span className="text-[15px] font-bold text-gray-500">Card Number</span>
+                        <span className="text-sm font-semibold text-gray-700">Card Number</span>
 
                         <div
                           className="px-4 py-1.5 rounded-lg bg-blue-500 text-white 
@@ -1706,7 +1713,7 @@ const CardModal = ({
 
                       {/* STATUS */}
                       <div className="flex flex-col">
-                        <span className="text-[15px] font-bold text-gray-500">Status</span>
+                        <span className="text-sm font-semibold text-gray-700">Status</span>
 
                         {(() => {
                           const colors = getCardStatusColors(card.status);
@@ -1731,7 +1738,7 @@ const CardModal = ({
                       
                       {/* DUE DATE */}
                       <div className="flex flex-col">
-                        <span className="text-[15px] font-bold text-gray-500">Due Date</span>
+                        <span className="text-sm font-semibold text-gray-700">Due Date</span>
                       
                         <div
                           className={`px-4 py-1.5 rounded-lg text-sm font-medium shadow-md 
@@ -1756,9 +1763,11 @@ const CardModal = ({
                 {/* Description */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <AlignLeft className="w-4 h-4 text-gray-600" />
                       Description
                     </label>
+
                     {!isEditing && (
                       <button
                         onClick={() => setIsEditing(true)}
@@ -1845,7 +1854,8 @@ const CardModal = ({
                 {/* Card Items Section */}
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <CheckSquare className="w-4 h-4 text-gray-400" />
                       Checklist ({items.length})
                     </label>
                   </div>
@@ -2100,7 +2110,8 @@ const CardModal = ({
                   </div>
                 )}
                 <div className="space-y-4">
-                  <label className="block text-sm font-semibold text-gray-700">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <MessageSquare className="w-4 h-4 text-gray-600" />
                     Add Comment
                   </label>
                   <div className="comment-editor">
@@ -2317,14 +2328,19 @@ const CardModal = ({
                 {/* Due Date */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Due Date
-                      {isArchived && (
-                        <span className="text-xs text-gray-500 ml-2 font-normal">
-                          (Disabled for archived cards)
-                        </span>
-                      )}
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <Clock4 className="w-4 h-4 text-gray-700" />
+
+                      <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                        Due Date
+                        {isArchived && (
+                          <span className="text-xs text-gray-500 font-normal">
+                            (Disabled for archived cards)
+                          </span>
+                        )}
+                      </label>
+                    </div>
+
                     {autoSaving && (
                       <span className="text-xs text-blue-600 flex items-center">
                         <svg
@@ -2403,9 +2419,13 @@ const CardModal = ({
 
                 {/* Priority */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Priority
-                  </label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-gray-700" />
+                    <label className="text-sm font-semibold text-gray-700">
+                      Priority
+                    </label>
+                  </div>
+
                   <div className="flex space-x-1">
                     {["low", "medium", "high"].map((priority) => (
                       <button
@@ -2429,9 +2449,12 @@ const CardModal = ({
                 {/* Labels */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Labels ({card.labels?.length || 0})
-                    </label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tag className="w-4 h-4 text-gray-700" />            
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Labels ({card.labels?.length || 0})
+                      </label>
+                    </div>  
                     <button
                       onClick={() => setShowLabelsModal(true)}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium"
@@ -2491,9 +2514,13 @@ const CardModal = ({
                 {/* Assignees */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Assignees ({assignees.length})
-                    </label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserPlus className="w-4 h-4 text-gray-700" />
+                      <label className="text-sm font-semibold text-gray-700">
+                        Members ({card.members?.length || 0})
+                      </label>
+                    </div>
+
                     <button
                       onClick={() => setShowAssignModal(true)}
                       className="text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -2534,10 +2561,12 @@ const CardModal = ({
 
                 {/* File Attachments */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Documents ({getOtherAttachments().length})
-                  </label>
-
+                  <div className="flex items-center gap-2 mb-2">
+                    <Paperclip className="w-4 h-4 text-gray-700" />
+                    <label className="text-sm font-semibold text-gray-700">
+                      Documents ({getOtherAttachments().length})
+                    </label>
+                  </div>
                   <div className="space-y-1 mb-2 max-h-40 overflow-y-auto">
                     {getOtherAttachments().length > 0 ? (
                       getOtherAttachments().map((attachment) => (
