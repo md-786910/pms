@@ -80,14 +80,14 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
             <AdvancedSearch />
           </div>
 
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">P</span>
             </div>
             <h1 className="text-xl font-bold text-gray-900">
               Project Management
             </h1>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center space-x-4">
