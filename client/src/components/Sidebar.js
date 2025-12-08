@@ -12,6 +12,7 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
 import SettingsModal from "./SettingsModal";
+import Logo from '../assets/logo.png';
 
 const Sidebar = ({
   isOpen,
@@ -113,15 +114,10 @@ const Sidebar = ({
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
-              <img 
-                src="../assets/logo.png" 
-                alt="Logo" 
-                className="w-6 h-6"
-              />
+              <img src={Logo} alt="Logo" className="w-6 h-6" />
               <h2 className="text-lg font-semibold text-gray-900">PMS</h2>
             </div>
           )}
-
           <button
             onClick={onToggleSidebar}
             className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
