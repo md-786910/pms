@@ -4,6 +4,7 @@ const Card = require("../models/Card");
 const Notification = require("../models/Notification");
 const Invitation = require("../models/Invitation");
 const Activity = require("../models/Activity");
+const Category = require("../models/Category");
 const { createDefaultColumns } = require("./columnController");
 const {
   sendProjectInvitationEmail,
@@ -142,6 +143,26 @@ const getProjects = async (req, res) => {
     const userId = req.user._id;
     const userRole = req.user.role;
 
+    // Get or create the "Workspace" category
+    let workspaceCategory = await Category.findOne({ name: "Workspace" });
+    if (!workspaceCategory) {
+      workspaceCategory = new Category({
+        name: "Workspace",
+        description: "Default workspace for uncategorized projects",
+        color: "#6366f1",
+        icon: "Folder",
+        isActive: true,
+        createdBy: userId,
+      });
+      await workspaceCategory.save();
+    }
+
+    // Auto-assign uncategorized projects to Workspace category
+    await Project.updateMany(
+      { category: { $in: [null, undefined] }, status: "active", isArchived: { $ne: true } },
+      { $set: { category: workspaceCategory._id } }
+    );
+
     let projects;
 
     if (userRole === "admin") {
@@ -274,13 +295,32 @@ const createProject = async (req, res) => {
     } = req.body;
     const userId = req.user._id;
     const bgColor = await assignColor();
+
+    // Get or create the "Workspace" category for uncategorized projects
+    let projectCategory = category;
+    if (!projectCategory) {
+      let workspaceCategory = await Category.findOne({ name: "Workspace" });
+      if (!workspaceCategory) {
+        workspaceCategory = new Category({
+          name: "Workspace",
+          description: "Default workspace for uncategorized projects",
+          color: "#6366f1",
+          icon: "Folder",
+          isActive: true,
+          createdBy: userId,
+        });
+        await workspaceCategory.save();
+      }
+      projectCategory = workspaceCategory._id;
+    }
+
     const project = new Project({
       name,
       description,
       clientName,
       projectType,
       projectStatus,
-      category: category || null,
+      category: projectCategory,
       startDate: startDate || new Date(),
       endDate: endDate || null,
       liveSiteUrl,
