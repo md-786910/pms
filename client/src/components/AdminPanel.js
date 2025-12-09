@@ -4,7 +4,7 @@ import {
   ArrowLeft,
   Plus,
   Edit,
-  Trash2,
+  Archive,
   Users,
   Calendar,
   Settings,
@@ -34,26 +34,30 @@ const AdminPanel = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [projectToArchive, setProjectToArchive] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isArchiving, setIsArchiving] = useState(false);
 
-  const handleDeleteProject = (project) => {
-    setProjectToDelete(project);
-    setShowDeleteConfirm(true);
+  const handleArchiveProject = (project) => {
+    setProjectToArchive(project);
+    setShowArchiveConfirm(true);
   };
 
-  const confirmDeleteProject = async () => {
-    if (!projectToDelete) return;
+  const confirmArchiveProject = async () => {
+    if (!projectToArchive) return;
 
     try {
-      await deleteProject(projectToDelete._id);
-      showToast("Project deleted successfully", "success");
-      setShowDeleteConfirm(false);
-      setProjectToDelete(null);
+      setIsArchiving(true);
+      await deleteProject(projectToArchive._id);
+      showToast("Project archived successfully. You can restore it from the Archived Projects section.", "success");
+      setShowArchiveConfirm(false);
+      setProjectToArchive(null);
     } catch (error) {
-      showToast("Failed to delete project", "error");
+      showToast("Failed to archive project", "error");
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -342,11 +346,11 @@ const AdminPanel = () => {
                           <Users className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteProject(project)}
+                          onClick={() => handleArchiveProject(project)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                          title="Delete Project"
+                          title="Archive Project"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Archive className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -408,24 +412,24 @@ const AdminPanel = () => {
         />
       )}
 
-      {/* Delete Project Confirmation Modal */}
+      {/* Archive Project Confirmation Modal */}
       <ConfirmationModal
-        isOpen={showDeleteConfirm}
+        isOpen={showArchiveConfirm}
         onClose={() => {
-          setShowDeleteConfirm(false);
-          setProjectToDelete(null);
+          setShowArchiveConfirm(false);
+          setProjectToArchive(null);
         }}
-        onConfirm={confirmDeleteProject}
-        title="Delete Project"
+        onConfirm={confirmArchiveProject}
+        title="Archive Project"
         message={
-          projectToDelete
-            ? `Are you sure you want to delete "${projectToDelete.name}"? This action will permanently remove the project and all its data (cards, columns, notifications, etc.) and cannot be undone.`
-            : "Are you sure you want to delete this project?"
+          projectToArchive
+            ? `Are you sure you want to archive "${projectToArchive.name}"? The project will be moved to the Archived Projects section where you can restore it or permanently delete it later.`
+            : "Are you sure you want to archive this project?"
         }
-        confirmText="Delete Project"
+        confirmText="Archive Project"
         cancelText="Cancel"
-        type="danger"
-        isLoading={false}
+        type="warning"
+        isLoading={isArchiving}
       />
     </div>
   );

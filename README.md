@@ -81,8 +81,8 @@ PORT=5000
 MONGODB_URI=mongodb://localhost:27017/pms
 JWT_SECRET=your-super-secret-jwt-key
 JWT_EXPIRE=7d
-EMAIL_USER=mdashifreza7869101@gmail.com
-EMAIL_PASS=737uydyus@1
+EMAIL_USER=example@gmail.com
+EMAIL_PASS=your password
 CLIENT_URL=http://localhost:3000
 ```
 

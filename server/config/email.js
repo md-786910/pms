@@ -737,6 +737,84 @@ const sendMemberRemovedEmail = async (member, project, removedBy) => {
   }
 };
 
+const sendCredentialAccessEmail = async (member, project, grantedBy) => {
+  try {
+    console.log(
+      `📧 Preparing to send credential access email to ${member.email}`
+    );
+
+    const projectUrl = `${
+      process.env.CLIENT_URL || "http://localhost:3000"
+    }/project/${project._id}/edit`;
+
+    const template = {
+      subject: `Credential Access Granted: "${project.name}" - Project Management System`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🔐 Credential Access Granted</h1>
+          </div>
+          <div style="padding: 30px; background: #f8f9fa;">
+            <h2 style="color: #333; margin-bottom: 20px;">Hello ${member.name},</h2>
+            <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+              <strong>${grantedBy.name}</strong> has granted you access to view credentials for the project
+              <strong>"${project.name}"</strong>.
+            </p>
+
+            <div style="background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h3 style="color: #495057; margin: 0 0 15px 0; font-size: 18px;">🔑 What this means</h3>
+              <ul style="color: #666; line-height: 1.8; padding-left: 20px; margin: 0;">
+                <li>You can now view project credentials in the Credentials tab</li>
+                <li>Please handle this information securely</li>
+                <li>Do not share credentials with unauthorized users</li>
+              </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${projectUrl}" style="background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                View Project Credentials
+              </a>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              Project Management System
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    console.log(
+      `📧 Sending credential access email to ${member.email} with subject: ${template.subject}`
+    );
+    const result = await sendEmail(
+      member.email,
+      template.subject,
+      template.html
+    );
+
+    if (result.success) {
+      console.log(
+        `✅ Credential access email sent successfully to ${member.email}`
+      );
+    } else {
+      console.error(
+        `❌ Failed to send credential access email to ${member.email}:`,
+        result.error
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error sending credential access email to ${member.email}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   transporter,
   sendEmail,
@@ -749,4 +827,5 @@ module.exports = {
   sendProjectUpdateEmail,
   sendCardStatusChangedEmail,
   sendMemberRemovedEmail,
+  sendCredentialAccessEmail,
 };

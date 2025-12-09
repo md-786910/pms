@@ -5,6 +5,8 @@ import Sidebar from "./components/Sidebar";
 import ProjectList from "./components/ProjectList";
 import ProjectBoard from "./components/ProjectBoard";
 import AdminPanel from "./components/AdminPanel";
+import ArchivedProjects from "./components/ArchivedProjects";
+import ManageProjects from "./components/ManageProjects";
 import Notifications from "./components/Notifications";
 import Settings from "./components/Settings";
 import AuthPage from "./components/AuthPage";
@@ -64,6 +66,8 @@ function AppContent() {
                     <Routes>
                       <Route path="/" element={<ProjectList />} />
                       <Route path="/admin" element={<AdminPanel />} />
+                      <Route path="/archived-projects" element={<ArchivedProjects />} />
+                      <Route path="/manage-projects" element={<ManageProjects />} />
                       <Route path="/users" element={<UserManagement />} />
                       <Route
                         path="/notifications"

@@ -223,9 +223,9 @@
   }
 
   /* Activity Comment Styles */
-  .activity-comment {
+  /* .activity-comment {
     @apply bg-blue-50 border-l-4 border-blue-400;
-  }
+  } */
 
   .activity-comment .prose {
     @apply text-sm text-gray-700;

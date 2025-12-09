@@ -36,6 +36,11 @@ const projectSchema = new mongoose.Schema(
       enum: ["new", "ongoing", "completed", "cancelled"],
       default: "new",
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+    },
     startDate: {
       type: Date,
       required: [true, "Start date is required"],
@@ -55,16 +60,18 @@ const projectSchema = new mongoose.Schema(
         message: "Live site URL must be a valid URL",
       },
     },
-    demoSiteUrl: {
-      type: String,
-      trim: true,
-      validate: {
-        validator: function (v) {
-          return !v || /^https?:\/\/.+/.test(v);
+    demoSiteUrls: [
+      {
+        type: String,
+        trim: true,
+        validate: {
+          validator: function (v) {
+            return !v || /^https?:\/\/.+/.test(v);
+          },
+          message: "Demo site URL must be a valid URL",
         },
-        message: "Demo site URL must be a valid URL",
       },
-    },
+    ],
     markupUrl: {
       type: String,
       trim: true,
@@ -131,6 +138,20 @@ const projectSchema = new mongoose.Schema(
       enum: ["active", "archived", "completed"],
       default: "active",
     },
+    // Soft delete (archive) fields
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    archivedAt: {
+      type: Date,
+      default: null,
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     color: {
       type: String,
       default: "blue",
@@ -145,6 +166,69 @@ const projectSchema = new mongoose.Schema(
         default: "todo",
       },
     },
+    // Credentials - custom fields with label/value pairs (admin only can manage)
+    credentials: [
+      {
+        label: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: [100, "Label cannot be more than 100 characters"],
+        },
+        value: {
+          type: String,
+          trim: true,
+          maxlength: [1000, "Value cannot be more than 1000 characters"],
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
+    // Members who have access to view credentials (admin always has access)
+    credentialAccess: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        grantedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        grantedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
+    // Project descriptions/notes
+    descriptions: [
+      {
+        content: {
+          type: String,
+          required: true,
+          maxlength: 10000,
+        },
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -155,5 +239,6 @@ const projectSchema = new mongoose.Schema(
 projectSchema.index({ owner: 1 });
 projectSchema.index({ "members.user": 1 });
 projectSchema.index({ status: 1 });
+projectSchema.index({ isArchived: 1 });
 
 module.exports = mongoose.model("Project", projectSchema);

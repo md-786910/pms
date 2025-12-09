@@ -103,6 +103,10 @@ export const projectAPI = {
   createProject: (projectData) => api.post("/projects", projectData),
   updateProject: (id, projectData) => api.put(`/projects/${id}`, projectData),
   deleteProject: (id) => api.delete(`/projects/${id}`),
+  // Archive functionality
+  getArchivedProjects: () => api.get("/projects/archived"),
+  restoreProject: (id) => api.put(`/projects/${id}/restore`),
+  permanentDeleteProject: (id) => api.delete(`/projects/${id}/permanent`),
   addMember: (id, memberData) =>
     api.post(`/projects/${id}/members`, memberData),
   removeMember: (id, userId) => api.delete(`/projects/${id}/members/${userId}`),
@@ -150,6 +154,39 @@ export const projectAPI = {
       `/projects/${projectId}/attachments/${attachmentId}`
     );
   },
+
+  // Credentials API (admin manages, specific members can view)
+  addCredential: (projectId, credentialData) =>
+    api.post(`/projects/${projectId}/credentials`, credentialData),
+  updateCredential: (projectId, credentialId, credentialData) =>
+    api.put(`/projects/${projectId}/credentials/${credentialId}`, credentialData),
+  deleteCredential: (projectId, credentialId) =>
+    api.delete(`/projects/${projectId}/credentials/${credentialId}`),
+
+  // Credential Access Management (admin only)
+  grantCredentialAccess: (projectId, memberId) =>
+    api.post(`/projects/${projectId}/credential-access/${memberId}`),
+  revokeCredentialAccess: (projectId, memberId) =>
+    api.delete(`/projects/${projectId}/credential-access/${memberId}`),
+
+  // Descriptions API (admin can add/edit/delete, members can view)
+  addDescription: (projectId, descriptionData) =>
+    api.post(`/projects/${projectId}/descriptions`, descriptionData),
+  updateDescription: (projectId, descriptionId, descriptionData) =>
+    api.put(`/projects/${projectId}/descriptions/${descriptionId}`, descriptionData),
+  deleteDescription: (projectId, descriptionId) =>
+    api.delete(`/projects/${projectId}/descriptions/${descriptionId}`),
+};
+
+// Category API
+export const categoryAPI = {
+  getCategories: () => api.get("/categories"),
+  getCategoriesWithCounts: () => api.get("/categories/with-counts"),
+  getCategory: (id) => api.get(`/categories/${id}`),
+  createCategory: (categoryData) => api.post("/categories", categoryData),
+  updateCategory: (id, categoryData) => api.put(`/categories/${id}`, categoryData),
+  deleteCategory: (id) => api.delete(`/categories/${id}`),
+  getProjectsByCategory: (id) => api.get(`/categories/${id}/projects`),
 };
 
 export const cardAPI = {
