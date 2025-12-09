@@ -12,8 +12,8 @@ import {
   Folder,
   SlidersHorizontal,
   Save,
-  Pin,
   Star,
+  FolderClosed,
 } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
@@ -62,6 +62,23 @@ const ProjectList = () => {
       return next;
     });
   };
+
+  // Recently viewed projects (read from localStorage, respect 1 hour TTL)
+  const recentProjects = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("recentlyViewedProjects");
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      const cutoff = Date.now() - 1000 * 60 * 60; // 1 hour
+      const valid = arr.filter((it) => it && it.viewedAt && it.viewedAt >= cutoff);
+      // Map to project objects in the current projects list and preserve order
+      return valid
+        .map((it) => projects.find((p) => p._id === it.id))
+        .filter(Boolean);
+    } catch (e) {
+      return [];
+    }
+  }, [projects]);
 
   // Get date from project for sorting
   const getProjectDate = (project) => {
@@ -459,12 +476,32 @@ const ProjectList = () => {
       </div>
 
       {/* Pinned Projects Section */}
+      {/* Recently Viewed Section */}
+      {recentProjects && recentProjects.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Recently Viewed</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recentProjects.map((project) => (
+              <ProjectCard
+                key={project._id}
+                project={project}
+                pinned={pinnedIds.includes(project._id)}
+                onTogglePin={togglePin}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {groupedProjects.pinnedProjects && groupedProjects.pinnedProjects.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Pinned Projects</h2>
+          <div className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Starred boards</h2>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {groupedProjects.pinnedProjects.map((project) => (
               <ProjectCard
@@ -481,7 +518,10 @@ const ProjectList = () => {
       {/* Filter Bar */}
       {projects.length > 0 && (
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">All Projects</h2>
+          <div className="flex items-center gap-2">
+            <FolderClosed className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">All Projects</h2>
+          </div>
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-gray-500" />
             <select

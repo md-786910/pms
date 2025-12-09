@@ -311,6 +311,28 @@ const ProjectBoard = () => {
     }
   }, [currentProject, actualProjectId]);
 
+  // Track recently viewed projects (store ids + timestamp in localStorage)
+  useEffect(() => {
+    if (!currentProject || !actualProjectId) return;
+    try {
+      const raw = localStorage.getItem("recentlyViewedProjects");
+      const list = raw ? JSON.parse(raw) : [];
+      const cutoff = Date.now() - 1000 * 60 * 60; // 1 hour
+
+      // Remove expired and the current id if already present
+      const filtered = list.filter((item) => item.viewedAt >= cutoff && item.id !== actualProjectId);
+
+      // Add current project at the front
+      filtered.unshift({ id: actualProjectId, viewedAt: Date.now() });
+
+      // Limit to 10 items
+      const next = filtered.slice(0, 10);
+      localStorage.setItem("recentlyViewedProjects", JSON.stringify(next));
+    } catch (e) {
+      console.error("Failed to update recently viewed projects", e);
+    }
+  }, [currentProject, actualProjectId]);
+
   useEffect(() => {
     if (actualProjectId) {
       fetchProject(actualProjectId);
