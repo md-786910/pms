@@ -147,12 +147,20 @@ const ProjectList = () => {
       return true;
     });
 
-    // Sort projects within each category by date
+    // Sort projects within each category alphabetically by name
     nonWorkspaceCategories.forEach((cat) => {
-      cat.projects = sortProjectsByDate(cat.projects, sortOrder);
+      cat.projects = [...cat.projects].sort((a, b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
     });
     if (workspaceCategory) {
-      workspaceCategory.projects = sortProjectsByDate(workspaceCategory.projects, sortOrder);
+      workspaceCategory.projects = [...workspaceCategory.projects].sort((a, b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
     }
 
     // Sort uncategorized projects alphabetically by name
