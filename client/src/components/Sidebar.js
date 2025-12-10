@@ -34,20 +34,27 @@ const Sidebar = ({
     if (!projects || projects.length === 0) return { categories: [], uncategorized: [] };
 
     const categoryMap = new Map();
-    const uncategorized = [];
+    const workspace = { name: "Workspace", projects: [], color: "#6366f1" };
 
     projects.forEach((project) => {
       if (project.category && project.category._id) {
         const catId = project.category._id;
-        if (!categoryMap.has(catId)) {
-          categoryMap.set(catId, {
-            ...project.category,
-            projects: [],
-          });
+        // If category is Workspace, add to workspace group
+        if (project.category.name === "Workspace") {
+          workspace.projects.push(project);
+          if (!workspace._id) workspace._id = catId;
+          if (!workspace.color) workspace.color = project.category.color;
+        } else {
+          if (!categoryMap.has(catId)) {
+            categoryMap.set(catId, {
+              ...project.category,
+              projects: [],
+            });
+          }
+          categoryMap.get(catId).projects.push(project);
         }
-        categoryMap.get(catId).projects.push(project);
       } else {
-        uncategorized.push(project);
+        workspace.projects.push(project);
       }
     });
 
@@ -56,15 +63,17 @@ const Sidebar = ({
       a.name.localeCompare(b.name)
     );
 
+    // Add workspace at the beginning if it has projects
+    if (workspace.projects.length > 0) {
+      categories.unshift(workspace);
+    }
+
     // Sort projects within each category alphabetically
     categories.forEach((cat) => {
       cat.projects.sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    // Sort uncategorized projects alphabetically
-    uncategorized.sort((a, b) => a.name.localeCompare(b.name));
-
-    return { categories, uncategorized };
+    return { categories, uncategorized: [] };
   }, [projects]);
 
   // Toggle category expansion
