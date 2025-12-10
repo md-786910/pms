@@ -107,7 +107,7 @@ const ProjectList = () => {
   // Group projects by category
   const groupedProjects = useMemo(() => {
     if (!projects || projects.length === 0)
-      return { allSections: [], uncategorizedProjects: [], pinnedProjects: [] };
+      return { allSections: [], uncategorizedProjects: [], pinnedProjects: [], workspaceProjects: [] };
 
     // Build pinned projects list (preserve pinned order from pinnedIds)
     const pinnedProjects = pinnedIds
@@ -119,6 +119,7 @@ const ProjectList = () => {
 
     const categoryMap = new Map();
     const uncategorized = [];
+    let workspaceCategory = null;
 
     otherProjects.forEach((project) => {
       if (project.category && project.category._id) {
@@ -136,11 +137,23 @@ const ProjectList = () => {
       }
     });
 
-    // Sort projects within each category by date
+    // Extract workspace category if it exists
     const categories = Array.from(categoryMap.values());
-    categories.forEach((cat) => {
+    const nonWorkspaceCategories = categories.filter((cat) => {
+      if (cat.name === "Workspace") {
+        workspaceCategory = cat;
+        return false;
+      }
+      return true;
+    });
+
+    // Sort projects within each category by date
+    nonWorkspaceCategories.forEach((cat) => {
       cat.projects = sortProjectsByDate(cat.projects, sortOrder);
     });
+    if (workspaceCategory) {
+      workspaceCategory.projects = sortProjectsByDate(workspaceCategory.projects, sortOrder);
+    }
 
     // Sort uncategorized projects alphabetically by name
     const sortedUncategorized = [...uncategorized].sort((a, b) => {
@@ -149,8 +162,8 @@ const ProjectList = () => {
       return nameA.localeCompare(nameB);
     });
 
-    // Create allSections array that includes only categories (no uncategorized section)
-    const allSections = [...categories];
+    // Create allSections array that includes only non-workspace categories
+    const allSections = [...nonWorkspaceCategories];
 
     // Sort all sections by the most recent/oldest project date
     allSections.sort((a, b) => {
@@ -159,7 +172,7 @@ const ProjectList = () => {
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
 
-    return { allSections, uncategorizedProjects: sortedUncategorized, pinnedProjects };
+    return { allSections, uncategorizedProjects: sortedUncategorized, pinnedProjects, workspaceProjects: workspaceCategory };
   }, [projects, sortOrder, pinnedIds]);
 
   // Initialize all categories as expanded
@@ -585,17 +598,19 @@ const ProjectList = () => {
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${expandedCategories[section._id] ? "rotate-180" : ""
-                    }`}
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                    expandedCategories[section._id] ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
               {/* Section Projects */}
               <div
-                className={`overflow-hidden transition-all duration-300 ${expandedCategories[section._id]
-                  ? "max-h-[2000px] opacity-100"
-                  : "max-h-0 opacity-0"
-                  }`}
+                className={`overflow-hidden transition-all duration-300 ${
+                  expandedCategories[section._id]
+                    ? "max-h-[2000px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
               >
                 <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {section.projects.map((project) => (
@@ -622,6 +637,60 @@ const ProjectList = () => {
                   onTogglePin={togglePin}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Workspace Projects - Display at the bottom */}
+          {groupedProjects.workspaceProjects && (
+            <div
+              key={groupedProjects.workspaceProjects._id}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            >
+              {/* Section Header */}
+              <button
+                onClick={() => toggleCategory(groupedProjects.workspaceProjects._id)}
+                className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: groupedProjects.workspaceProjects.color || "#6366f1" }}
+                  >
+                    <Folder className="w-4 h-4 text-white" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {groupedProjects.workspaceProjects.name}
+                  </h2>
+                  <span className="text-sm text-gray-500">
+                    ({groupedProjects.workspaceProjects.projects.length})
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                    expandedCategories[groupedProjects.workspaceProjects._id] ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Section Projects */}
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  expandedCategories[groupedProjects.workspaceProjects._id]
+                    ? "max-h-[2000px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+              >
+                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedProjects.workspaceProjects.projects.map((project) => (
+                    <ProjectCard
+                      key={project._id}
+                      project={project}
+                      pinned={pinnedIds.includes(project._id)}
+                      onTogglePin={togglePin}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
