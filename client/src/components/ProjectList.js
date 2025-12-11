@@ -711,7 +711,7 @@ const ProjectList = () => {
         <div className="pb-8">
           <button
             onClick={() => navigate("/archived-projects")}
-            className="group flex items-center gap-2 px-6 py-2.5 ml-52 text-gray-700 border border-gray-700 font-semibold rounded-xl hover:text-blue-700 hover:border-blue-700 transition-colors duration-300"
+            className="group flex items-center gap-2 px-4 py-2.5 text-gray-700 border border-gray-700 font-semibold rounded-xl hover:text-blue-700 hover:border-blue-700 transition-colors duration-300"
           >
             <Archive className="w-4 h-4" />
             <span>View All Closed Projects</span>
