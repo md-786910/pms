@@ -14,6 +14,8 @@ import {
   Save,
   Star,
   FolderClosed,
+  Archive,
+  ArrowRight,
 } from "lucide-react";
 import { useProject } from "../contexts/ProjectContext";
 import { useUser } from "../contexts/UserContext";
@@ -701,6 +703,19 @@ const ProjectList = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* View All Closed Projects Button - Admin Only */}
+      {user?.role === "admin" && (
+        <div className="pb-8">
+          <button
+            onClick={() => navigate("/archived-projects")}
+            className="group flex items-center gap-2 px-6 py-2.5 ml-52 text-gray-700 border border-gray-700 font-semibold rounded-xl hover:text-blue-700 hover:border-blue-700 transition-colors duration-300"
+          >
+            <Archive className="w-4 h-4" />
+            <span>View All Closed Projects</span>
+          </button>
         </div>
       )}
 

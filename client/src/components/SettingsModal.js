@@ -91,7 +91,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
                   key={item.key}
                   to={item.href}
                   title={item.title}
-                  className={`flex items-center space-x-3 px-1 py-3 mx-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-3 px-1 py-1 mx-2 rounded-lg transition-all duration-200 ${
                     isActive
                       ? "bg-blue-50 text-blue-700 border border-blue-200"
                       : "text-gray-700 hover:bg-gray-50"
