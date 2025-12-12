@@ -31,7 +31,7 @@ const Sidebar = ({
 
   // Group projects by category (alphabetically sorted)
   const groupedProjects = useMemo(() => {
-    if (!projects || projects.length === 0) return { categories: [], uncategorized: [] };
+    if (!projects || projects.length === 0) return { categories: [], uncategorized: [], workspaceCategory: null };
 
     const categoryMap = new Map();
     const workspace = { name: "Workspace", projects: [], color: "#6366f1" };
@@ -63,17 +63,17 @@ const Sidebar = ({
       a.name.localeCompare(b.name)
     );
 
-    // Add workspace at the beginning if it has projects
-    if (workspace.projects.length > 0) {
-      categories.unshift(workspace);
-    }
-
     // Sort projects within each category alphabetically
     categories.forEach((cat) => {
       cat.projects.sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    return { categories, uncategorized: [] };
+    // Sort workspace projects alphabetically
+    if (workspace.projects.length > 0) {
+      workspace.projects.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return { categories, uncategorized: [], workspaceCategory: workspace.projects.length > 0 ? workspace : null };
   }, [projects]);
 
   // Toggle category expansion
@@ -286,6 +286,70 @@ const Sidebar = ({
                       </Link>
                     );
                   })}
+
+                  {/* Workspace Category - displayed at the bottom */}
+                  {groupedProjects.workspaceCategory && (
+                    <div key={groupedProjects.workspaceCategory._id}>
+                      {/* Category Header */}
+                      <button
+                        onClick={() => toggleCategory(groupedProjects.workspaceCategory._id)}
+                        className={`w-full flex items-center justify-between px-2 py-2 rounded-md transition-all duration-200 ${
+                          groupedProjects.workspaceCategory.projects.some(
+                            (p) => location.pathname === `/project/${p._id}`
+                          )
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 min-w-0">
+                          <div
+                            className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center"
+                            style={{ backgroundColor: groupedProjects.workspaceCategory.color || "#6366f1" }}
+                          >
+                            <FolderOpen className="w-2.5 h-2.5 text-white" />
+                          </div>
+                          <span className="text-sm font-medium truncate">
+                            {groupedProjects.workspaceCategory.name}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                            expandedCategories[groupedProjects.workspaceCategory._id] ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* Category Projects */}
+                      <div
+                        className={`overflow-hidden transition-all duration-200 ${
+                          expandedCategories[groupedProjects.workspaceCategory._id]
+                            ? "max-h-[500px] opacity-100"
+                            : "max-h-0 opacity-0"
+                        }`}
+                      >
+                        <div className="mt-0.5 space-y-0.5 ml-3 pl-2 border-l border-gray-200">
+                          {groupedProjects.workspaceCategory.projects.map((project) => {
+                            const isProjectActive =
+                              location.pathname === `/project/${project._id}`;
+                            return (
+                              <Link
+                                key={project._id}
+                                to={`/project/${project._id}`}
+                                onClick={onClose}
+                                className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 ${
+                                  isProjectActive
+                                    ? "bg-blue-50 text-blue-600 font-medium"
+                                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                }`}
+                              >
+                                <span className="text-sm truncate">{project.name}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
