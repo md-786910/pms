@@ -1808,6 +1808,9 @@ const CardModal = ({
                               lineHeight: "1.5",
                               letterSpacing: "0.3px",
                               color: "#374151",
+                              whiteSpace: "normal",
+                              wordBreak: "break-word",
+                              overflowWrap: "break-word",
                             }}
                             dangerouslySetInnerHTML={{
                               __html: formData.description,
@@ -2184,15 +2187,16 @@ const CardModal = ({
                                         : "Unknown User")}
                                   </span>
                                   <span className="text-xs text-gray-500 ml-2">
-                                    {new Date(
-                                      comment.timestamp || comment.createdAt
-                                    ).toLocaleString()}
+                                    {(() => {
+                                      const date = new Date(comment.timestamp || comment.createdAt);
+                                      const day = String(date.getDate()).padStart(2, "0");
+                                      const month = date.toLocaleString("en-US", { month: "short" });
+                                      const year = date.getFullYear();
+                                      return `${day}/${month}/${year}`;
+                                    })()}
                                     {comment.updatedAt &&
-                                      comment.updatedAt !==
-                                      comment.timestamp && (
-                                        <span className="text-gray-400 ml-1">
-                                          (edited)
-                                        </span>
+                                      comment.updatedAt !== comment.timestamp && (
+                                        <span className="text-gray-400 ml-1">(edited)</span>
                                       )}
                                   </span>
                                 </div>
