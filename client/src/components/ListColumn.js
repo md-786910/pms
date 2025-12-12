@@ -109,8 +109,8 @@ const ListColumn = React.memo(
         className={`bg-[#f1f2f4] rounded-lg border border-gray-200 h-[644px] transition-all duration-200 ${
           isHovered ? "shadow-lg" : "shadow-sm"
         }`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        // onMouseEnter={() => setIsHovered(true)}
+        // onMouseLeave={() => setIsHovered(false)}
       >
         {/* Column Header */}
         <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg">
