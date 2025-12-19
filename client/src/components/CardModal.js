@@ -1110,6 +1110,75 @@ const CardModal = ({
     }
   };
 
+  // Verify an attachment URL before opening. Shows toast on 404 or failure.
+  const handleViewAttachment = async (e, url) => {
+  if (e) e.preventDefault();
+
+  if (!url) {
+    showToast("Attachment not found", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+
+    if (res.status === 404) {
+      showToast("This attachment has been removed", "error");
+      return;
+    }
+
+    if (!res.ok) {
+      showToast("Unable to open attachment", "error");
+      return;
+    }
+
+    // Open file only if it exists
+    window.open(url, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    console.error("Attachment check failed:", error);
+    showToast("Attachment not found or server error", "error");
+  }
+};
+
+  // Intercept clicks on links inside the modal (e.g., comments) and
+  // verify attachments before opening them. This handles comment links
+  // created via dangerouslySetInnerHTML.
+  useEffect(() => {
+    if (!modalRef?.current) return;
+
+    const isLikelyAttachment = (href) => {
+      if (!href) return false;
+      const lower = href.toLowerCase();
+      // Common file/video extensions
+      if (lower.match(/\.(pdf|mp4|mov|webm|mkv|avi|zip|rar|7z|docx?|xlsx?|pptx?|txt|csv)(\?|$)/)) {
+        return true;
+      }
+      // Links to the API uploads path
+      if (lower.includes('/uploads') || lower.includes(API_URL.toLowerCase())) {
+        return true;
+      }
+      return false;
+    };
+
+    const handler = (event) => {
+      const anchor = event.target.closest && event.target.closest('a');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+      const fullUrl = href.startsWith('http') ? href : `${API_URL}${href}`;
+      if (isLikelyAttachment(fullUrl)) {
+        event.preventDefault();
+        handleViewAttachment(event, fullUrl);
+      }
+    };
+
+    const node = modalRef.current;
+    node.addEventListener('click', handler);
+    return () => node.removeEventListener('click', handler);
+  }, [modalRef, handleViewAttachment]);
+
+
   const handleArchive = () => {
     setShowDeleteConfirm(true);
   };
@@ -2089,6 +2158,9 @@ const CardModal = ({
                             }
                             className="w-full h-28 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors duration-200"
                             onError={(e) => {
+                              try {
+                                showToast("Image attachment not found or removed", "error");
+                              } catch (err) {}
                               e.target.src = "/placeholder-image.png"; // Fallback image
                             }}
                           />
@@ -2602,6 +2674,14 @@ const CardModal = ({
                                   ? attachment.url
                                   : `${API_URL}${attachment.url}`
                               }
+                              onClick={(e) =>
+                                handleViewAttachment(
+                                  e,
+                                  attachment?.url?.startsWith("http")
+                                    ? attachment.url
+                                    : `${API_URL}${attachment.url}`
+                                )
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 text-xs"
@@ -2826,6 +2906,9 @@ const CardModal = ({
                   }
                   className="max-w-full max-h-[calc(90vh-200px)] object-contain rounded-lg shadow-lg"
                   onError={(e) => {
+                    try {
+                      showToast("Image attachment not found or removed", "error");
+                    } catch (err) {}
                     e.target.src = "/placeholder-image.png"; // Fallback image
                   }}
                 />

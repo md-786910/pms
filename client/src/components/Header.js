@@ -101,16 +101,30 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="
-        hover:bg-gray-100 font-normal 
-        py-2 px-4 rounded-lg border hover:border-[#4338CA] hover:border-transparent
-        transition-all duration-200 flex items-center space-x-2
-      "
+                  group relative inline-flex items-center gap-2
+                  px-4 py-2 rounded-lg
+                  bg-gradient-to-r from-indigo-600 to-violet-600
+                  text-white font-medium text-xs
+                  shadow-sm shadow-indigo-500/25
+                  transition-all duration-300 ease-out
+                  hover:from-indigo-700 hover:to-violet-700
+                  hover:shadow-sm hover:shadow-indigo-500/40
+                  hover:-translate-y-0.5
+                  active:translate-y-0
+                "
               >
-                <Plus className="w-4 h-4" />
-                <span>Create Project</span>
+                {/* Icon */}
+                <span className="flex items-center justify-center w-4 h-4 rounded-lg bg-white/15 backdrop-blur-md">
+                  <Plus className="w-3 h-3 transition-transform duration-300 group-hover:rotate-90" />
+                </span>
+                        
+                {/* Text */}
+                <span className="tracking-wide">Create Project</span>
+                        
+                {/* Glow Effect */}
+                <span className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
             )}
-
             {/* Create Project Modal */}
             {showCreateModal && (
               <CreateProjectModal
