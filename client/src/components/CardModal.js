@@ -1122,7 +1122,7 @@ const CardModal = ({
   try {
     const res = await fetch(url, { method: "HEAD" });
 
-    if (res.status === 404) {
+    if (res?.status === 404) {
       showToast("This attachment has been removed", "error");
       return;
     }
@@ -2670,16 +2670,16 @@ const CardModal = ({
                           <div className="flex items-center space-x-1">
                             <a
                               href={
-                                attachment.url.startsWith("http")
-                                  ? attachment.url
-                                  : `${API_URL}${attachment.url}`
+                                attachment?.url?.startsWith("http")
+                                  ? attachment?.url
+                                  : `${API_URL}${attachment?.url}`
                               }
                               onClick={(e) =>
                                 handleViewAttachment(
                                   e,
                                   attachment?.url?.startsWith("http")
-                                    ? attachment.url
-                                    : `${API_URL}${attachment.url}`
+                                    ? attachment?.url
+                                    : `${API_URL}${attachment?.url}`
                                 )
                               }
                               target="_blank"
