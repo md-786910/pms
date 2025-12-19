@@ -111,11 +111,30 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - return JSON for API requests, HTML page for browser requests
 app.use("*", (req, res) => {
+  // API routes should receive JSON errors
+  if (req.originalUrl && req.originalUrl.startsWith("/api")) {
+    return res.status(404).json({
+      success: false,
+      message: "API route not found",
+    });
+  }
+
+  // For file or browser requests prefer an HTML 404 page
+  if (req.originalUrl && req.originalUrl.startsWith("/uploads")) {
+    return res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
+  }
+
+  // If the client accepts HTML, serve the 404 page so browsers see a friendly page
+  if (req.accepts && req.accepts("html")) {
+    return res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
+  }
+
+  // Fallback to JSON
   res.status(404).json({
     success: false,
-    message: "Route not found",
+    message: "Resource not found",
   });
 });
 

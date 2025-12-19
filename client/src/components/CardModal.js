@@ -2636,7 +2636,7 @@ const CardModal = ({
                         <input
                           type="file"
                           multiple
-                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,.7z,.json,.xml,.odt,.ods,.odp"
+                          accept="image/*,video/*,.mp4,.mov,.avi,.mkv,.webm,.wmv,.flv,.mpeg,.mpg,.3gp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,.7z,.json,.xml,.odt,.ods,.odp"
                           onChange={handleFileSelect}
                           className="hidden"
                           id="file-upload"
