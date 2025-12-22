@@ -56,17 +56,17 @@ const CardImage = React.memo(
           loading="lazy"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
-          style={{
-            opacity: isLoaded ? 1 : 0,
-            transition: "opacity 0.3s ease",
-          }}
+          // style={{
+          //   opacity: isLoaded ? 1 : 0,
+          //   transition: "opacity 0.3s ease",
+          // }}
         />
         {/* Loading placeholder */}
-        {!isLoaded && !hasError && (
+        {/* {!isLoaded && !hasError && (
           <div className="absolute inset-0 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
           </div>
-        )}
+        )} */}
       </div>
     );
   },
