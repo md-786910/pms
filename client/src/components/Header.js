@@ -102,7 +102,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                 onClick={() => setShowCreateModal(true)}
                 className="
                   group relative inline-flex items-center gap-2
-                  px-4 py-2 rounded-lg
+                  px-4 py-[0.7rem] rounded-lg
                   bg-gradient-to-r from-indigo-600 to-violet-600
                   text-white font-medium text-xs
                   shadow-sm shadow-indigo-500/25
