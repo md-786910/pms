@@ -487,7 +487,7 @@ const CardItem = React.memo(
                 >
                   <div className="min-w-0">
                     <h4
-                      className={`font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1 line-clamp-2 break-words`}
+                      className={`font-medium text-[#292a2e] text-medium leading-tight mb-1 line-clamp-2 break-words`}
                     >
                       {card.title}
                     </h4>
