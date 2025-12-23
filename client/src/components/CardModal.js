@@ -2922,7 +2922,7 @@ const CardModal = ({
             )}
 
             <div className="flex flex-col items-center space-y-4 px-4">
-              <div className="w-full h-full md:w-full md:h-full max-w-[100vw] max-h-[100vh] flex items-center justify-center">
+              <div className="w-full h-[85%] md:w-[85%] md:h-[85%] max-w-[100vw] max-h-[100vh] flex items-center justify-center">
                 <img
                   src={
                     currentImage?.url && currentImage.url.startsWith("http")
@@ -2941,20 +2941,29 @@ const CardModal = ({
                   }}
                 />
               </div>
-
-              <div className="text-center">
-                <h3 className="text-lg text-white font-bold">
-                  {currentImage?.originalName || currentImage?.filename || currentImage?.name}
-                </h3>
-                <p className="text-sm text-white font-semibold my-1">
-                  {currentImage?.size && `${(currentImage.size / 1024 / 1024).toFixed(2)} MB`}
-                  {currentImage?.uploadedAt && ` • ${new Date(currentImage.uploadedAt).toLocaleString()}`}
-                </p>
-              </div>
             </div>
 
             {/* Actions bar (fixed bottom center) */}
-            <div className="fixed bottom-8 left-0 right-0 -z-1 px-4">
+            <div className="text-center my-4 fixed bottom-[2.9rem] left-0 right-0 -z-1 px-4">
+              <h3 className="text-lg text-white font-bold">
+                {currentImage?.originalName || currentImage?.filename || currentImage?.name}
+              </h3>
+              <p className="text-sm text-white font-semibold my-1">
+                Added{" "}
+                {currentImage?.uploadedAt &&
+                  `${new Date(currentImage.uploadedAt).toLocaleString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })} • `}
+                {currentImage?.size &&
+                  `${(currentImage?.size / 1024 / 1024).toFixed(2)} MB`}
+              </p>
+            </div>
+            <div className="fixed bottom-4 left-0 right-0 -z-1 px-4">
               <div className="mx-auto flex w-fit items-center gap-3 rounded-lg p-2">
 
                 {/* Open */}
