@@ -2954,7 +2954,7 @@ const CardModal = ({
             </div>
 
             {/* Actions bar (fixed bottom center) */}
-            <div className="fixed bottom-8 left-0 right-0 -inset-1 px-4">
+            <div className="fixed bottom-8 left-0 right-0 -z-1 px-4">
               <div className="mx-auto flex w-fit items-center gap-3 rounded-lg p-2">
 
                 {/* Open */}
