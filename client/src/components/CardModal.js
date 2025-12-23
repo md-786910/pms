@@ -203,6 +203,9 @@ const CardModal = ({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [showDeleteAttachmentConfirm, setShowDeleteAttachmentConfirm] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState(null);
+  const [deletingAttachment, setDeletingAttachment] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [mentions, setMentions] = useState([]);
@@ -301,6 +304,15 @@ const CardModal = ({
     if (!showImageModal) return;
 
     const handleClickOutside = (event) => {
+      // If a confirmation modal (or any modal with high z-index) is open and
+      // the click is inside it, don't close the image modal. This prevents
+      // clicks on confirmation dialogs (e.g., delete confirmation) from
+      // closing the image viewer when the user cancels.
+      const confirmationModal = document.querySelector('[class*="z-[100]"]');
+      if (confirmationModal && confirmationModal.contains(event.target)) {
+        return;
+      }
+
       if (
         imageModalRef.current &&
         !imageModalRef.current.contains(event.target)
@@ -1109,6 +1121,27 @@ const CardModal = ({
     } catch (error) {
       console.error("Error deleting attachment:", error);
       showToast("Failed to delete attachment", "error");
+    }
+  };
+
+  // Confirm delete attachment (shows modal)
+  const confirmDeleteAttachment = async (e) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (!attachmentToDelete) return;
+    setDeletingAttachment(true);
+    try {
+      await handleDeleteAttachment(attachmentToDelete.id);
+      if (attachmentToDelete.closeImageModal) {
+        setShowImageModal(false);
+      }
+      setShowDeleteAttachmentConfirm(false);
+      setAttachmentToDelete(null);
+    } catch (err) {
+      // handleDeleteAttachment handles errors/toasts
+    } finally {
+      setDeletingAttachment(false);
     }
   };
 
@@ -2209,9 +2242,11 @@ const CardModal = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteAttachment(
-                                attachment._id || attachment.id
-                              );
+                              setAttachmentToDelete({
+                                id: attachment._id || attachment.id,
+                                closeImageModal: false,
+                              });
+                              setShowDeleteAttachmentConfirm(true);
                             }}
                             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200"
                             title="Delete image"
@@ -2735,11 +2770,14 @@ const CardModal = ({
                               View
                             </a>
                             <button
-                              onClick={() =>
-                                handleDeleteAttachment(
-                                  attachment._id || attachment.id
-                                )
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAttachmentToDelete({
+                                  id: attachment._id || attachment.id,
+                                  closeImageModal: false,
+                                });
+                                setShowDeleteAttachmentConfirm(true);
+                              }}
                               className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
                               title="Delete attachment"
                             >
@@ -3004,10 +3042,14 @@ const CardModal = ({
                 
                 {/* Delete */}
                 <button
-                  onClick={async () => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (!currentImage) return;
-                    await handleDeleteAttachment(currentImage._id || currentImage.id);
-                    setShowImageModal(false);
+                    setAttachmentToDelete({
+                      id: currentImage._id || currentImage.id,
+                      closeImageModal: true,
+                    });
+                    setShowDeleteAttachmentConfirm(true);
                   }}
                   className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-500/20 text-white text-sm font-bold"
                   title="Delete"
@@ -3063,6 +3105,32 @@ const CardModal = ({
           isLoading={loading}
         />
       )}
+
+      {/* Delete attachment confirmation modal */}
+      <ConfirmationModal
+        isOpen={showDeleteAttachmentConfirm}
+        onClose={(e) => {
+          if (e) {
+            e.stopPropagation();
+          }
+          if (!deletingAttachment) {
+            setShowDeleteAttachmentConfirm(false);
+            setAttachmentToDelete(null);
+          }
+        }}
+        onConfirm={(e) => {
+          if (e) {
+            e.stopPropagation();
+          }
+          confirmDeleteAttachment(e);
+        }}
+        title="Delete attachment?"
+        message="Deleting an attachment is permanent. There is no undo."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={deletingAttachment}
+      />
 
       {/* Labels Modal */}
       <LabelsModal
