@@ -2887,7 +2887,7 @@ const CardModal = ({
 
       {/* Image Modal */}
       {showImageModal && (imageAttachments.length > 0 || selectedImage) && (
-        <div className="modal-overlay bg-black bg-opacity-90">
+        <div className="modal-overlay bg-black bg-opacity-70">
           <div
             ref={imageModalRef}
             className="relative w-full h-full flex items-center justify-center"
@@ -2954,7 +2954,7 @@ const CardModal = ({
             </div>
 
             {/* Actions bar (fixed bottom center) */}
-            <div className="fixed bottom-8 left-0 right-0 z-50 px-4">
+            <div className="fixed bottom-8 left-0 right-0 -inset-1 px-4">
               <div className="mx-auto flex w-fit items-center gap-3 rounded-lg p-2">
 
                 {/* Open */}
