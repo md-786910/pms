@@ -2887,7 +2887,7 @@ const CardModal = ({
 
       {/* Image Modal */}
       {showImageModal && (imageAttachments.length > 0 || selectedImage) && (
-        <div className="modal-overlay">
+        <div className="modal-overlay bg-black bg-opacity-90">
           <div
             ref={imageModalRef}
             className="relative w-full h-full flex items-center justify-center"
@@ -2906,14 +2906,14 @@ const CardModal = ({
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); showPrevImage(); }}
-                  className="absolute left-6 bottom-5 z-50 -translate-y-5 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
+                  className="absolute left-6 bottom-5 z-50 -translate-y-1/2 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
                   title="Previous"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); showNextImage(); }}
-                  className="absolute right-6 bottom-5 z-50 -translate-y-5 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
+                  className="absolute right-6 bottom-5 z-50 -translate-y-1/2 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
                   title="Next"
                 >
                   <ChevronRight className="w-6 h-6" />
@@ -2922,7 +2922,7 @@ const CardModal = ({
             )}
 
             <div className="flex flex-col items-center space-y-4 px-4">
-              <div className="w-[360px] h-[360px] md:w-[480px] md:h-[480px] max-w-[90vw] max-h-[80vh] flex items-center justify-center">
+              <div className="w-full h-full md:w-full md:h-full max-w-[100vw] max-h-[100vh] flex items-center justify-center">
                 <img
                   src={
                     currentImage?.url && currentImage.url.startsWith("http")
@@ -2946,7 +2946,7 @@ const CardModal = ({
                 <h3 className="text-lg text-white font-bold">
                   {currentImage?.originalName || currentImage?.filename || currentImage?.name}
                 </h3>
-                <p className="text-sm text-white/80">
+                <p className="text-sm text-white font-semibold my-1">
                   {currentImage?.size && `${(currentImage.size / 1024 / 1024).toFixed(2)} MB`}
                   {currentImage?.uploadedAt && ` • ${new Date(currentImage.uploadedAt).toLocaleString()}`}
                 </p>
