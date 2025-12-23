@@ -487,7 +487,7 @@ const CardItem = React.memo(
                 >
                   <div className="min-w-0">
                     <h4
-                      className={`font-medium text-[#292a2e] text-medium leading-tight cursor-pointer hover:text-blue-600 transition-colors duration-200 mb-1 line-clamp-2 break-words`}
+                      className={`font-medium text-[#292a2e] text-medium leading-tight mb-1 line-clamp-2 break-words`}
                     >
                       {card.title}
                     </h4>
@@ -512,21 +512,21 @@ const CardItem = React.memo(
               </div>
 
               {/* Action Buttons - Show on Hover */}
-              <div className="flex items-center space-x-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
-                {/* <button
+              {/* <div className="flex items-center space-x-1 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+                <button
                 onClick={handleQuickEdit}
                 className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                 title="Edit card"
               >
                 <Edit2 className="w-3.5 h-3.5" />
-              </button> */}
-                {/* <button
+              </button>
+                <button
                 onClick={handleQuickDelete}
                 className="p-1.5 rounded hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors duration-200"
                 title="Delete card"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-              </button> */}
+              </button>
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={(e) => {
@@ -536,10 +536,9 @@ const CardItem = React.memo(
                     className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                     title="More actions"
                   >
-                    {/* <MoreVertical className="w-3.5 h-3.5" /> */}
+                    <MoreVertical className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* Quick Actions Dropdown */}
                   {showActions && (
                     <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
                       <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide border-b border-gray-100">
@@ -594,7 +593,7 @@ const CardItem = React.memo(
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Card Image or Description - Using memoized CardImage component */}

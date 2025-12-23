@@ -2261,10 +2261,17 @@ const CardModal = ({
                                   <span className="text-xs text-gray-500 ml-2">
                                     {(() => {
                                       const date = new Date(comment.timestamp || comment.createdAt);
+
                                       const day = String(date.getDate()).padStart(2, "0");
                                       const month = date.toLocaleString("en-US", { month: "short" });
                                       const year = date.getFullYear();
-                                      return `${day}/${month}/${year}`;
+
+                                      const time = date.toLocaleString("en-US", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                      });
+                                      return `${day} ${month}, ${year}, ${time}`;
                                     })()}
                                     {comment.updatedAt &&
                                       comment.updatedAt !== comment.timestamp && (
