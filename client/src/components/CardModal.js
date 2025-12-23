@@ -10,7 +10,6 @@ import {
   Image as ImageIcon,
   Upload,
   Eye,
-  Download,
   Plus,
   Archive,
   RotateCcw,
@@ -24,6 +23,8 @@ import {
   Paperclip,
   UserPlus,
   AlertTriangle,
+  MoveUpRight,
+  DownloadCloud as CloudDownload,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -199,6 +200,7 @@ const CardModal = ({
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingItemTitle, setEditingItemTitle] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [editingComment, setEditingComment] = useState(null);
@@ -1577,6 +1579,42 @@ const CardModal = ({
   const nextCard = getNextCard();
   const prevCard = getPrevCard();
 
+  // Image carousel helpers
+  const imageAttachments = getImageAttachments();
+  const currentImage = imageAttachments[selectedImageIndex] || selectedImage;
+
+  const showImageAt = (index) => {
+    const images = getImageAttachments();
+    if (!images || images.length === 0) return;
+    const idx = ((index % images.length) + images.length) % images.length;
+    setSelectedImageIndex(idx);
+    setSelectedImage(images[idx]);
+    setShowImageModal(true);
+  };
+
+  const showPrevImage = () => {
+    const images = getImageAttachments();
+    if (!images || images?.length <= 1) return;
+    showImageAt(selectedImageIndex - 1);
+  };
+
+  const showNextImage = () => {
+    const images = getImageAttachments();
+    if (!images || images?.length <= 1) return;
+    showImageAt(selectedImageIndex + 1);
+  };
+
+  useEffect(() => {
+    if (!showImageModal) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setShowImageModal(false);
+      else if (e.key === "ArrowLeft") showPrevImage();
+      else if (e.key === "ArrowRight") showNextImage();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showImageModal, selectedImageIndex, card.attachments]);
+
   return (
     <>
       {/* Rich Text Editor Styles */}
@@ -2136,12 +2174,13 @@ const CardModal = ({
                       Images ({getImageAttachments().length})
                     </label>
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
-                      {getImageAttachments().map((attachment) => (
+                      {getImageAttachments().map((attachment, idx) => (
                         <div
                           key={attachment._id || attachment.id}
                           className="relative group cursor-pointer"
                           onClick={() => {
                             setSelectedImage(attachment);
+                            setSelectedImageIndex(idx);
                             setShowImageModal(true);
                           }}
                         >
@@ -2834,6 +2873,8 @@ const CardModal = ({
         )}
       </div>
 
+      // image carousel helpers moved above
+
       {/* Assign User Modal */}
       {showAssignModal && (
         <AssignUserModal
@@ -2845,73 +2886,53 @@ const CardModal = ({
       )}
 
       {/* Image Modal */}
-      {showImageModal && selectedImage && (
+      {showImageModal && (imageAttachments.length > 0 || selectedImage) && (
         <div className="modal-overlay">
           <div
             ref={imageModalRef}
-            className="bg-white rounded-2xl shadow-2xl max-w-6xl max-h-[95vh] overflow-hidden"
+            className="relative w-full h-full flex items-center justify-center"
           >
-            {/* Image Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center space-x-3">
-                <ImageIcon className="w-6 h-6 text-blue-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {selectedImage.originalName ||
-                      selectedImage.filename ||
-                      selectedImage.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {selectedImage.size &&
-                      `${(selectedImage.size / 1024 / 1024).toFixed(2)} MB`}
-                    {selectedImage.uploadedAt &&
-                      ` • ${new Date(
-                        selectedImage.uploadedAt
-                      ).toLocaleString()}`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <a
-                  href={
-                    selectedImage.url.startsWith("http")
-                      ? selectedImage.url
-                      : `${API_URL}${selectedImage.url}`
-                  }
-                  download={
-                    selectedImage.originalName ||
-                    selectedImage.filename ||
-                    selectedImage.name
-                  }
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                  title="Download image"
-                >
-                  <Download className="w-5 h-5 text-gray-600" />
-                </a>
-                <button
-                  onClick={() => setShowImageModal(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-            </div>
+            {/* Close button */}
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-0 right-0 z-50 p-2 rounded-full bg-black bg-opacity-60 text-white hover:bg-opacity-80"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-            {/* Image Content */}
-            <div className="p-4 max-h-[calc(90vh-120px)] overflow-y-auto">
-              <div className="flex justify-center">
+            {/* Prev / Next buttons */}
+            {imageAttachments?.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); showPrevImage(); }}
+                  className="absolute left-6 bottom-5 z-50 -translate-y-5 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
+                  title="Previous"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); showNextImage(); }}
+                  className="absolute right-6 bottom-5 z-50 -translate-y-5 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
+                  title="Next"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            <div className="flex flex-col items-center space-y-4 px-4">
+              <div className="w-[360px] h-[360px] md:w-[480px] md:h-[480px] max-w-[90vw] max-h-[80vh] flex items-center justify-center">
                 <img
                   src={
-                    selectedImage.url.startsWith("http")
-                      ? selectedImage.url
-                      : `${API_URL}${selectedImage.url}`
+                    currentImage?.url && currentImage.url.startsWith("http")
+                      ? currentImage.url
+                      : `${API_URL}${currentImage?.url}`
                   }
                   alt={
-                    selectedImage.originalName ||
-                    selectedImage.filename ||
-                    selectedImage.name
+                    currentImage?.originalName || currentImage?.filename || currentImage?.name
                   }
-                  className="max-w-full max-h-[calc(90vh-200px)] object-contain rounded-lg shadow-lg"
+                  className="w-full h-full object-contain rounded-lg shadow-2xl"
                   onError={(e) => {
                     try {
                       showToast("Image attachment not found or removed", "error");
@@ -2919,6 +2940,73 @@ const CardModal = ({
                     e.target.src = "/placeholder-image.png"; // Fallback image
                   }}
                 />
+              </div>
+
+              <div className="text-center">
+                <h3 className="text-lg text-white font-bold">
+                  {currentImage?.originalName || currentImage?.filename || currentImage?.name}
+                </h3>
+                <p className="text-sm text-white/80">
+                  {currentImage?.size && `${(currentImage.size / 1024 / 1024).toFixed(2)} MB`}
+                  {currentImage?.uploadedAt && ` • ${new Date(currentImage.uploadedAt).toLocaleString()}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions bar (fixed bottom center) */}
+            <div className="fixed bottom-8 left-0 right-0 z-50 px-4">
+              <div className="mx-auto flex w-fit items-center gap-3 rounded-lg p-2">
+
+                {/* Open */}
+                <a
+                  href={
+                    currentImage?.url && currentImage.url.startsWith("http")
+                      ? currentImage.url
+                      : `${API_URL}${currentImage?.url}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/20 text-white text-sm font-bold"
+                  title="Open in new tab"
+                >
+                  <MoveUpRight className="w-3 h-3" />
+                  <span>Open in new tab</span>
+                </a>
+                
+                {/* Download */}
+                <a
+                  href={
+                    currentImage?.url && currentImage.url.startsWith("http")
+                      ? currentImage.url
+                      : `${API_URL}${currentImage?.url}`
+                  }
+                  target="_blank"
+                  download={
+                    currentImage?.originalName ||
+                    currentImage?.filename ||
+                    currentImage?.name
+                  }
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/20 text-white text-sm font-bold"
+                  title="Download"
+                >
+                  <CloudDownload className="w-3 h-3" />
+                  <span>Download</span>
+                </a>
+                
+                {/* Delete */}
+                <button
+                  onClick={async () => {
+                    if (!currentImage) return;
+                    await handleDeleteAttachment(currentImage._id || currentImage.id);
+                    setShowImageModal(false);
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-500/20 text-white text-sm font-bold"
+                  title="Delete"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Delete</span>
+                </button>
+                
               </div>
             </div>
           </div>
