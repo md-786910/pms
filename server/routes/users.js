@@ -11,9 +11,10 @@ const router = express.Router();
 // @access  Private
 router.get("/profile", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select(
-      "-password -emailVerificationToken -passwordResetToken -passwordResetExpires"
-    );
+    const user = await User.findById(req.user._id)
+      .select("-password -emailVerificationToken -passwordResetToken -passwordResetExpires")
+      .populate("pinnedProjects")
+      .populate({ path: "recentlyViewedProjects.project" });
 
     if (!user) {
       return res.status(404).json({
@@ -418,5 +419,124 @@ router.put(
     }
   }
 );
+
+// ---------------------------
+// Pinned Projects Endpoints
+// ---------------------------
+
+// GET pinned projects for current user
+router.get('/me/pinned', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate('pinnedProjects');
+    res.json({ success: true, pinned: user.pinnedProjects || [] });
+  } catch (error) {
+    console.error('Get pinned projects error:', error);
+    res.status(500).json({ success: false, message: 'Server error while fetching pinned projects' });
+  }
+});
+
+// PUT replace pinned projects for current user
+router.put('/me/pinned', [auth, body('pinned').isArray()], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+    }
+
+    const { pinned } = req.body;
+    const mongoose = require('mongoose');
+    const Project = require('../models/Project');
+
+    // Validate project ids and existence
+    for (const id of pinned) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: `Invalid project id: ${id}` });
+      }
+      const proj = await Project.findById(id);
+      if (!proj) {
+        return res.status(404).json({ success: false, message: `Project not found: ${id}` });
+      }
+    }
+
+    const user = await User.findById(req.user._id);
+    user.pinnedProjects = pinned;
+    await user.save();
+    await user.populate('pinnedProjects');
+
+    res.json({ success: true, pinned: user.pinnedProjects || [] });
+  } catch (error) {
+    console.error('Set pinned projects error:', error);
+    res.status(500).json({ success: false, message: 'Server error while setting pinned projects' });
+  }
+});
+
+// ---------------------------
+// Recently viewed endpoints
+// ---------------------------
+
+// POST record a project as recently viewed (add/update timestamp)
+router.post('/me/recently-viewed', [auth, body('projectId').notEmpty()], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
+    }
+
+    const { projectId } = req.body;
+    const mongoose = require('mongoose');
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({ success: false, message: 'Invalid project id' });
+    }
+
+    const Project = require('../models/Project');
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+    const user = await User.findById(req.user._id);
+
+    // Remove any existing entry for this project
+    user.recentlyViewedProjects = user.recentlyViewedProjects.filter(
+      (entry) => entry.project.toString() !== projectId.toString()
+    );
+
+    // Prepend new entry
+    user.recentlyViewedProjects.unshift({ project: projectId, viewedAt: Date.now() });
+
+    // Trim to max 20 entries to avoid unbounded growth
+    if (user.recentlyViewedProjects.length > 20) {
+      user.recentlyViewedProjects = user.recentlyViewedProjects.slice(0, 20);
+    }
+
+    await user.save();
+    await user.populate({ path: 'recentlyViewedProjects.project' });
+
+    res.json({ success: true, recentlyViewed: user.recentlyViewedProjects || [] });
+  } catch (error) {
+    console.error('Record recently viewed error:', error);
+    res.status(500).json({ success: false, message: 'Server error while recording recently viewed project' });
+  }
+});
+
+// GET recently viewed projects (filtered by 1 hour TTL to match client behaviour)
+router.get('/me/recently-viewed', auth, async (req, res) => {
+  try {
+    const TTL = 1000 * 60 * 60; // 1 hour
+    const cutoff = Date.now() - TTL;
+
+    const user = await User.findById(req.user._id).populate({ path: 'recentlyViewedProjects.project' });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const valid = (user.recentlyViewedProjects || [])
+      .filter((it) => it && it.viewedAt && new Date(it.viewedAt).getTime() >= cutoff)
+      .map((it) => ({ project: it.project, viewedAt: it.viewedAt }))
+      .filter((it) => it.project); // ensure project still exists
+
+    res.json({ success: true, recentlyViewed: valid });
+  } catch (error) {
+    console.error('Get recently viewed error:', error);
+    res.status(500).json({ success: false, message: 'Server error while fetching recently viewed projects' });
+  }
+});
 
 module.exports = router;

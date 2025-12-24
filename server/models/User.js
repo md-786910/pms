@@ -74,6 +74,29 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // Pinned projects (starred boards) - stored server-side per user
+    pinnedProjects: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project",
+      },
+    ],
+
+    // Recently viewed projects (server-side storage)
+    recentlyViewedProjects: [
+      {
+        project: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Project",
+        },
+        viewedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     lastLogin: {
       type: Date,
     },

@@ -27,7 +27,7 @@ import {
   getProjectTypeColors,
   getStatusBadgeClasses,
 } from "../utils/statusColors";
-import { cardAPI } from "../utils/api";
+import { cardAPI, userAPI } from "../utils/api";
 
 const ProjectList = () => {
   const { projects, loading, fetchProjects } = useProject();
@@ -42,45 +42,64 @@ const ProjectList = () => {
   const [loadingUpcomingCards, setLoadingUpcomingCards] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [sortOrder, setSortOrder] = useState("recent"); // "recent" or "oldest"
-  // Pinned projects (stored per browser in localStorage)
-  const [pinnedIds, setPinnedIds] = useState(() => {
-    try {
-      const raw = localStorage.getItem("pinnedProjects");
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // Pinned projects (stored server-side per user)
+  const [pinnedIds, setPinnedIds] = useState([]);
+
+  useEffect(() => {
+    const fetchPinned = async () => {
+      if (!user) return;
+      try {
+        const res = await userAPI.getPinned();
+        const pinned = res.data?.pinned || [];
+        setPinnedIds(pinned.map((p) => p._id));
+      } catch (e) {
+        console.error("Failed to fetch pinned projects", e);
+      }
+    };
+    fetchPinned();
+  }, [user]);
 
   const togglePin = (projectId) => {
     setPinnedIds((prev) => {
       const exists = prev.includes(projectId);
-      const next = exists ? prev.filter((id) => id !== projectId) : [projectId, ...prev];
-      try {
-        localStorage.setItem("pinnedProjects", JSON.stringify(next));
-      } catch (e) {
-        console.error("Failed to persist pinned projects", e);
-      }
+      const next = exists
+        ? prev.filter((id) => id !== projectId)
+        : [projectId, ...prev];
+      // Persist to server (optimistic update)
+      (async (nextIds, prevIds) => {
+        try {
+          await userAPI.setPinned(nextIds);
+        } catch (err) {
+          console.error("Failed to persist pinned projects", err);
+          setPinnedIds(prevIds);
+        }
+      })(next, prev);
       return next;
     });
   };
 
-  // Recently viewed projects (read from localStorage, respect 1 hour TTL)
-  const recentProjects = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("recentlyViewedProjects");
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      const cutoff = Date.now() - 1000 * 60 * 60; // 1 hour
-      const valid = arr.filter((it) => it && it.viewedAt && it.viewedAt >= cutoff);
-      // Map to project objects in the current projects list and preserve order
-      return valid
-        .map((it) => projects.find((p) => p._id === it.id))
-        .filter(Boolean);
-    } catch (e) {
-      return [];
+  // Recently viewed projects (fetched from server, server applies 1 hour TTL)
+  const [recentProjects, setRecentProjects] = useState([]);
+
+  const refreshRecentlyViewed = async () => {
+    if (!user) {
+      setRecentProjects([]);
+      return;
     }
-  }, [projects]);
+    try {
+      const res = await userAPI.getRecentlyViewed();
+      const list = res.data?.recentlyViewed || [];
+      setRecentProjects(list.map((it) => it.project).filter(Boolean));
+    } catch (e) {
+      console.error("Failed to fetch recently viewed projects", e);
+      setRecentProjects([]);
+    }
+  };
+
+  useEffect(() => {
+    refreshRecentlyViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, projects]);
 
   // Get date from project for sorting
   const getProjectDate = (project) => {
@@ -109,15 +128,20 @@ const ProjectList = () => {
   // Group projects by category
   const groupedProjects = useMemo(() => {
     if (!projects || projects.length === 0)
-      return { allSections: [], uncategorizedProjects: [], pinnedProjects: [], workspaceProjects: [] };
+      return {
+        allSections: [],
+        uncategorizedProjects: [],
+        pinnedProjects: [],
+        workspaceProjects: [],
+      };
 
     // Build pinned projects list (preserve pinned order from pinnedIds)
     const pinnedProjects = pinnedIds
       .map((id) => projects.find((p) => p._id === id))
       .filter(Boolean);
 
-    // Other projects (exclude pinned)
-    const otherProjects = projects.filter((p) => !pinnedIds.includes(p._id));
+    // Other projects (include all projects). Pinned projects will appear both in Starred boards and in their original location.
+    const otherProjects = projects;
 
     const categoryMap = new Map();
     const uncategorized = [];
@@ -158,11 +182,13 @@ const ProjectList = () => {
       });
     });
     if (workspaceCategory) {
-      workspaceCategory.projects = [...workspaceCategory.projects].sort((a, b) => {
-        const nameA = (a.name || "").toLowerCase();
-        const nameB = (b.name || "").toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
+      workspaceCategory.projects = [...workspaceCategory.projects].sort(
+        (a, b) => {
+          const nameA = (a.name || "").toLowerCase();
+          const nameB = (b.name || "").toLowerCase();
+          return nameA.localeCompare(nameB);
+        }
+      );
     }
 
     // Sort uncategorized projects alphabetically by name
@@ -182,7 +208,12 @@ const ProjectList = () => {
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
 
-    return { allSections, uncategorizedProjects: sortedUncategorized, pinnedProjects, workspaceProjects: workspaceCategory };
+    return {
+      allSections,
+      uncategorizedProjects: sortedUncategorized,
+      pinnedProjects,
+      workspaceProjects: workspaceCategory,
+    };
   }, [projects, sortOrder, pinnedIds]);
 
   // Initialize all categories as expanded
@@ -326,9 +357,7 @@ const ProjectList = () => {
             <div className="bg-white border border-gray-200 p-4">
               <div className="flex items-center space-x-2 mb-4">
                 <Clock className="w-5 h-5 text-blue-600" />
-                <h2 className="text-base font-semibold ">
-                  Due Today
-                </h2>
+                <h2 className="text-base font-semibold ">Due Today</h2>
                 {cardsDueToday.length > 0 && (
                   <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full">
                     {cardsDueToday.length}
@@ -442,9 +471,7 @@ const ProjectList = () => {
             <div className="bg-white border border-gray-200 p-4 rounded-b-lg">
               <div className="flex items-center space-x-2 mb-4">
                 <Calendar className="w-5 h-5 text-green-600" />
-                <h2 className="text-base font-semibold ">
-                  Upcoming
-                </h2>
+                <h2 className="text-base font-semibold ">Upcoming</h2>
                 {cardsUpcoming.length > 0 && (
                   <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">
                     {cardsUpcoming.length}
@@ -513,30 +540,33 @@ const ProjectList = () => {
                 project={project}
                 pinned={pinnedIds.includes(project._id)}
                 onTogglePin={togglePin}
+                onView={refreshRecentlyViewed}
               />
             ))}
           </div>
         </div>
       )}
 
-      {groupedProjects.pinnedProjects && groupedProjects.pinnedProjects.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Star className="w-5 h-5 text-gray-600" />
-            <h2 className="text-base font-semibold">Starred boards</h2>
+      {groupedProjects.pinnedProjects &&
+        groupedProjects.pinnedProjects.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-gray-600" />
+              <h2 className="text-base font-semibold">Starred boards</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {groupedProjects.pinnedProjects.map((project) => (
+                <ProjectCard
+                  key={project._id}
+                  project={project}
+                  pinned={pinnedIds.includes(project._id)}
+                  onTogglePin={togglePin}
+                  onView={refreshRecentlyViewed}
+                />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {groupedProjects.pinnedProjects.map((project) => (
-              <ProjectCard
-                key={project._id}
-                project={project}
-                pinned={pinnedIds.includes(project._id)}
-                onTogglePin={togglePin}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+        )}
 
       {/* Filter Bar */}
       {projects.length > 0 && (
@@ -563,9 +593,7 @@ const ProjectList = () => {
       {projects.length === 0 ? (
         <div className="text-center py-12">
           <FolderOpen className="w-16 h-16 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-base font-semibold mb-2">
-            No projects yet
-          </h3>
+          <h3 className="text-base font-semibold mb-2">No projects yet</h3>
           <p className="text-secondary-600 mb-6">
             {user?.role === "admin"
               ? "Create your first project to get started"
@@ -600,9 +628,7 @@ const ProjectList = () => {
                   >
                     <Folder className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className="text-base font-semibold">
-                    {section.name}
-                  </h2>
+                  <h2 className="text-base font-semibold">{section.name}</h2>
                   <span className="text-sm text-gray-500">
                     ({section.projects.length})
                   </span>
@@ -629,6 +655,7 @@ const ProjectList = () => {
                       project={project}
                       pinned={pinnedIds.includes(project._id)}
                       onTogglePin={togglePin}
+                      onView={refreshRecentlyViewed}
                     />
                   ))}
                 </div>
@@ -645,6 +672,7 @@ const ProjectList = () => {
                   project={project}
                   pinned={pinnedIds.includes(project._id)}
                   onTogglePin={togglePin}
+                  onView={refreshRecentlyViewed}
                 />
               ))}
             </div>
@@ -658,13 +686,18 @@ const ProjectList = () => {
             >
               {/* Section Header */}
               <button
-                onClick={() => toggleCategory(groupedProjects.workspaceProjects._id)}
+                onClick={() =>
+                  toggleCategory(groupedProjects.workspaceProjects._id)
+                }
                 className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center space-x-3">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: groupedProjects.workspaceProjects.color || "#6366f1" }}
+                    style={{
+                      backgroundColor:
+                        groupedProjects.workspaceProjects.color || "#6366f1",
+                    }}
                   >
                     <Folder className="w-4 h-4 text-white" />
                   </div>
@@ -677,7 +710,9 @@ const ProjectList = () => {
                 </div>
                 <ChevronDown
                   className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                    expandedCategories[groupedProjects.workspaceProjects._id] ? "rotate-180" : ""
+                    expandedCategories[groupedProjects.workspaceProjects._id]
+                      ? "rotate-180"
+                      : ""
                   }`}
                 />
               </button>
@@ -697,6 +732,7 @@ const ProjectList = () => {
                       project={project}
                       pinned={pinnedIds.includes(project._id)}
                       onTogglePin={togglePin}
+                      onView={refreshRecentlyViewed}
                     />
                   ))}
                 </div>
@@ -730,10 +766,16 @@ const ProjectList = () => {
   );
 };
 
-const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
+const ProjectCard = ({
+  project,
+  pinned = false,
+  onTogglePin = () => {},
+  onView = () => {},
+}) => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const { user } = useUser();
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -775,15 +817,27 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
   return (
     <Link
       to={`/project/${project._id}`}
-      className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border  overflow-hidden"
+      onClick={() => {
+        if (user) {
+          userAPI
+            .recordRecentlyViewed(project._id)
+            .then(() => {
+              try {
+                onView();
+              } catch (e) {}
+            })
+            .catch((err) =>
+              console.error("Failed to record recently viewed", err)
+            );
+        }
+      }}
+      className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
     >
       {/* Card Header with Gradient */}
       <div className="p-4 bg-[#f1f2f4]">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-base font-semibold">
-              {project.name}
-            </h3>
+            <h3 className="text-base font-semibold">{project.name}</h3>
             {/* {project.description && !isEmptyHtml(project.description) && (
               <p className="text-primary-100 text-sm mt-1 line-clamp-2">
                 {getCleanTextPreview(project.description, 150)}
@@ -801,7 +855,11 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
               title={pinned ? "Unpin project" : "Pin project"}
               className="p-1 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
             >
-              <Star className={`w-4 h-4 ${pinned ? "fill-yellow-500 text-yellow-500" : ""}`} />
+              <Star
+                className={`w-4 h-4 ${
+                  pinned ? "fill-yellow-500 text-yellow-500" : ""
+                }`}
+              />
             </button>
 
             <button
