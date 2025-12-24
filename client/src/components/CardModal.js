@@ -10,7 +10,6 @@ import {
   Image as ImageIcon,
   Upload,
   Eye,
-  Download,
   Plus,
   Archive,
   RotateCcw,
@@ -24,6 +23,8 @@ import {
   Paperclip,
   UserPlus,
   AlertTriangle,
+  MoveUpRight,
+  DownloadCloud as CloudDownload,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import { useProject } from "../contexts/ProjectContext";
@@ -199,8 +200,12 @@ const CardModal = ({
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingItemTitle, setEditingItemTitle] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [showDeleteAttachmentConfirm, setShowDeleteAttachmentConfirm] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState(null);
+  const [deletingAttachment, setDeletingAttachment] = useState(false);
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [mentions, setMentions] = useState([]);
@@ -299,6 +304,15 @@ const CardModal = ({
     if (!showImageModal) return;
 
     const handleClickOutside = (event) => {
+      // If a confirmation modal (or any modal with high z-index) is open and
+      // the click is inside it, don't close the image modal. This prevents
+      // clicks on confirmation dialogs (e.g., delete confirmation) from
+      // closing the image viewer when the user cancels.
+      const confirmationModal = document.querySelector('[class*="z-[100]"]');
+      if (confirmationModal && confirmationModal.contains(event.target)) {
+        return;
+      }
+
       if (
         imageModalRef.current &&
         !imageModalRef.current.contains(event.target)
@@ -1110,6 +1124,27 @@ const CardModal = ({
     }
   };
 
+  // Confirm delete attachment (shows modal)
+  const confirmDeleteAttachment = async (e) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (!attachmentToDelete) return;
+    setDeletingAttachment(true);
+    try {
+      await handleDeleteAttachment(attachmentToDelete.id);
+      if (attachmentToDelete.closeImageModal) {
+        setShowImageModal(false);
+      }
+      setShowDeleteAttachmentConfirm(false);
+      setAttachmentToDelete(null);
+    } catch (err) {
+      // handleDeleteAttachment handles errors/toasts
+    } finally {
+      setDeletingAttachment(false);
+    }
+  };
+
   // Verify an attachment URL before opening. Shows toast on 404 or failure.
   const handleViewAttachment = async (e, url) => {
   if (e) e.preventDefault();
@@ -1576,6 +1611,42 @@ const CardModal = ({
 
   const nextCard = getNextCard();
   const prevCard = getPrevCard();
+
+  // Image carousel helpers
+  const imageAttachments = getImageAttachments();
+  const currentImage = imageAttachments[selectedImageIndex] || selectedImage;
+
+  const showImageAt = (index) => {
+    const images = getImageAttachments();
+    if (!images || images.length === 0) return;
+    const idx = ((index % images.length) + images.length) % images.length;
+    setSelectedImageIndex(idx);
+    setSelectedImage(images[idx]);
+    setShowImageModal(true);
+  };
+
+  const showPrevImage = () => {
+    const images = getImageAttachments();
+    if (!images || images?.length <= 1) return;
+    showImageAt(selectedImageIndex - 1);
+  };
+
+  const showNextImage = () => {
+    const images = getImageAttachments();
+    if (!images || images?.length <= 1) return;
+    showImageAt(selectedImageIndex + 1);
+  };
+
+  useEffect(() => {
+    if (!showImageModal) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setShowImageModal(false);
+      else if (e.key === "ArrowLeft") showPrevImage();
+      else if (e.key === "ArrowRight") showNextImage();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showImageModal, selectedImageIndex, card.attachments]);
 
   return (
     <>
@@ -2136,12 +2207,13 @@ const CardModal = ({
                       Images ({getImageAttachments().length})
                     </label>
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
-                      {getImageAttachments().map((attachment) => (
+                      {getImageAttachments().map((attachment, idx) => (
                         <div
                           key={attachment._id || attachment.id}
                           className="relative group cursor-pointer"
                           onClick={() => {
                             setSelectedImage(attachment);
+                            setSelectedImageIndex(idx);
                             setShowImageModal(true);
                           }}
                         >
@@ -2170,9 +2242,11 @@ const CardModal = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteAttachment(
-                                attachment._id || attachment.id
-                              );
+                              setAttachmentToDelete({
+                                id: attachment._id || attachment.id,
+                                closeImageModal: false,
+                              });
+                              setShowDeleteAttachmentConfirm(true);
                             }}
                             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200"
                             title="Delete image"
@@ -2696,11 +2770,14 @@ const CardModal = ({
                               View
                             </a>
                             <button
-                              onClick={() =>
-                                handleDeleteAttachment(
-                                  attachment._id || attachment.id
-                                )
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAttachmentToDelete({
+                                  id: attachment._id || attachment.id,
+                                  closeImageModal: false,
+                                });
+                                setShowDeleteAttachmentConfirm(true);
+                              }}
                               className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
                               title="Delete attachment"
                             >
@@ -2834,6 +2911,8 @@ const CardModal = ({
         )}
       </div>
 
+      // image carousel helpers moved above
+
       {/* Assign User Modal */}
       {showAssignModal && (
         <AssignUserModal
@@ -2845,73 +2924,53 @@ const CardModal = ({
       )}
 
       {/* Image Modal */}
-      {showImageModal && selectedImage && (
-        <div className="modal-overlay">
+      {showImageModal && (imageAttachments.length > 0 || selectedImage) && (
+        <div className="modal-overlay bg-black bg-opacity-70">
           <div
             ref={imageModalRef}
-            className="bg-white rounded-2xl shadow-2xl max-w-6xl max-h-[95vh] overflow-hidden"
+            className="relative w-full h-full flex items-center justify-center"
           >
-            {/* Image Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center space-x-3">
-                <ImageIcon className="w-6 h-6 text-blue-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {selectedImage.originalName ||
-                      selectedImage.filename ||
-                      selectedImage.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {selectedImage.size &&
-                      `${(selectedImage.size / 1024 / 1024).toFixed(2)} MB`}
-                    {selectedImage.uploadedAt &&
-                      ` • ${new Date(
-                        selectedImage.uploadedAt
-                      ).toLocaleString()}`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <a
-                  href={
-                    selectedImage.url.startsWith("http")
-                      ? selectedImage.url
-                      : `${API_URL}${selectedImage.url}`
-                  }
-                  download={
-                    selectedImage.originalName ||
-                    selectedImage.filename ||
-                    selectedImage.name
-                  }
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                  title="Download image"
-                >
-                  <Download className="w-5 h-5 text-gray-600" />
-                </a>
-                <button
-                  onClick={() => setShowImageModal(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-            </div>
+            {/* Close button */}
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-0 right-0 z-50 p-2 rounded-full bg-black bg-opacity-60 text-white hover:bg-opacity-80"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-            {/* Image Content */}
-            <div className="p-4 max-h-[calc(90vh-120px)] overflow-y-auto">
-              <div className="flex justify-center">
+            {/* Prev / Next buttons */}
+            {imageAttachments?.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); showPrevImage(); }}
+                  className="absolute left-6 bottom-5 z-50 -translate-y-1/2 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
+                  title="Previous"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); showNextImage(); }}
+                  className="absolute right-6 bottom-5 z-50 -translate-y-1/2 p-3 rounded-full bg-black bg-opacity-40 text-white cursor-pointer"
+                  title="Next"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            <div className="flex flex-col items-center space-y-4 px-4">
+              <div className="w-full h-[85%] md:w-[85%] md:h-[85%] max-w-[100vw] max-h-[100vh] flex items-center justify-center">
                 <img
                   src={
-                    selectedImage.url.startsWith("http")
-                      ? selectedImage.url
-                      : `${API_URL}${selectedImage.url}`
+                    currentImage?.url && currentImage.url.startsWith("http")
+                      ? currentImage.url
+                      : `${API_URL}${currentImage?.url}`
                   }
                   alt={
-                    selectedImage.originalName ||
-                    selectedImage.filename ||
-                    selectedImage.name
+                    currentImage?.originalName || currentImage?.filename || currentImage?.name
                   }
-                  className="max-w-full max-h-[calc(90vh-200px)] object-contain rounded-lg shadow-lg"
+                  className="w-full h-full object-contain rounded-lg shadow-2xl"
                   onError={(e) => {
                     try {
                       showToast("Image attachment not found or removed", "error");
@@ -2919,6 +2978,86 @@ const CardModal = ({
                     e.target.src = "/placeholder-image.png"; // Fallback image
                   }}
                 />
+              </div>
+            </div>
+
+            {/* Actions bar (fixed bottom center) */}
+            <div className="text-center my-4 fixed bottom-[2.9rem] left-0 right-0 -z-1 px-4">
+              <h3 className="text-lg text-white font-bold">
+                {currentImage?.originalName || currentImage?.filename || currentImage?.name}
+              </h3>
+              <p className="text-sm text-white font-semibold my-1">
+                Added{" "}
+                {currentImage?.uploadedAt &&
+                  `${new Date(currentImage.uploadedAt).toLocaleString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })} • `}
+                {currentImage?.size &&
+                  `${(currentImage?.size / 1024 / 1024).toFixed(2)} MB`}
+              </p>
+            </div>
+            <div className="fixed bottom-4 left-0 right-0 -z-1 px-4">
+              <div className="mx-auto flex w-fit items-center gap-3 rounded-lg p-2">
+
+                {/* Open */}
+                <a
+                  href={
+                    currentImage?.url && currentImage.url.startsWith("http")
+                      ? currentImage.url
+                      : `${API_URL}${currentImage?.url}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/20 text-white text-sm font-bold"
+                  title="Open in new tab"
+                >
+                  <MoveUpRight className="w-3 h-3" />
+                  <span>Open in new tab</span>
+                </a>
+                
+                {/* Download */}
+                <a
+                  href={
+                    currentImage?.url && currentImage.url.startsWith("http")
+                      ? currentImage.url
+                      : `${API_URL}${currentImage?.url}`
+                  }
+                  target="_blank"
+                  download={
+                    currentImage?.originalName ||
+                    currentImage?.filename ||
+                    currentImage?.name
+                  }
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/20 text-white text-sm font-bold"
+                  title="Download"
+                >
+                  <CloudDownload className="w-3 h-3" />
+                  <span>Download</span>
+                </a>
+                
+                {/* Delete */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!currentImage) return;
+                    setAttachmentToDelete({
+                      id: currentImage._id || currentImage.id,
+                      closeImageModal: true,
+                    });
+                    setShowDeleteAttachmentConfirm(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-500/20 text-white text-sm font-bold"
+                  title="Delete"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Delete</span>
+                </button>
+                
               </div>
             </div>
           </div>
@@ -2966,6 +3105,32 @@ const CardModal = ({
           isLoading={loading}
         />
       )}
+
+      {/* Delete attachment confirmation modal */}
+      <ConfirmationModal
+        isOpen={showDeleteAttachmentConfirm}
+        onClose={(e) => {
+          if (e) {
+            e.stopPropagation();
+          }
+          if (!deletingAttachment) {
+            setShowDeleteAttachmentConfirm(false);
+            setAttachmentToDelete(null);
+          }
+        }}
+        onConfirm={(e) => {
+          if (e) {
+            e.stopPropagation();
+          }
+          confirmDeleteAttachment(e);
+        }}
+        title="Delete attachment?"
+        message="Deleting an attachment is permanent. There is no undo."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={deletingAttachment}
+      />
 
       {/* Labels Modal */}
       <LabelsModal
