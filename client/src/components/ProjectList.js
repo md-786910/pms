@@ -27,7 +27,7 @@ import {
   getProjectTypeColors,
   getStatusBadgeClasses,
 } from "../utils/statusColors";
-import { cardAPI } from "../utils/api";
+import { cardAPI, userAPI } from "../utils/api";
 
 const ProjectList = () => {
   const { projects, loading, fetchProjects } = useProject();
@@ -42,45 +42,62 @@ const ProjectList = () => {
   const [loadingUpcomingCards, setLoadingUpcomingCards] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [sortOrder, setSortOrder] = useState("recent"); // "recent" or "oldest"
-  // Pinned projects (stored per browser in localStorage)
-  const [pinnedIds, setPinnedIds] = useState(() => {
-    try {
-      const raw = localStorage.getItem("pinnedProjects");
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // Pinned projects (stored server-side per user)
+  const [pinnedIds, setPinnedIds] = useState([]);
+
+  useEffect(() => {
+    const fetchPinned = async () => {
+      if (!user) return;
+      try {
+        const res = await userAPI.getPinned();
+        const pinned = res.data?.pinned || [];
+        setPinnedIds(pinned.map((p) => p._id));
+      } catch (e) {
+        console.error('Failed to fetch pinned projects', e);
+      }
+    };
+    fetchPinned();
+  }, [user]);
 
   const togglePin = (projectId) => {
     setPinnedIds((prev) => {
       const exists = prev.includes(projectId);
       const next = exists ? prev.filter((id) => id !== projectId) : [projectId, ...prev];
-      try {
-        localStorage.setItem("pinnedProjects", JSON.stringify(next));
-      } catch (e) {
-        console.error("Failed to persist pinned projects", e);
-      }
+      // Persist to server (optimistic update)
+      (async (nextIds, prevIds) => {
+        try {
+          await userAPI.setPinned(nextIds);
+        } catch (err) {
+          console.error('Failed to persist pinned projects', err);
+          setPinnedIds(prevIds);
+        }
+      })(next, prev);
       return next;
     });
   };
 
-  // Recently viewed projects (read from localStorage, respect 1 hour TTL)
-  const recentProjects = useMemo(() => {
-    try {
-      const raw = localStorage.getItem("recentlyViewedProjects");
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      const cutoff = Date.now() - 1000 * 60 * 60; // 1 hour
-      const valid = arr.filter((it) => it && it.viewedAt && it.viewedAt >= cutoff);
-      // Map to project objects in the current projects list and preserve order
-      return valid
-        .map((it) => projects.find((p) => p._id === it.id))
-        .filter(Boolean);
-    } catch (e) {
-      return [];
+  // Recently viewed projects (fetched from server, server applies 1 hour TTL)
+  const [recentProjects, setRecentProjects] = useState([]);
+
+  const refreshRecentlyViewed = async () => {
+    if (!user) {
+      setRecentProjects([]);
+      return;
     }
-  }, [projects]);
+    try {
+      const res = await userAPI.getRecentlyViewed();
+      const list = res.data?.recentlyViewed || [];
+      setRecentProjects(list.map((it) => it.project).filter(Boolean));
+    } catch (e) {
+      console.error('Failed to fetch recently viewed projects', e);
+      setRecentProjects([]);
+    }
+  };
+
+  useEffect(() => {
+    refreshRecentlyViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, projects]);
 
   // Get date from project for sorting
   const getProjectDate = (project) => {
@@ -116,8 +133,8 @@ const ProjectList = () => {
       .map((id) => projects.find((p) => p._id === id))
       .filter(Boolean);
 
-    // Other projects (exclude pinned)
-    const otherProjects = projects.filter((p) => !pinnedIds.includes(p._id));
+    // Other projects (include all projects). Pinned projects will appear both in Starred boards and in their original location.
+    const otherProjects = projects;
 
     const categoryMap = new Map();
     const uncategorized = [];
@@ -513,6 +530,7 @@ const ProjectList = () => {
                 project={project}
                 pinned={pinnedIds.includes(project._id)}
                 onTogglePin={togglePin}
+                onView={refreshRecentlyViewed}
               />
             ))}
           </div>
@@ -532,6 +550,7 @@ const ProjectList = () => {
                 project={project}
                 pinned={pinnedIds.includes(project._id)}
                 onTogglePin={togglePin}
+                onView={refreshRecentlyViewed}
               />
             ))}
           </div>
@@ -629,6 +648,7 @@ const ProjectList = () => {
                       project={project}
                       pinned={pinnedIds.includes(project._id)}
                       onTogglePin={togglePin}
+                      onView={refreshRecentlyViewed}
                     />
                   ))}
                 </div>
@@ -645,6 +665,7 @@ const ProjectList = () => {
                   project={project}
                   pinned={pinnedIds.includes(project._id)}
                   onTogglePin={togglePin}
+                  onView={refreshRecentlyViewed}
                 />
               ))}
             </div>
@@ -697,6 +718,7 @@ const ProjectList = () => {
                       project={project}
                       pinned={pinnedIds.includes(project._id)}
                       onTogglePin={togglePin}
+                      onView={refreshRecentlyViewed}
                     />
                   ))}
                 </div>
@@ -730,10 +752,11 @@ const ProjectList = () => {
   );
 };
 
-const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
+const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView = () => {} }) => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const { user } = useUser();
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -775,6 +798,15 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
   return (
     <Link
       to={`/project/${project._id}`}
+      onClick={() => {
+        if (user) {
+          userAPI.recordRecentlyViewed(project._id)
+            .then(() => {
+              try { onView(); } catch(e){}
+            })
+            .catch((err) => console.error('Failed to record recently viewed', err));
+        }
+      }}
       className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
     >
       {/* Card Header with Gradient */}
