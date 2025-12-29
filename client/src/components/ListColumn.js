@@ -318,6 +318,7 @@ const ListColumn = React.memo(
         prevCard.title !== nextCard.title ||
         prevCard.status !== nextCard.status ||
         prevCard.isArchived !== nextCard.isArchived ||
+        prevCard.isComplete !== nextCard.isComplete ||
         prevCard.updatedAt !== nextCard.updatedAt
       ) {
         return false;

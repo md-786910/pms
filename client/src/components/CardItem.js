@@ -960,7 +960,7 @@ const CardItem = React.memo(
       prevCard.dueDate !== nextCard.dueDate ||
       prevCard.order !== nextCard.order ||
       prevCard.isArchived !== nextCard.isArchived ||
-      prevCard.isCompleted !== nextCard.isCompleted ||
+      prevCard.isComplete !== nextCard.isComplete ||
       prevCard.updatedAt !== nextCard.updatedAt
     ) {
       return false;
