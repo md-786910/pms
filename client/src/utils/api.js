@@ -95,6 +95,14 @@ export const userAPI = {
   resetUserPassword: (id, newPassword) =>
     api.post(`/users/${id}/reset-password`, { newPassword }),
   updateProfile: (userData) => api.put("/users/profile", userData),
+
+  // Pinned projects (starred boards)
+  getPinned: () => api.get("/users/me/pinned"),
+  setPinned: (pinned) => api.put("/users/me/pinned", { pinned }),
+
+  // Recently viewed
+  getRecentlyViewed: () => api.get("/users/me/recently-viewed"),
+  recordRecentlyViewed: (projectId) => api.post("/users/me/recently-viewed", { projectId }),
 };
 
 export const projectAPI = {

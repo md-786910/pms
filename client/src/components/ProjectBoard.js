@@ -40,7 +40,7 @@ import { useProject } from "../contexts/ProjectContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useSocket } from "../contexts/SocketContext";
 import { useUser } from "../contexts/UserContext";
-import { cardAPI, columnAPI, projectAPI } from "../utils/api";
+import { cardAPI, columnAPI, projectAPI, userAPI } from "../utils/api";
 import ListColumn from "./ListColumn";
 import CreateCardModal from "./CreateCardModal";
 import ConfirmationModal from "./ConfirmationModal";
@@ -311,27 +311,17 @@ const ProjectBoard = () => {
     }
   }, [currentProject, actualProjectId]);
 
-  // Track recently viewed projects (store ids + timestamp in localStorage)
+  // Track recently viewed projects (save server-side)
   useEffect(() => {
-    if (!currentProject || !actualProjectId) return;
-    try {
-      const raw = localStorage.getItem("recentlyViewedProjects");
-      const list = raw ? JSON.parse(raw) : [];
-      const cutoff = Date.now() - 1000 * 60 * 60; // 1 hour
-
-      // Remove expired and the current id if already present
-      const filtered = list.filter((item) => item.viewedAt >= cutoff && item.id !== actualProjectId);
-
-      // Add current project at the front
-      filtered.unshift({ id: actualProjectId, viewedAt: Date.now() });
-
-      // Limit to 10 items
-      const next = filtered.slice(0, 10);
-      localStorage.setItem("recentlyViewedProjects", JSON.stringify(next));
-    } catch (e) {
-      console.error("Failed to update recently viewed projects", e);
-    }
-  }, [currentProject, actualProjectId]);
+    if (!currentProject || !actualProjectId || !user) return;
+    (async () => {
+      try {
+        await userAPI.recordRecentlyViewed(actualProjectId);
+      } catch (e) {
+        console.error("Failed to record recently viewed project", e);
+      }
+    })();
+  }, [currentProject, actualProjectId, user]);
 
   useEffect(() => {
     if (actualProjectId) {
