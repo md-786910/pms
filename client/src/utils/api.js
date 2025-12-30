@@ -144,6 +144,8 @@ export const projectAPI = {
       },
     });
   },
+  // Admin time tracking report
+  getTimeTrackingReport: (projectId) => api.get(`/projects/${projectId}/time-tracking`),
 
   deleteAttachment: (projectId, attachmentId) => {
     const deleteApi = axios.create({
@@ -251,6 +253,10 @@ export const cardAPI = {
       },
     });
   },
+  // Time tracking
+  startTimer: (id) => api.post(`/cards/${id}/timers/start`),
+  stopTimer: (id) => api.post(`/cards/${id}/timers/stop`),
+  getTimers: (id) => api.get(`/cards/${id}/timers`),
 };
 
 export const cardItemAPI = {

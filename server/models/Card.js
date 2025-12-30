@@ -107,6 +107,33 @@ const cardSchema = new mongoose.Schema(
         },
       },
     ],
+    // Time-tracking entries. An entry with an empty endTime represents a running timer.
+    timeEntries: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        startTime: {
+          type: Date,
+          required: true,
+        },
+        endTime: {
+          type: Date,
+        },
+        // duration in seconds (filled when timer is stopped)
+        durationSeconds: {
+          type: Number,
+          default: 0,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     activityLog: [
       {
         user: {

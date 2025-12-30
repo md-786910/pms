@@ -87,6 +87,7 @@ const getCards = async (req, res) => {
       .populate("comments.user", "name email avatar color")
       .populate("readBy.user", "name email avatar color")
       .populate("archivedBy", "name email avatar color")
+      .populate("timeEntries.user", "name email avatar color")
       .sort({ order: 1, updatedAt: -1 });
 
     // Fetch all columns for this project to create status -> column name mapping
@@ -144,7 +145,8 @@ const getCard = async (req, res) => {
       .populate("createdBy", "name email avatar color")
       .populate("comments.user", "name email avatar color")
       .populate("readBy.user", "name email avatar color")
-      .populate("project", "name");
+      .populate("project", "name")
+      .populate("timeEntries.user", "name email avatar color");
 
     if (!card) {
       return res.status(404).json({
@@ -2692,6 +2694,183 @@ const markCardAsRead = async (req, res) => {
   }
 };
 
+// --- Time tracking controllers ---
+
+const startTimer = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ success: false, message: "Card not found" });
+    }
+
+    // Check project access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+    if (!isOwner && !isMember && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    // Prevent starting multiple timers for same user on same card
+    const running = card.timeEntries.find(
+      (e) => e.user.toString() === userId.toString() && !e.endTime
+    );
+    if (running) {
+      return res.status(400).json({ success: false, message: "Timer already running" });
+    }
+
+    card.timeEntries.push({ user: userId, startTime: new Date() });
+    card.activityLog.push({ user: userId, action: "timer_started", timestamp: new Date() });
+
+    await card.save();
+    await card.populate("timeEntries.user", "name email avatar color");
+
+    // Emit socket event
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-timer-updated", { cardId: card._id.toString(), userId: userId.toString() });
+    } catch (err) {
+      console.error("Socket emit error (timer start):", err);
+    }
+
+    res.json({ success: true, message: "Timer started", card });
+  } catch (error) {
+    console.error("Start timer error:", error);
+    res.status(500).json({ success: false, message: "Server error while starting timer" });
+  }
+};
+
+const stopTimer = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ success: false, message: "Card not found" });
+    }
+
+    // Check project access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+    if (!isOwner && !isMember && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const running = card.timeEntries.find(
+      (e) => e.user.toString() === userId.toString() && !e.endTime
+    );
+    if (!running) {
+      return res.status(400).json({ success: false, message: "No running timer found" });
+    }
+
+    running.endTime = new Date();
+    running.durationSeconds = Math.max(0, Math.round((running.endTime - running.startTime) / 1000));
+
+    card.activityLog.push({ user: userId, action: "timer_stopped", details: `Duration: ${running.durationSeconds}s`, timestamp: new Date() });
+
+    await card.save();
+    await card.populate("timeEntries.user", "name email avatar color");
+
+    // Emit socket event
+    try {
+      const io = getIO();
+      io.to(`project-${card.project}`).emit("card-timer-updated", { cardId: card._id.toString(), userId: userId.toString() });
+    } catch (err) {
+      console.error("Socket emit error (timer stop):", err);
+    }
+
+    res.json({ success: true, message: "Timer stopped", card });
+  } catch (error) {
+    console.error("Stop timer error:", error);
+    res.status(500).json({ success: false, message: "Server error while stopping timer" });
+  }
+};
+
+const getTimers = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    const userId = req.user._id;
+
+    const card = await Card.findById(cardId).populate("timeEntries.user", "name email avatar color");
+    if (!card) {
+      return res.status(404).json({ success: false, message: "Card not found" });
+    }
+
+    // Check project access
+    const project = await Project.findById(card.project);
+    const isOwner = project.owner.toString() === userId.toString();
+    const isMember = project.members.some(
+      (member) => member.user.toString() === userId.toString()
+    );
+    if (!isOwner && !isMember && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const now = new Date();
+    const perUserTotals = {};
+    let totalSeconds = 0;
+
+    const timers = card.timeEntries.map((e) => {
+      const dur = e.durationSeconds && e.durationSeconds > 0
+        ? e.durationSeconds
+        : e.endTime
+        ? Math.max(0, Math.round((e.endTime - e.startTime) / 1000))
+        : Math.max(0, Math.round((now - e.startTime) / 1000));
+
+      const userIdStr = e.user?._id ? e.user._id.toString() : e.user.toString();
+
+      if (!perUserTotals[userIdStr]) {
+        perUserTotals[userIdStr] = {
+          user: e.user || { _id: userIdStr },
+          totalSeconds: 0,
+        };
+      }
+
+      perUserTotals[userIdStr].totalSeconds += dur;
+      totalSeconds += dur;
+
+      return {
+        user: e.user,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        durationSeconds: dur,
+      };
+    });
+
+    const runningForCurrentUserEntry = card.timeEntries.find((e) => {
+      const entryUserId = e.user && e.user._id ? e.user._id.toString() : e.user && e.user.toString ? e.user.toString() : null;
+      return entryUserId === userId.toString() && !e.endTime;
+    });
+    const runningForCurrentUser = Boolean(runningForCurrentUserEntry);
+    const currentSessionSeconds = runningForCurrentUser
+      ? Math.max(0, Math.round((now - runningForCurrentUserEntry.startTime) / 1000))
+      : 0;
+
+    res.json({
+      success: true,
+      timers,
+      totals: {
+        perUser: Object.values(perUserTotals),
+        totalSeconds,
+      },
+      runningForCurrentUser,
+      currentSessionSeconds,
+    });
+  } catch (error) {
+    console.error("Get timers error:", error);
+    res.status(500).json({ success: false, message: "Server error while fetching timers" });
+  }
+};
+
 module.exports = {
   getCards,
   getCard,
@@ -2717,4 +2896,8 @@ module.exports = {
   moveAllCards,
   deleteCard,
   markCardAsRead,
+  // Time tracking
+  startTimer,
+  stopTimer,
+  getTimers,
 };

@@ -11,6 +11,7 @@ const {
   getArchivedProjects,
   restoreProject,
   permanentDeleteProject,
+  getProjectTimeTrackingReport,
 } = require("../controllers/projectController");
 const { auth, projectMemberAuth, adminAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
@@ -82,6 +83,11 @@ router.put("/:id/restore", adminAuth, restoreProject);
 // @desc    Permanently delete project
 // @access  Private (Admin only)
 router.delete("/:id/permanent", adminAuth, permanentDeleteProject);
+
+// @route   GET /api/projects/:id/time-tracking
+// @desc    Admin report: Get time tracking summary for each card in the project (per-user totals)
+// @access  Private (Admin only)
+router.get("/:id/time-tracking", adminAuth, getProjectTimeTrackingReport);
 
 // @route   POST /api/projects/:id/upload
 // @desc    Upload files for a project

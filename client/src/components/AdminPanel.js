@@ -203,13 +203,16 @@ const AdminPanel = () => {
               <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
               <p className="text-gray-600">Manage your projects and team assignments</p>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Project</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <a href="/admin/time-tracking" className="bg-gray-100 text-gray-800 hover:bg-gray-200 font-medium py-2 px-3 rounded-lg transition-colors duration-200 text-sm">Time Tracking</a>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Project</span>
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between">

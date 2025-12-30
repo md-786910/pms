@@ -225,6 +225,16 @@ const CardModal = ({
   const [autoSaving, setAutoSaving] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Time tracking UI state
+  const [timers, setTimers] = useState([]);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [currentSessionSeconds, setCurrentSessionSeconds] = useState(0);
+  const [totalSecondsForUser, setTotalSecondsForUser] = useState(0);
+  const [startingTimer, setStartingTimer] = useState(false);
+  const [stoppingTimer, setStoppingTimer] = useState(false);
+  const timerIntervalRef = useRef(null);
+
   const modalRef = useRef(null);
   const imageModalRef = useRef(null);
   const formattingHelpModalRef = useRef(null);
@@ -883,6 +893,130 @@ const CardModal = ({
     }
   }, [card.comments, card._id, onCardUpdated]);
 
+  // Time tracking helpers
+  const formatSeconds = (sec) => {
+    if (!sec || sec <= 0) return "0:00";
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const fetchTimers = async () => {
+    try {
+      const response = await cardAPI.getTimers(card._id);
+      if (response.data && response.data.success) {
+        setTimers(response.data.timers || []);
+        setIsTimerRunning(Boolean(response.data.runningForCurrentUser));
+        setCurrentSessionSeconds(response.data.currentSessionSeconds || 0);
+        // find total for current user (handle user._id or user.id)
+        const myId = user?._id || user?.id;
+        const perUser = (response.data.totals && response.data.totals.perUser) || [];
+        const me = perUser.find((p) => {
+          const uid = p?.user?._id || p?.user;
+          return uid && myId && (uid === myId || uid.toString() === myId.toString());
+        });
+        setTotalSecondsForUser(me ? me.totalSeconds : 0);
+      }
+    } catch (error) {
+      console.error("Error fetching timers:", error);
+    }
+  };
+
+  const handleStartTimer = async () => {
+    setStartingTimer(true);
+    // optimistic update
+    setIsTimerRunning(true);
+    setCurrentSessionSeconds(0);
+    try {
+      const resp = await cardAPI.startTimer(card._id);
+      if (resp.data && resp.data.success) {
+        // If server returned the updated card, try using it to set running session without extra call
+        const returnedCard = resp.data.card;
+        let foundRunning = false;
+        if (returnedCard && returnedCard.timeEntries) {
+          const running = returnedCard.timeEntries.find(
+            (e) => (!e.endTime) && ((e.user && (e.user._id ? e.user._id.toString() : e.user.toString())) === (user?._id || user?.id).toString())
+          );
+          if (running) {
+            foundRunning = true;
+            const elapsed = Math.max(0, Math.round((new Date() - new Date(running.startTime)) / 1000));
+            setCurrentSessionSeconds(elapsed);
+          }
+        }
+
+        if (!foundRunning) {
+          // fallback: refresh from server
+          await fetchTimers();
+        }
+
+        showToast("Timer started", "success");
+      } else {
+        // Server didn't start it — revert optimistic UI
+        setIsTimerRunning(false);
+      }
+    } catch (err) {
+      console.error("Start timer error:", err);
+      setIsTimerRunning(false);
+      showToast(err.response?.data?.message || "Failed to start timer", "error");
+    } finally {
+      setStartingTimer(false);
+    }
+  };
+
+  const handleStopTimer = async () => {
+    setStoppingTimer(true);
+    // optimistically stop
+    setIsTimerRunning(false);
+    try {
+      const resp = await cardAPI.stopTimer(card._id);
+      if (resp.data && resp.data.success) {
+        await fetchTimers();
+        // reset current session view
+        setCurrentSessionSeconds(0);
+        showToast("Timer stopped", "success");
+      } else {
+        // revert optimistic stop on failure
+        await fetchTimers();
+      }
+    } catch (err) {
+      console.error("Stop timer error:", err);
+      showToast(err.response?.data?.message || "Failed to stop timer", "error");
+      await fetchTimers();
+    } finally {
+      setStoppingTimer(false);
+    }
+  };
+
+  // Keep session seconds ticking while timer is running
+  React.useEffect(() => {
+    // clear previous
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+
+    const shouldRun = isTimerRunning || startingTimer;
+
+    if (shouldRun) {
+      timerIntervalRef.current = setInterval(() => {
+        setCurrentSessionSeconds((s) => s + 1);
+        setTotalSecondsForUser((t) => t + 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    };
+  }, [isTimerRunning, startingTimer]);
+
+  // Fetch timers whenever the card changes
+  React.useEffect(() => {
+    fetchTimers();
+  }, [card._id]);
+
   // Listen for Socket.IO events for card updates
   React.useEffect(() => {
     if (!socket) return;
@@ -978,10 +1112,18 @@ const CardModal = ({
     socket.on("card-attachment-added", handleCardUpdated);
     socket.on("card-attachment-removed", handleCardUpdated);
     socket.on("card-files-uploaded", handleCardUpdated);
+    const handleCardTimerUpdated = (data) => {
+      if (data.cardId === card._id) {
+        // refresh timers for this card
+        fetchTimers();
+      }
+    };
+
     socket.on("card-item-created", handleCardItemCreated);
     socket.on("card-item-updated", handleCardItemUpdated);
     socket.on("card-item-deleted", handleCardItemDeleted);
     socket.on("card-items-reordered", handleCardItemsReordered);
+    socket.on("card-timer-updated", handleCardTimerUpdated);
 
     return () => {
       socket.off("card-updated", handleCardUpdated);
@@ -998,6 +1140,7 @@ const CardModal = ({
       socket.off("card-item-updated", handleCardItemUpdated);
       socket.off("card-item-deleted", handleCardItemDeleted);
       socket.off("card-items-reordered", handleCardItemsReordered);
+      socket.off("card-timer-updated", handleCardTimerUpdated);
     };
   }, [socket, card._id, onCardUpdated, user?._id, user?.id]);
 
@@ -1894,6 +2037,52 @@ const CardModal = ({
                                 day: "numeric",
                               })
                             : "No due date"}
+                        </div>
+                      </div>
+
+                      {/* TIME TRACKING */}
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-gray-700">Time Spent</span>
+
+                        <div className="flex items-center gap-2">
+                          <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-sm font-medium flex items-center gap-2">
+                            <Clock4 className="w-4 h-4 text-gray-600" />
+                            <span className="text-gray-800">{formatSeconds(totalSecondsForUser)}</span>
+                            {(isTimerRunning || startingTimer) && (
+                              <span className="text-xs text-green-600 ml-2">Running ({formatSeconds(currentSessionSeconds)})</span>
+                            )}
+                          </div>
+
+                          <div>
+                            {!(isTimerRunning || startingTimer) ? (
+                              <button
+                                onClick={handleStartTimer}
+                                className={`bg-green-600 text-white px-3 py-1 rounded text-sm font-medium ${startingTimer ? "opacity-70 cursor-wait" : "hover:bg-green-700"}`}
+                                disabled={startingTimer}
+                              >
+                                {startingTimer ? "Starting..." : "Start"}
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={handleStopTimer}
+                                  className={`bg-yellow-500 text-white px-3 py-1 rounded text-sm font-medium ${stoppingTimer ? "opacity-70 cursor-wait" : "hover:bg-yellow-600"}`}
+                                  disabled={stoppingTimer}
+                                  title="Pause session (you can resume later)"
+                                >
+                                  {stoppingTimer ? "Pausing..." : "Pause"}
+                                </button>
+                                <button
+                                  onClick={handleStopTimer}
+                                  className={`bg-red-600 text-white px-3 py-1 rounded text-sm font-medium ${stoppingTimer ? "opacity-70 cursor-wait" : "hover:bg-red-700"}`}
+                                  disabled={stoppingTimer}
+                                  title="Stop session"
+                                >
+                                  {stoppingTimer ? "Stopping..." : "Stop"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

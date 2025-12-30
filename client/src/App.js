@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import ProjectList from "./components/ProjectList";
 import ProjectBoard from "./components/ProjectBoard";
 import AdminPanel from "./components/AdminPanel";
+import AdminTimeTracking from "./components/AdminTimeTracking";
 import ArchivedProjects from "./components/ArchivedProjects";
 import ManageProjects from "./components/ManageProjects";
 import Notifications from "./components/Notifications";
@@ -66,6 +67,7 @@ function AppContent() {
                     <Routes>
                       <Route path="/" element={<ProjectList />} />
                       <Route path="/admin" element={<AdminPanel />} />
+                      <Route path="/admin/time-tracking" element={<AdminTimeTracking />} />
                       <Route path="/archived-projects" element={<ArchivedProjects />} />
                       <Route path="/manage-projects" element={<ManageProjects />} />
                       <Route path="/users" element={<UserManagement />} />

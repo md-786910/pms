@@ -1332,6 +1332,55 @@ const removeMember = async (req, res) => {
   }
 };
 
+// Admin: Get time-tracking report per card for a project
+const getProjectTimeTrackingReport = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    // Find cards in project and populate time entries
+    const cards = await Card.find({ project: projectId }).populate("timeEntries.user", "name email avatar color").select("title cardNumber timeEntries");
+
+    const report = cards.map((card) => {
+      const perUser = {};
+      let cardTotal = 0;
+      const now = new Date();
+
+      (card.timeEntries || []).forEach((e) => {
+        const dur = e.durationSeconds && e.durationSeconds > 0
+          ? e.durationSeconds
+          : e.endTime
+          ? Math.max(0, Math.round((e.endTime - e.startTime) / 1000))
+          : Math.max(0, Math.round((now - e.startTime) / 1000));
+
+        const uid = e.user && e.user._id ? e.user._id.toString() : e.user.toString();
+        if (!perUser[uid]) {
+          perUser[uid] = { user: e.user, totalSeconds: 0 };
+        }
+        perUser[uid].totalSeconds += dur;
+        cardTotal += dur;
+      });
+
+      return {
+        cardId: card._id,
+        title: card.title,
+        cardNumber: card.cardNumber,
+        perUser: Object.values(perUser),
+        totalSeconds: cardTotal,
+      };
+    });
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error("Get project time tracking report error:", error);
+    res.status(500).json({ success: false, message: "Server error while fetching time tracking report" });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
@@ -1343,4 +1392,5 @@ module.exports = {
   getArchivedProjects,
   restoreProject,
   permanentDeleteProject,
+  getProjectTimeTrackingReport,
 };

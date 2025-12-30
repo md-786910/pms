@@ -25,6 +25,10 @@ const {
   moveAllCards,
   deleteCard,
   markCardAsRead,
+  // Time tracking
+  startTimer,
+  stopTimer,
+  getTimers,
 } = require("../controllers/cardController");
 const { auth, projectMemberAuth } = require("../middleware/auth");
 const { uploadMiddleware } = require("../middleware/upload");
@@ -363,5 +367,21 @@ router.post("/:id/upload-files", uploadMiddleware, uploadFiles);
 // @desc    Remove attachment from card
 // @access  Private
 router.delete("/:id/attachments/:attachmentId", removeAttachment);
+// -------------------
+// Time tracking routes
+// -------------------
+// @route   POST /api/cards/:id/timers/start
+// @desc    Start a timer for current user on this card
+// @access  Private
+router.post('/:id/timers/start', startTimer);
 
+// @route   POST /api/cards/:id/timers/stop
+// @desc    Stop (pause) the currently running timer for current user on this card
+// @access  Private
+router.post('/:id/timers/stop', stopTimer);
+
+// @route   GET /api/cards/:id/timers
+// @desc    Get timers and totals for this card (including running sessions)
+// @access  Private
+router.get('/:id/timers', getTimers);
 module.exports = router;
