@@ -1013,7 +1013,7 @@ const ProjectBoard = () => {
       if (window?.event?.dataTransfer) {
         window.event.dataTransfer.effectAllowed = "move";
       }
-    } catch (_) { }
+    } catch (_) {}
   };
 
   const handleColumnDragOver = (e) => {
@@ -1094,11 +1094,11 @@ const ProjectBoard = () => {
           prev.map((col) =>
             col._id === column._id
               ? {
-                ...col,
-                name: newTitle,
-                status: newStatus,
-                position: column.position, // Keep original position
-              }
+                  ...col,
+                  name: newTitle,
+                  status: newStatus,
+                  position: column.position, // Keep original position
+                }
               : col
           )
         );
@@ -1323,7 +1323,6 @@ const ProjectBoard = () => {
   //   );
   // }
 
-
   if (!currentProject) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1379,17 +1378,19 @@ const ProjectBoard = () => {
               )}
 
               {/* Demo URLs */}
-              {currentProject.demoSiteUrls && currentProject.demoSiteUrls.length > 0 && (() => {
-                // Always show the last URL in the array
-                const lastIndex = currentProject.demoSiteUrls.length - 1;
-                const selectedUrl = currentProject.demoSiteUrls[lastIndex];
+              {currentProject.demoSiteUrls &&
+                currentProject.demoSiteUrls.length > 0 &&
+                (() => {
+                  // Always show the last URL in the array
+                  const lastIndex = currentProject.demoSiteUrls.length - 1;
+                  const selectedUrl = currentProject.demoSiteUrls[lastIndex];
 
-                return selectedUrl ? (
-                  <a
-                    href={selectedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="
+                  return selectedUrl ? (
+                    <a
+                      href={selectedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
         group relative flex items-center gap-2
         px-2 py-2 rounded-lg text-xs font-medium
         text-white shadow-md transition-all duration-300
@@ -1397,12 +1398,12 @@ const ProjectBoard = () => {
         hover:from-blue-400 hover:to-indigo-400
         hover:scale-105 hover:shadow-blue-500/40
       "
-                  >
-                    <span>Demo Site</span>
-                    <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
-                  </a>
-                ) : null;
-              })()}
+                    >
+                      <span>Demo Site</span>
+                      <ExternalLink className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+                    </a>
+                  ) : null;
+                })()}
 
               {/* Markup URL */}
               {currentProject.markupUrl && (
@@ -1432,7 +1433,7 @@ const ProjectBoard = () => {
                   ref={membersBtnRef}
                   onClick={() => setShowMembersPopover((s) => !s)}
                   className="flex items-center -space-x-2 group"
-                // title="Project members"
+                  // title="Project members"
                 >
                   {currentProject.members.slice(0, 3).map((m, idx) => (
                     <div
@@ -1513,7 +1514,7 @@ const ProjectBoard = () => {
                             }
                           >
                             {removingMemberId ===
-                              (m.user?._id || m.user?.id) ? (
+                            (m.user?._id || m.user?.id) ? (
                               <svg
                                 className="w-4 h-4 animate-spin"
                                 viewBox="0 0 24 24"
@@ -1546,11 +1547,14 @@ const ProjectBoard = () => {
             {/* Status pills */}
             <div className="flex items-center gap-2">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm cursor-default ${getProjectStatusColors(currentProject.projectStatus).bgColor
-                  } ${getProjectStatusColors(currentProject.projectStatus).textColor
-                  } ${getProjectStatusColors(currentProject.projectStatus)
+                className={`px-3 py-1 rounded-full text-xs font-semibold border-2 shadow-sm cursor-default ${
+                  getProjectStatusColors(currentProject.projectStatus).bgColor
+                } ${
+                  getProjectStatusColors(currentProject.projectStatus).textColor
+                } ${
+                  getProjectStatusColors(currentProject.projectStatus)
                     .borderColor
-                  }`}
+                }`}
                 title="Project status"
               >
                 {getProjectStatusColors(currentProject.projectStatus).label}
@@ -1571,41 +1575,41 @@ const ProjectBoard = () => {
             {/* Date pills */}
             {(projectData?.project?.startDate ||
               projectData?.project?.endDate) && (
-                <div className="flex items-center gap-1.5">
-                  {/* Start Date */}
-                  {projectData?.project?.startDate && (
-                    <div className="flex bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
-                      <div className="w-6 h-6 text-white bg-[#26de81] rounded-full flex items-center justify-center">
-                        <Calendar className="w-3.5 h-3.5 " />
+              <div className="flex items-center gap-1.5">
+                {/* Start Date */}
+                {projectData?.project?.startDate && (
+                  <div className="flex bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 text-white bg-[#26de81] rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5 " />
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-white/80 font-medium text-[10px] leading-none">
+                        Start Date
                       </div>
-                      <div className="text-xs">
-                        <div className="text-white/80 font-medium text-[10px] leading-none">
-                          Start Date
-                        </div>
-                        <div className="text-white font-semibold leading-tight">
-                          {formatDate(projectData?.project?.startDate)}
-                        </div>
+                      <div className="text-white font-semibold leading-tight">
+                        {formatDate(projectData?.project?.startDate)}
                       </div>
                     </div>
-                  )}
-                  {/* End Date */}
-                  {projectData?.project?.endDate && (
-                    <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
-                      <div className="w-6 h-6 bg-[#fa8231] rounded-full flex items-center justify-center">
-                        <Calendar className="w-3.5 h-3.5" />
+                  </div>
+                )}
+                {/* End Date */}
+                {projectData?.project?.endDate && (
+                  <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
+                    <div className="w-6 h-6 bg-[#fa8231] rounded-full flex items-center justify-center">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-white/80 font-medium text-[10px] leading-none">
+                        End Date
                       </div>
-                      <div className="text-xs">
-                        <div className="text-white/80 font-medium text-[10px] leading-none">
-                          End Date
-                        </div>
-                        <div className="text-white font-semibold leading-tight">
-                          {formatDate(projectData?.project?.endDate)}
-                        </div>
+                      <div className="text-white font-semibold leading-tight">
+                        {formatDate(projectData?.project?.endDate)}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Filter button and Cancel Filter button */}
             <div className="flex items-center gap-2">
               <button
@@ -1642,7 +1646,7 @@ const ProjectBoard = () => {
       </div>
 
       {/* Board */}
-      <div className="relative border-4 rounded-t-xl flex-1 overflow-hidden min-h-0">
+      <div className="relative rounded-t-lg flex-1 overflow-hidden min-h-0">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1666,13 +1670,15 @@ const ProjectBoard = () => {
                 return (
                   <div
                     key={colKey}
-                    className={`w-80  flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${draggingColumnId === colKey
-                      ? "opacity-100 scale-[0.98]"
-                      : "opacity-100"
-                      } ${dragOverColumnId === colKey
+                    className={`w-80  flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                      draggingColumnId === colKey
+                        ? "opacity-100 scale-[0.98]"
+                        : "opacity-100"
+                    } ${
+                      dragOverColumnId === colKey
                         ? "ring-4 ring-blue-500 rounded-lg bg-blue-50 shadow-xl border-2 border-blue-300"
                         : ""
-                      }`}
+                    }`}
                     draggable={column.status !== "archive"}
                     onDragStart={() => handleColumnDragStart(colKey)}
                     onDragEnter={() => setDragOverColumnId(colKey)}
@@ -1737,10 +1743,6 @@ const ProjectBoard = () => {
             ) : null}
           </DragOverlay>
         </DndContext>
-
-        {/* Scroll indicators */}
-        <div className="absolute top-0 left-0 bg-gradient-to-r from-white to-transparent w-8 h-full pointer-events-none opacity-50"></div>
-        <div className="absolute top-0 right-0 bg-gradient-to-l from-white to-transparent w-8 h-full pointer-events-none opacity-50"></div>
 
         {/* Jira-style Horizontal Scroll Indicator */}
         <HorizontalScrollIndicator
@@ -1817,10 +1819,11 @@ const ProjectBoard = () => {
                       <button
                         key={color}
                         onClick={() => setNewColumnColor(color)}
-                        className={`w-8 h-8 rounded-full border-2 ${newColumnColor === color
-                          ? "border-gray-800"
-                          : "border-gray-300"
-                          } bg-${color}-500 hover:opacity-80 transition-opacity`}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          newColumnColor === color
+                            ? "border-gray-800"
+                            : "border-gray-300"
+                        } bg-${color}-500 hover:opacity-80 transition-opacity`}
                       />
                     )
                   )}

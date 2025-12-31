@@ -166,7 +166,7 @@ const AssignUserModal = ({
 
         <div className="p-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-secondary-900">
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-gray-100">
               {card ? "Project Members" : "All Users"}
             </h3>
 
@@ -193,22 +193,22 @@ const AssignUserModal = ({
                 return (
                   <div
                     key={user?._id}
-                    className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-secondary-50 dark:bg-gray-700 rounded-lg"
                   >
                     <div className="flex items-center space-x-3">
                       <Avatar user={user} size="sm" />
                       <div>
-                        <p className="font-medium text-secondary-900">
+                        <p className="font-medium text-secondary-900 dark:text-gray-100">
                           {user?.name}
                         </p>
-                        <p className="text-sm text-secondary-600">
+                        <p className="text-sm text-secondary-600 dark:text-gray-400">
                           {user?.email}
                         </p>
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${
                             role === "admin"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-blue-100 text-blue-800"
+                              ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                              : "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                           }`}
                         >
                           {role}
@@ -221,7 +221,7 @@ const AssignUserModal = ({
                         <button
                           onClick={() => handleRemoveUser(user)}
                           disabled={isLoading}
-                          className="flex items-center space-x-1 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-200 disabled:opacity-50"
+                          className="flex items-center space-x-1 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors duration-200 disabled:opacity-50"
                         >
                           <UserMinus className="w-4 h-4" />
                           <span className="text-sm font-medium">
@@ -232,7 +232,7 @@ const AssignUserModal = ({
                         <button
                           onClick={() => handleAssignUser(user)}
                           disabled={isLoading}
-                          className="flex items-center space-x-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors duration-200 disabled:opacity-50"
+                          className="flex items-center space-x-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200 disabled:opacity-50"
                         >
                           <UserPlus className="w-4 h-4" />
                           <span className="text-sm font-medium">
@@ -247,7 +247,7 @@ const AssignUserModal = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end pt-6 border-t border-secondary-200 mt-6">
+          <div className="flex items-center justify-end pt-6 border-t border-secondary-200 dark:border-gray-700 mt-6">
             <button onClick={onClose} className="btn-secondary">
               Close
             </button>

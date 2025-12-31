@@ -188,15 +188,13 @@ const SimpleCommentEditor = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         dir="ltr"
-        className="w-full min-h-[100px] max-h-[200px] p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-200 relative z-20"
+        className="w-full min-h-[100px] max-h-[200px] p-3 pr-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors duration-200 relative z-20 placeholder:text-gray-400 dark:placeholder:text-gray-500"
         rows={4}
         spellCheck="false"
         autoCorrect="off"
         autoCapitalize="off"
         autoComplete="off"
         style={{
-          backgroundColor: "#fff",
-          color: "#374151",
           fontSize: "14px",
           lineHeight: "1.5",
           fontFamily:

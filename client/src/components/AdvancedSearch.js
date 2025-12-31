@@ -226,29 +226,29 @@ const AdvancedSearch = () => {
     if (type === "project") {
       switch (status?.toLowerCase()) {
         case "new":
-          return "bg-blue-100 text-blue-800";
+          return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
         case "ongoing":
-          return "bg-yellow-100 text-yellow-800";
+          return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
         case "completed":
-          return "bg-green-100 text-green-800";
+          return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
         case "cancelled":
-          return "bg-red-100 text-red-800";
+          return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
         default:
-          return "bg-gray-100 text-gray-800";
+          return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
       }
     }
 
     switch (status?.toLowerCase()) {
       case "todo":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
       case "doing":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
       case "review":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300";
       case "done":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
     }
   };
 
@@ -263,14 +263,14 @@ const AdvancedSearch = () => {
       <div className="relative">
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
             <input
               type="text"
               placeholder="Search projects, cards (#27)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsOpen(true)}
-              className="w-full md:w-[40rem] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full md:w-[40rem] pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300"
             />
             {searchQuery && (
               <button
@@ -278,7 +278,7 @@ const AdvancedSearch = () => {
                   setSearchQuery("");
                   setSearchResults([]);
                 }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -289,16 +289,16 @@ const AdvancedSearch = () => {
 
       {/* Search Results */}
       {isOpen && (searchQuery || searchResults.length > 0) && (
-        <div className="absolute top-full left-0 mt-2 w-full md:w-[40rem] bg-white rounded-lg shadow-xl border border-gray-200 z-[100] max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 mt-2 w-full md:w-[40rem] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[100] max-h-96 overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-gray-500 mt-2">Searching...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Searching...</p>
             </div>
           ) : searchResults.length > 0 ? (
             <div className="py-2">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   {searchResults.length} result
                   {searchResults.length !== 1 ? "s" : ""} found
                 </p>
@@ -309,20 +309,20 @@ const AdvancedSearch = () => {
                   <button
                     key={`${result.type}-${result.id}`}
                     onClick={() => handleResultClick(result)}
-                    className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 text-left"
+                    className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-left transition-colors duration-200"
                   >
                     <div className="flex-shrink-0 mt-1">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                           {result.title}
                         </p>
                         {result.metadata?.cardNumber !== undefined && (
-                          <span className="text-xs font-medium text-gray-500">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                             #{result.metadata.cardNumber}
                           </span>
                         )}
@@ -335,38 +335,38 @@ const AdvancedSearch = () => {
                           {result.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                         {result.subtitle}
                       </p>
                       {result.metadata && (
                         <div className="flex items-center space-x-4 mt-1">
                           {result.metadata.cardNumber !== undefined && (
-                            <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
                               #{result.metadata.cardNumber}
                             </span>
                           )}
                           {result.metadata.project && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
                               Project: {result.metadata.project}
                             </span>
                           )}
                           {result.metadata.members !== undefined && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
                               {result.metadata.members} members
                             </span>
                           )}
                           {result.metadata.assignees !== undefined && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
                               {result.metadata.assignees} assignees
                             </span>
                           )}
                           {result.metadata.dueDate && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
                               Due: {formatDate(result.metadata.dueDate)}
                             </span>
                           )}
                           {result.metadata.projectType && (
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
                               Type: {result.metadata.projectType}
                             </span>
                           )}
@@ -379,9 +379,9 @@ const AdvancedSearch = () => {
             </div>
           ) : searchQuery ? (
             <div className="p-4 text-center">
-              <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No results found</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <Search className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">No results found</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                 Try different keywords or check your spelling
               </p>
             </div>

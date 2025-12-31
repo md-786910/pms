@@ -584,13 +584,13 @@ const LabelsModal = ({
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           ref={modalRef}
-          className="modal-content relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all"
+          className="modal-content relative w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-xl transition-all"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Labels</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Labels</h3>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -599,7 +599,7 @@ const LabelsModal = ({
                     onClose();
                   }
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -613,13 +613,13 @@ const LabelsModal = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search labels..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
 
           {/* Labels List */}
           <div className="px-6 pb-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">Labels</h4>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Labels</h4>
             <div className="max-h-60 overflow-y-auto space-y-2">
               {filteredLabels.map((label) => {
                 let colorConfig = labelColors.find(
@@ -641,7 +641,7 @@ const LabelsModal = ({
                 return (
                   <div
                     key={label._id || label.id || label.name}
-                    className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg"
+                    className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
                   >
                     {/* Checkbox */}
                     <input
@@ -658,13 +658,13 @@ const LabelsModal = ({
                           type="text"
                           value={editLabelName}
                           onChange={(e) => setEditLabelName(e.target.value.toUpperCase())}
-                          className="flex-1 p-1 border border-gray-300 rounded text-sm"
+                          className="flex-1 p-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-sm"
                           autoFocus
                         />
                         <select
                           value={editLabelColor}
                           onChange={(e) => setEditLabelColor(e.target.value)}
-                          className="p-1 border border-gray-300 rounded text-sm"
+                          className="p-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-sm"
                         >
                           {labelColors.map((color) => (
                             <option key={color.value} value={color.value}>
@@ -674,13 +674,13 @@ const LabelsModal = ({
                         </select>
                         <button
                           onClick={handleSaveEdit}
-                          className="text-green-600 hover:text-green-800 text-sm"
+                          className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-sm"
                         >
                           Save
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="text-red-600 hover:text-red-800 text-sm"
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
                         >
                           Cancel
                         </button>
@@ -701,14 +701,14 @@ const LabelsModal = ({
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={(e) => handleEditLabel(label, e)}
-                            className="text-gray-400 hover:text-gray-600 p-1"
+                            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1"
                             title="Edit label"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={(e) => handleDeleteLabel(label, e)}
-                            className="text-gray-400 hover:text-red-600 p-1 transition-colors"
+                            className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 p-1 transition-colors"
                             title="Delete label"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -723,7 +723,7 @@ const LabelsModal = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="px-6 py-4 border-t border-gray-200 space-y-2">
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
             {showCreateLabel ? (
               <div className="space-y-2">
                 <input
@@ -731,13 +731,13 @@ const LabelsModal = ({
                   value={newLabelName}
                   onChange={(e) => setNewLabelName(e.target.value.toUpperCase())}
                   placeholder="Label name"
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   autoFocus
                 />
                 <select
                   value={newLabelColor}
                   onChange={(e) => setNewLabelColor(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded text-sm"
                 >
                   {labelColors.map((color) => (
                     <option key={color.value} value={color.value}>
@@ -757,7 +757,7 @@ const LabelsModal = ({
                       e.stopPropagation();
                       setShowCreateLabel(false);
                     }}
-                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-400"
+                    className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 px-3 rounded text-sm hover:bg-gray-400 dark:hover:bg-gray-500"
                   >
                     Cancel
                   </button>
@@ -769,7 +769,7 @@ const LabelsModal = ({
                   e.stopPropagation();
                   setShowCreateLabel(true);
                 }}
-                className="w-full bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200 flex items-center justify-center space-x-2"
+                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-2 px-3 rounded text-sm hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center space-x-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create a new label</span>
@@ -786,14 +786,14 @@ const LabelsModal = ({
             className="absolute inset-0 bg-black bg-opacity-50"
             onClick={cancelDelete}
           />
-          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
               Permanently Delete Label
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Are you sure you want to permanently delete the label "
               {labelToDelete.name}"?
-              <span className="block mt-2 text-sm text-red-600 font-semibold">
+              <span className="block mt-2 text-sm text-red-600 dark:text-red-400 font-semibold">
                 This will remove the label from ALL cards in this project and
                 cannot be undone.
               </span>
@@ -807,7 +807,7 @@ const LabelsModal = ({
               </button>
               <button
                 onClick={cancelDelete}
-                className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>

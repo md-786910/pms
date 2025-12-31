@@ -131,14 +131,14 @@ const ArchivedProjects = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+          <AlertTriangle className="w-5 h-5 text-amber-500 dark:text-amber-400 mt-0.5" />
           <div>
-            <h3 className="font-medium text-amber-800">
+            <h3 className="font-medium text-amber-800 dark:text-amber-300">
               About Archived Projects
             </h3>
-            <p className="text-sm text-amber-700 mt-1">
+            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
               Archived projects are hidden from the main project list but can be
               restored at any time. Permanent deletion will remove all project
               data including cards, columns, and attachments.
@@ -148,17 +148,17 @@ const ArchivedProjects = () => {
       </div>
 
       {/* Archived Projects List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Archive className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <Archive className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Archived Projects
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Projects that have been archived
               </p>
             </div>
@@ -168,13 +168,13 @@ const ArchivedProjects = () => {
         <div className="p-6">
           {!archivedProjects || archivedProjects.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <Archive className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Archive className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 No archived projects
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
                 When you archive a project, it will appear here
               </p>
               <Link
@@ -194,15 +194,15 @@ const ArchivedProjects = () => {
                 return (
                   <div
                     key={project._id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 border border-gray-200"
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 border border-gray-200 dark:border-gray-600"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Archive className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <Archive className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
                         <div className="flex items-center space-x-3 mb-1">
-                          <h3 className="font-medium text-gray-900">
+                          <h3 className="font-medium text-gray-900 dark:text-gray-100">
                             {project.name || "Unnamed Project"}
                           </h3>
                           {/* Status Badges */}
@@ -228,7 +228,7 @@ const ArchivedProjects = () => {
                             </span>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           {stripHtmlTags(project.description)?.length > 150
                             ? stripHtmlTags(project.description).substring(
                                 0,
@@ -248,7 +248,7 @@ const ArchivedProjects = () => {
                                     key={
                                       member.user?._id || member.user || index
                                     }
-                                    className="border-2 text-white border-white shadow-sm rounded-full"
+                                    className="border-2 text-white border-white dark:border-gray-700 shadow-sm rounded-full"
                                   >
                                     <Avatar
                                       user={member.user}
@@ -260,7 +260,7 @@ const ArchivedProjects = () => {
                               {project.members?.filter(
                                 (member) => member && member.user
                               )?.length > 3 && (
-                                <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs text-gray-600 font-medium shadow-sm bg-gray-200">
+                                <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 font-medium shadow-sm bg-gray-200 dark:bg-gray-600">
                                   +
                                   {project.members.filter(
                                     (member) => member && member.user
@@ -268,14 +268,14 @@ const ArchivedProjects = () => {
                                 </div>
                               )}
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
                               {project.members?.filter(
                                 (member) => member && member.user
                               )?.length || 0}{" "}
                               members
                             </span>
                           </div>
-                          <span className="text-xs text-gray-500 flex items-center">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                             <Calendar className="w-3 h-3 mr-1" />
                             Archived{" "}
                             {project.archivedAt
@@ -283,7 +283,7 @@ const ArchivedProjects = () => {
                               : "Unknown"}
                           </span>
                           {project.archivedBy && (
-                            <span className="text-xs text-gray-500 flex items-center">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                               <Users className="w-3 h-3 mr-1" />
                               by {project.archivedBy.name || "Unknown"}
                             </span>
@@ -295,7 +295,7 @@ const ArchivedProjects = () => {
                     <div className="flex items-center space-x-2">
                       <Link
                         to={`/project/${project._id}`}
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200 flex items-center space-x-1"
                         title="View Project"
                       >
                         <Calendar className="w-4 h-4" />
@@ -303,7 +303,7 @@ const ArchivedProjects = () => {
                       </Link>
                       <button
                         onClick={() => handleRestoreProject(project)}
-                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors duration-200 flex items-center space-x-1"
                         title="Restore Project"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -311,7 +311,7 @@ const ArchivedProjects = () => {
                       </button>
                       <button
                         onClick={() => handlePermanentDelete(project)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                        className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-200 flex items-center space-x-1"
                         title="Permanently Delete"
                       >
                         <Trash2 className="w-4 h-4" />

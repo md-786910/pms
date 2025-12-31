@@ -91,7 +91,7 @@ const CreateCardModal = ({
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-secondary-700 mb-2"
+              className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2"
             >
               Card Title *
             </label>
@@ -110,7 +110,7 @@ const CreateCardModal = ({
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-secondary-700 mb-2"
+              className="block text-sm font-medium text-secondary-700 dark:text-gray-300 mb-2"
             >
               Description
             </label>
@@ -124,7 +124,7 @@ const CreateCardModal = ({
                   description: e.target.value,
                 });
               }}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] resize-y"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px] resize-y placeholder:text-gray-400 dark:placeholder:text-gray-500"
               placeholder="Enter card description"
               rows={4}
             />

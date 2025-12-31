@@ -149,12 +149,12 @@ const ToastContainer = ({ toasts, onRemove }) => {
       {toasts.map((toast) => (
         <div key={toast.id} className="notification-toast animate-slide-up">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-secondary-900">
+            <p className="text-sm font-medium text-secondary-900 dark:text-gray-100">
               {toast.message}
             </p>
             <button
               onClick={() => onRemove(toast.id)}
-              className="ml-4 text-secondary-400 hover:text-secondary-600"
+              className="ml-4 text-secondary-400 hover:text-secondary-600 dark:text-gray-400 dark:hover:text-gray-200"
             >
               ×
             </button>

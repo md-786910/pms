@@ -1730,7 +1730,7 @@ const CardModal = ({
       <div className="modal-overlay">
         <div
           ref={modalRef}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
         >
           {/* Modal Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-2">
@@ -1804,7 +1804,7 @@ const CardModal = ({
               <div className="lg:col-span-2 space-y-4 max-h-[70vh] overflow-y-auto px-2">
                 {/* Status and Due Date Display */}
 
-                <div className="sticky top-0 z-50 bg-white pb-4">
+                <div className="sticky top-0 z-50 bg-white dark:bg-gray-800 pb-4">
                   {/* Status/Due Row */}
                   <div className="flex items-center gap-2">
                     {/* Completion Toggle - Hidden when archived */}
@@ -1813,7 +1813,7 @@ const CardModal = ({
                         onClick={handleCompleteToggle}
                         className={`mt-6 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${card.isComplete
                           ? "bg-green-500 border-green-500 hover:bg-green-600"
-                          : "border-gray-400 hover:border-gray-600 hover:bg-gray-50"
+                          : "border-gray-400 dark:border-gray-500 hover:border-gray-600 dark:hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                           } cursor-pointer`}
                         title={
                           card.isComplete
@@ -1841,7 +1841,7 @@ const CardModal = ({
                     <div className="flex items-center gap-6">
                       {/* CARD NUMBER */}
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-700">Card Number</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Card Number</span>
 
                         <div
                           className="px-4 py-1.5 rounded-lg bg-blue-500 text-white 
@@ -1853,7 +1853,7 @@ const CardModal = ({
 
                       {/* STATUS */}
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-700">Status</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Status</span>
 
                         {(() => {
                           const colors = getCardStatusColors(card.status);
@@ -1878,7 +1878,7 @@ const CardModal = ({
                       
                       {/* DUE DATE */}
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-700">Due Date</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Due Date</span>
                       
                         <div
                           className={`px-4 py-1.5 rounded-lg text-sm font-medium shadow-md 
@@ -1903,8 +1903,8 @@ const CardModal = ({
                 {/* Description */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <AlignLeft className="w-4 h-4 text-gray-600" />
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <AlignLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       Description
                     </label>
 
@@ -1937,7 +1937,7 @@ const CardModal = ({
                       </div>
                     ) : (
                       <div
-                        className="w-full p-4 min-h-[120px] border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                        className="w-full p-4 min-h-[120px] border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                         onClick={() => setIsEditing(true)}
                       >
                         {formData.description && formData.description.trim() ? (
@@ -1957,7 +1957,7 @@ const CardModal = ({
                             }}
                           />
                         ) : (
-                          <div className="flex items-center text-gray-500 text-sm">
+                          <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
                             <Edit2 className="w-4 h-4 mr-2" />
                             <span>Click to edit</span>
                           </div>
@@ -1986,7 +1986,7 @@ const CardModal = ({
                             description: card.description,
                           });
                         }}
-                        className="text-gray-600 hover:text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
                       >
                         Cancel
                       </button>
@@ -1997,8 +1997,8 @@ const CardModal = ({
                 {/* Card Items Section */}
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <CheckSquare className="w-4 h-4 text-gray-400" />
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <CheckSquare className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       Checklist ({items.length})
                     </label>
                   </div>
@@ -2007,13 +2007,13 @@ const CardModal = ({
                   {(items.length > 0 || showAddItem) && (
                     <div className="mb-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-500 font-medium">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {items.length > 0
                             ? `${items.filter((item) => item.completed).length
                             }/${items.length} items`
                             : "0 items"}
                         </span>
-                        <span className="text-xs text-gray-500 font-medium">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {items.length > 0
                             ? `${Math.round(
                               (items.filter((item) => item.completed).length /
@@ -2023,7 +2023,7 @@ const CardModal = ({
                             : "0%"}
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-blue-500 transition-all duration-300"
                           style={{
@@ -2053,7 +2053,7 @@ const CardModal = ({
                         <div key={item._id}>
                           {editingItemId === item._id ? (
                             /* Edit Mode */
-                            <div className="p-2 bg-white border-2 border-blue-300 rounded-lg">
+                            <div className="p-2 bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 rounded-lg">
                               <input
                                 type="text"
                                 value={editingItemTitle}
@@ -2067,7 +2067,7 @@ const CardModal = ({
                                     handleCancelEditItem();
                                   }
                                 }}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
                                 autoFocus
                               />
                               <div className="flex space-x-2">
@@ -2080,7 +2080,7 @@ const CardModal = ({
                                 </button>
                                 <button
                                   onClick={handleCancelEditItem}
-                                  className="flex-1 bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-1.5 px-3 rounded-lg transition-colors text-xs"
+                                  className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 font-medium py-1.5 px-3 rounded-lg transition-colors text-xs"
                                 >
                                   Cancel
                                 </button>
@@ -2092,12 +2092,12 @@ const CardModal = ({
                               onClick={() =>
                                 handleToggleItem(item._id, item.completed)
                               }
-                              className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors cursor-pointer"
+                              className="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                             >
                               <div
                                 className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${item.completed
                                   ? "bg-green-500 border-green-500 text-white"
-                                  : "border-gray-300"
+                                  : "border-gray-300 dark:border-gray-500"
                                   }`}
                               >
                                 {item.completed && (
@@ -2110,8 +2110,8 @@ const CardModal = ({
                                   handleStartEditItem(item);
                                 }}
                                 className={`flex-1 text-left text-sm ${item.completed
-                                  ? "line-through text-gray-400"
-                                  : "text-gray-700"
+                                  ? "line-through text-gray-400 dark:text-gray-500"
+                                  : "text-gray-700 dark:text-gray-200"
                                   }`}
                               >
                                 {item.title}
@@ -2122,7 +2122,7 @@ const CardModal = ({
                                     e.stopPropagation();
                                     handleStartEditItem(item);
                                   }}
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all"
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-500 hover:text-blue-700 transition-all"
                                   title="Edit item"
                                 >
                                   <Edit className="w-3 h-3" />
@@ -2132,7 +2132,7 @@ const CardModal = ({
                                     e.stopPropagation();
                                     handleDeleteItem(item._id);
                                   }}
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all"
+                                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-700 transition-all"
                                   title="Delete item"
                                 >
                                   <X className="w-3 h-3" />
@@ -2143,7 +2143,7 @@ const CardModal = ({
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 italic text-sm text-center py-2">
+                      <p className="text-gray-500 dark:text-gray-400 italic text-sm text-center py-2">
                         No checklist yet
                       </p>
                     )}
@@ -2151,7 +2151,7 @@ const CardModal = ({
 
                   {/* Add Item Box - Fixed at bottom */}
                   {showAddItem ? (
-                    <div className="bg-white border-2 border-blue-300 rounded-lg p-3">
+                    <div className="bg-white dark:bg-gray-700 border-2 border-blue-300 dark:border-blue-500 rounded-lg p-3">
                       <input
                         type="text"
                         value={newItemTitle}
@@ -2165,7 +2165,7 @@ const CardModal = ({
                           }
                         }}
                         placeholder="Enter item title..."
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
                         autoFocus
                       />
                       <div className="flex space-x-2">
@@ -2181,7 +2181,7 @@ const CardModal = ({
                             setShowAddItem(false);
                             setNewItemTitle("");
                           }}
-                          className="bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                          className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
                         >
                           Cancel
                         </button>
@@ -2190,10 +2190,10 @@ const CardModal = ({
                   ) : (
                     <button
                       onClick={() => setShowAddItem(!showAddItem)}
-                      className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 flex items-center justify-center space-x-2"
+                      className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex items-center justify-center space-x-2"
                     >
-                      <Plus className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-600">
+                      <Plus className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Add Checklist
                       </span>
                     </button>
@@ -2203,7 +2203,7 @@ const CardModal = ({
                 {/* Images */}
                 {getImageAttachments().length > 0 && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Images ({getImageAttachments().length})
                     </label>
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-4">
@@ -2228,7 +2228,7 @@ const CardModal = ({
                               attachment.filename ||
                               attachment.name
                             }
-                            className="w-full h-28 object-cover rounded-lg border border-gray-200 hover:border-blue-300 transition-colors duration-200"
+                            className="w-full h-28 object-cover rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 transition-colors duration-200"
                             onError={(e) => {
                               try {
                                 showToast("Image attachment not found or removed", "error");
@@ -2259,8 +2259,8 @@ const CardModal = ({
                   </div>
                 )}
                 <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <MessageSquare className="w-4 h-4 text-gray-600" />
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <MessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     Add Comment
                   </label>
                   <div className="comment-editor">
@@ -2288,9 +2288,9 @@ const CardModal = ({
                 </div>
 
                 {/* Comments */}
-                <div className="bg-white p-6">
+                <div className="bg-white dark:bg-gray-800 p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                       Comments ({card.comments.length})
                     </h3>
                   </div>
@@ -2309,7 +2309,7 @@ const CardModal = ({
                         return (
                           <div
                             key={comment._id || comment.id}
-                            className="bg-gray-50 rounded-lg p-4 transition-colors duration-200 group"
+                            className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 transition-colors duration-200 group"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-3">
@@ -2325,14 +2325,14 @@ const CardModal = ({
                                   }
                                 />
                                 <div>
-                                  <span className="font-medium text-gray-900">
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">
                                     {comment.user?.name ||
                                       (comment.user &&
                                         typeof comment.user === "string"
                                         ? "Loading..."
                                         : "Unknown User")}
                                   </span>
-                                  <span className="text-xs text-gray-500 ml-2">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                                     {(() => {
                                       const date = new Date(comment.timestamp || comment.createdAt);
 
@@ -2349,7 +2349,7 @@ const CardModal = ({
                                     })()}
                                     {comment.updatedAt &&
                                       comment.updatedAt !== comment.timestamp && (
-                                        <span className="text-gray-400 ml-1">(edited)</span>
+                                        <span className="text-gray-400 dark:text-gray-500 ml-1">(edited)</span>
                                       )}
                                   </span>
                                 </div>
@@ -2361,7 +2361,7 @@ const CardModal = ({
                                     onClick={() =>
                                       handleStartEditComment(comment)
                                     }
-                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-all duration-200"
+                                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-500 hover:text-blue-700 transition-all duration-200"
                                     title="Edit comment"
                                   >
                                     <Edit className="w-3 h-3" />
@@ -2375,7 +2375,7 @@ const CardModal = ({
                                   onChange={(e) =>
                                     setEditCommentText(e.target.value)
                                   }
-                                  className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  className="w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   rows="3"
                                   placeholder="Edit your comment..."
                                 />
@@ -2396,7 +2396,7 @@ const CardModal = ({
                               </div>
                             ) : (
                               <div
-                                className={`text-sm text-gray-700 prose prose-sm max-w-none ${(comment.text &&
+                                className={`text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none ${(comment.text &&
                                   comment.text.includes(
                                     "moved this card from"
                                   )) ||
@@ -2429,8 +2429,8 @@ const CardModal = ({
                     onClick={() => handleNavigateToCard(prevCard)}
                     disabled={!prevCard}
                     className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${prevCard
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      ? "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      : "bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                       }`}
                     title={prevCard ? "Previous card" : "No previous card"}
                   >
@@ -2441,8 +2441,8 @@ const CardModal = ({
                     onClick={() => handleNavigateToCard(nextCard)}
                     disabled={!nextCard}
                     className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 ${nextCard
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      ? "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      : "bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                       }`}
                     title={nextCard ? "Next card" : "No next card"}
                   >
@@ -2453,10 +2453,10 @@ const CardModal = ({
 
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Status
                     {isArchived && (
-                      <span className="text-xs text-gray-500 ml-2 font-normal">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 font-normal">
                         (Disabled for archived cards)
                       </span>
                     )}
@@ -2464,7 +2464,7 @@ const CardModal = ({
                   <select
                     value={card.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                    className={`w-full p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isArchived ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""
                       }`}
                     disabled={loadingColumns || isArchived}
                   >
@@ -2486,12 +2486,12 @@ const CardModal = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Clock4 className="w-4 h-4 text-gray-700" />
+                      <Clock4 className="w-4 h-4 text-gray-700 dark:text-gray-300" />
 
-                      <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
                         Due Date
                         {isArchived && (
-                          <span className="text-xs text-gray-500 font-normal">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">
                             (Disabled for archived cards)
                           </span>
                         )}
@@ -2532,7 +2532,7 @@ const CardModal = ({
                       onChange={(e) =>
                         setFormData({ ...formData, dueDate: e.target.value })
                       }
-                      className={`w-full p-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isArchived ? "bg-gray-100 cursor-not-allowed" : ""
+                      className={`w-full p-2 pr-10 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isArchived ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""
                         }`}
                       style={{
                         colorScheme: formData.dueDate ? 'normal' : 'light',
@@ -2577,8 +2577,8 @@ const CardModal = ({
                 {/* Priority */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4 text-gray-700" />
-                    <label className="text-sm font-semibold text-gray-700">
+                    <AlertTriangle className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Priority
                     </label>
                   </div>
@@ -2594,7 +2594,7 @@ const CardModal = ({
                             : priority === "medium"
                               ? "bg-yellow-100 text-yellow-700"
                               : "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                           }`}
                       >
                         {priority.charAt(0).toUpperCase() + priority.slice(1)}
@@ -2607,8 +2607,8 @@ const CardModal = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <Tag className="w-4 h-4 text-gray-700" />            
-                      <label className="block text-sm font-semibold text-gray-700">
+                      <Tag className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Labels ({card.labels?.length || 0})
                       </label>
                     </div>  
@@ -2662,7 +2662,7 @@ const CardModal = ({
                   </div>
 
                   {card.labels?.length === 0 && (
-                    <div className="text-center py-4 text-gray-500 text-xs">
+                    <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-xs">
                       No labels assigned
                     </div>
                   )}
@@ -2672,8 +2672,8 @@ const CardModal = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <UserPlus className="w-4 h-4 text-gray-700" />
-                      <label className="text-sm font-semibold text-gray-700">
+                      <UserPlus className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Members ({card.members?.length || 0})
                       </label>
                     </div>
@@ -2690,11 +2690,11 @@ const CardModal = ({
                       assignees.map((user) => (
                         <div
                           key={user._id || user.id}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
                         >
                           <div className="flex items-center space-x-2">
                             <Avatar user={user} size="xs" />
-                            <span className="text-xs text-gray-700">
+                            <span className="text-xs text-gray-700 dark:text-gray-200">
                               {user.name || "Unknown User"}
                             </span>
                           </div>
@@ -2709,7 +2709,7 @@ const CardModal = ({
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 italic text-xs">
+                      <p className="text-gray-500 dark:text-gray-400 italic text-xs">
                         No assignees
                       </p>
                     )}
@@ -2719,8 +2719,8 @@ const CardModal = ({
                 {/* File Attachments */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Paperclip className="w-4 h-4 text-gray-700" />
-                    <label className="text-sm font-semibold text-gray-700">
+                    <Paperclip className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Documents ({getOtherAttachments().length})
                     </label>
                   </div>
@@ -2729,18 +2729,18 @@ const CardModal = ({
                       getOtherAttachments().map((attachment) => (
                         <div
                           key={attachment._id || attachment.id}
-                          className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors duration-200"
+                          className="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
                         >
                           <span className="text-lg">
                             {getFileIcon(attachment)}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 text-xs truncate">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 text-xs truncate">
                               {attachment.originalName ||
                                 attachment.filename ||
                                 attachment.name}
                             </p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
                               {attachment.uploadedAt
                                 ? new Date(
                                   attachment.uploadedAt
@@ -2778,7 +2778,7 @@ const CardModal = ({
                                 });
                                 setShowDeleteAttachmentConfirm(true);
                               }}
-                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 hover:text-red-700 transition-all duration-200 text-xs"
                               title="Delete attachment"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -2787,7 +2787,7 @@ const CardModal = ({
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 italic text-xs">
+                      <p className="text-gray-500 dark:text-gray-400 italic text-xs">
                         No file attachments
                       </p>
                     )}
@@ -2813,7 +2813,7 @@ const CardModal = ({
                           <span>Upload Files (Max 5)</span>
                         </label>
                       </div>
-                      <p className="text-xs text-gray-500 text-center">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                         Max 5 files, 25MB each. Supports images and documents.
                       </p>
                     </div>
@@ -2825,7 +2825,7 @@ const CardModal = ({
                         value={attachmentUrl}
                         onChange={(e) => setAttachmentUrl(e.target.value)}
                         placeholder="Enter attachment URL..."
-                        className="flex-1 p-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                        className="flex-1 p-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
                       />
                       <button
                         onClick={handleAddAttachment}
@@ -3146,55 +3146,55 @@ const CardModal = ({
         <div className="modal-overlay">
           <div
             ref={formattingHelpModalRef}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4"
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Markdown Formatting Help
                 </h3>
                 <button
                   onClick={() => setShowFormattingHelp(false)}
-                  className="p-1 rounded hover:bg-gray-100 transition-colors duration-200"
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 </button>
               </div>
 
               <div className="space-y-3 text-sm">
                 <div>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                  <code className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-xs">
                     **bold**
                   </code>
-                  <span className="ml-2 text-gray-600">
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">
                     → <strong>bold</strong>
                   </span>
                 </div>
                 <div>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                  <code className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-xs">
                     *italic*
                   </code>
-                  <span className="ml-2 text-gray-600">
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">
                     → <em>italic</em>
                   </span>
                 </div>
                 <div>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                  <code className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-xs">
                     ## Header
                   </code>
-                  <span className="ml-2 text-gray-600">→ Header (larger)</span>
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">→ Header (larger)</span>
                 </div>
                 <div>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                  <code className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-xs">
                     - List item
                   </code>
-                  <span className="ml-2 text-gray-600">→ • List item</span>
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">→ • List item</span>
                 </div>
                 <div>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                  <code className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-xs">
                     [link](url)
                   </code>
-                  <span className="ml-2 text-gray-600">
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">
                     →{" "}
                     <a href="#" className="text-blue-600">
                       link

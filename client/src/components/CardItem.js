@@ -52,7 +52,7 @@ const CardImage = React.memo(
           key={imageId}
           src={imageUrl}
           alt={altText}
-          className="w-full h-24 object-cover rounded-lg border border-gray-200 bg-gray-100"
+          className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-700"
           loading="lazy"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
@@ -433,10 +433,10 @@ const CardItem = React.memo(
           style={style}
           {...attributes}
           {...listeners}
-          className={`bg-white rounded-lg shadow-sm border transition-all duration-200 group relative cursor-grab active:cursor-grabbing ${
+          className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border transition-all duration-200 group relative cursor-grab active:cursor-grabbing ${
             isUnread
               ? "border-l-blue-500 border-l-4 hover:shadow-md hover:border-l-blue-600"
-              : "border-gray-200 hover:shadow-md hover:border-gray-300"
+              : "border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
           } ${isDragging ? "shadow-xl scale-105 z-50 opacity-50" : ""}`}
           onClick={handleCardClick}
         >
@@ -455,7 +455,7 @@ const CardItem = React.memo(
                       e.stopPropagation();
                       handleCompleteToggle(e);
                     }}
-                    className={`absolute left-0 top-0.5 z-20 p-0.5 rounded-full hover:bg-gray-100 transition-all duration-200 ease-in-out ${
+                    className={`absolute left-0 top-0.5 z-20 p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out ${
                       card.isComplete
                         ? "opacity-100"
                         : "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"
@@ -471,7 +471,7 @@ const CardItem = React.memo(
                         <Check className="w-3 h-3" strokeWidth={3} />
                       </div>
                     ) : (
-                      <div className="w-4 h-4 border-2 border-gray-400 rounded-full hover:border-gray-600 transition-colors duration-200"></div>
+                      <div className="w-4 h-4 border-2 border-gray-400 dark:border-gray-500 rounded-full hover:border-gray-600 dark:hover:border-gray-400 transition-colors duration-200"></div>
                     )}
                   </button>
                 )}
@@ -487,13 +487,13 @@ const CardItem = React.memo(
                 >
                   <div className="min-w-0">
                     <h4
-                      className={`font-medium text-[#292a2e] text-medium leading-tight mb-1 line-clamp-5 break-words pr-5`}
+                      className={`font-medium text-[#292a2e] dark:text-gray-100 text-medium leading-tight mb-1 line-clamp-5 break-words pr-5`}
                     >
                       {card.title}
                     </h4>
                     {/* Issue Number and Priority */}
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <span className="bg-gray-200  text-black font-medium px-2 py-0.5 rounded">
+                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="bg-gray-200 dark:bg-gray-700 text-black dark:text-gray-200 font-medium px-2 py-0.5 rounded">
                         #{card.cardNumber || card._id?.slice(-4) || "0000"}
                       </span>
                       {card.priority && (
@@ -607,12 +607,12 @@ const CardItem = React.memo(
               card.description.trim() &&
               card.description !== "<p><br></p>" &&
               card.description !== "<p></p>" ? (
-              <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 leading-relaxed">
                 {stripHtmlTags(card.description)}
               </p>
             ) : card.attachments && card.attachments.length > 0 ? (
-              <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center space-x-2 text-xs text-gray-600">
+              <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
                   <Paperclip className="w-3 h-3" />
                   <span>{card.attachments.length} attachment(s)</span>
                 </div>
@@ -625,7 +625,7 @@ const CardItem = React.memo(
             {/* Bottom Row with Icons */}
             <div className="flex items-center justify-between">
               {/* Left side - Comments, Attachments, Labels */}
-              <div className="flex items-center space-x-3 text-xs text-gray-500">
+              <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
                 {card.comments && card.comments.length > 0 && (
                   <div className="flex items-center space-x-1">
                     <MessageSquare className="w-3.5 h-3.5" />
@@ -655,13 +655,13 @@ const CardItem = React.memo(
                   {assignees.slice(0, 3).map((user) => (
                     <div
                       key={user.id}
-                      className="border-2 border-white shadow-sm rounded-full"
+                      className="border-2 border-white dark:border-gray-800 shadow-sm rounded-full"
                     >
                       <Avatar user={user} size="xs" showTooltip={true} />
                     </div>
                   ))}
                   {assignees.length > 3 && (
-                    <div className="w-6 h-6 bg-gray-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-gray-600 font-medium shadow-sm">
+                    <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 font-medium shadow-sm">
                       +{assignees.length - 3}
                     </div>
                   )}
@@ -744,7 +744,7 @@ const CardItem = React.memo(
                   );
                 })}
                 {card.labels.length > 3 && (
-                  <span className="text-xs text-gray-500 font-medium">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                     +{card.labels.length - 3}
                   </span>
                 )}
@@ -757,11 +757,11 @@ const CardItem = React.memo(
             <div className="px-3 pb-2">
               {/* Progress Bar */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-500 font-medium">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                   {items.filter((item) => item.completed).length}/{items.length}{" "}
                   items
                 </span>
-                <div className="w-16 h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div className="w-16 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 transition-all duration-300"
                     style={{
@@ -840,7 +840,7 @@ const CardItem = React.memo(
                     }
                   }}
                   placeholder="Add an item..."
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex space-x-1">
@@ -859,7 +859,7 @@ const CardItem = React.memo(
                       setShowAddItem(false);
                       setNewItemTitle("");
                     }}
-                    className="px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400 transition-colors"
+                    className="px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs rounded hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
                   >
                     Cancel
                   </button>
@@ -871,7 +871,7 @@ const CardItem = React.memo(
                   e.stopPropagation();
                   setShowAddItem(true);
                 }}
-                className="w-full flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 py-1 rounded hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
+                className="w-full flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100"
               >
                 {/* <Plus className="w-3 h-3" /> */}
                 {/* <span>Add an item</span> */}

@@ -340,10 +340,10 @@ const ProjectList = () => {
 
           {/* Cards Due Today */}
           {cardsDueToday.length > 0 && (
-            <div className="bg-white border border-gray-200 p-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-center space-x-2 mb-4">
-                <Clock className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Due Today
                 </h2>
                 {cardsDueToday.length > 0 && (
@@ -363,22 +363,22 @@ const ProjectList = () => {
                     <div
                       key={card._id}
                       onClick={() => handleCardClick(card)}
-                      className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200"
+                      className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm line-clamp-2 flex-1">
                           {card.title}
                         </h3>
-                        <span className="bg-blue-200 text-blue-800 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                        <span className="bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
                           #{card.cardNumber || card._id?.slice(-4)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-600">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex items-center space-x-1">
                           <FolderOpen className="w-3 h-3" />
                           <span className="truncate">{card.project?.name}</span>
                         </div>
-                        <div className="flex items-center space-x-1 text-blue-600">
+                        <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
                           <Calendar className="w-3 h-3" />
                           <span>Today</span>
                         </div>
@@ -388,8 +388,8 @@ const ProjectList = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">
+                  <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     No cards due today. You're all caught up! 🎉
                   </p>
                 </div>
@@ -399,10 +399,10 @@ const ProjectList = () => {
 
           {/* Cards Back Date */}
           {cardsBackDate.length > 0 && (
-            <div className="bg-white border border-gray-200 p-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
               <div className="flex items-center space-x-2 mb-4">
-                <Clock className="w-5 h-5 text-red-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Pending</h2>
+                <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Pending</h2>
                 {cardsBackDate.length > 0 && (
                   <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">
                     {cardsBackDate.length}
@@ -420,22 +420,22 @@ const ProjectList = () => {
                     <div
                       key={card._id}
                       onClick={() => handleCardClick(card)}
-                      className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-red-300 transition-all duration-200"
+                      className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/30 dark:to-orange-900/30 border border-red-200 dark:border-red-700 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-red-300 dark:hover:border-red-600 transition-all duration-200"
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm line-clamp-2 flex-1">
                           {card.title}
                         </h3>
-                        <span className="bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                        <span className="bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
                           #{card.cardNumber || card._id?.slice(-4)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-600">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex items-center space-x-1">
                           <FolderOpen className="w-3 h-3" />
                           <span className="truncate">{card.project?.name}</span>
                         </div>
-                        <div className="flex items-center space-x-1 text-red-600">
+                        <div className="flex items-center space-x-1 text-red-600 dark:text-red-400">
                           <Calendar className="w-3 h-3" />
                           <span>{formatDueDate(card.dueDate)}</span>
                         </div>
@@ -445,8 +445,8 @@ const ProjectList = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">
+                  <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     No past due cards. Great job!
                   </p>
                 </div>
@@ -456,10 +456,10 @@ const ProjectList = () => {
 
           {/* Upcoming Cards */}
           {cardsUpcoming.length > 0 && (
-            <div className="bg-white border border-gray-200 p-4 rounded-b-lg">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-b-lg">
               <div className="flex items-center space-x-2 mb-4">
-                <Calendar className="w-5 h-5 text-green-600" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Upcoming
                 </h2>
                 {cardsUpcoming.length > 0 && (
@@ -479,22 +479,22 @@ const ProjectList = () => {
                     <div
                       key={card._id}
                       onClick={() => handleCardClick(card)}
-                      className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-green-300 transition-all duration-200"
+                      className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-700 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all duration-200"
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2 flex-1">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm line-clamp-2 flex-1">
                           {card.title}
                         </h3>
-                        <span className="bg-green-200 text-green-800 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
+                        <span className="bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 text-xs px-2 py-0.5 rounded ml-2 flex-shrink-0">
                           #{card.cardNumber || card._id?.slice(-4)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-600">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex items-center space-x-1">
                           <FolderOpen className="w-3 h-3" />
                           <span className="truncate">{card.project?.name}</span>
                         </div>
-                        <div className="flex items-center space-x-1 text-green-600">
+                        <div className="flex items-center space-x-1 text-green-600 dark:text-green-400">
                           <Calendar className="w-3 h-3" />
                           <span>{formatDueDate(card.dueDate)}</span>
                         </div>
@@ -504,8 +504,8 @@ const ProjectList = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">
+                  <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     No upcoming cards scheduled.
                   </p>
                 </div>
@@ -520,8 +520,8 @@ const ProjectList = () => {
       {recentProjects && recentProjects.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Recently Viewed</h2>
+            <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recently Viewed</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {recentProjects.map((project) => (
@@ -540,8 +540,8 @@ const ProjectList = () => {
       {groupedProjects.pinnedProjects && groupedProjects.pinnedProjects.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Star className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Starred boards</h2>
+            <Star className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Starred boards</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {groupedProjects.pinnedProjects.map((project) => (
@@ -561,15 +561,15 @@ const ProjectList = () => {
       {projects.length > 0 && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FolderClosed className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">All Projects</h2>
+            <FolderClosed className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Projects</h2>
           </div>
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-gray-500" />
+            <SlidersHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
-              className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
             >
               <option value="recent">Recent First</option>
               <option value="oldest">Oldest First</option>
@@ -581,11 +581,11 @@ const ProjectList = () => {
       {/* Projects Grid - Grouped by Category */}
       {projects.length === 0 ? (
         <div className="text-center py-12">
-          <FolderOpen className="w-16 h-16 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-secondary-900 mb-2">
+          <FolderOpen className="w-16 h-16 text-secondary-300 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-gray-100 mb-2">
             No projects yet
           </h3>
-          <p className="text-secondary-600 mb-6">
+          <p className="text-secondary-600 dark:text-gray-400 mb-6">
             {user?.role === "admin"
               ? "Create your first project to get started"
               : "You haven't been added to any projects yet"}
@@ -605,12 +605,12 @@ const ProjectList = () => {
           {groupedProjects.allSections.map((section) => (
             <div
               key={section._id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
             >
               {/* Section Header */}
               <button
                 onClick={() => toggleCategory(section._id)}
-                className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
                 <div className="flex items-center space-x-3">
                   <div
@@ -619,15 +619,15 @@ const ProjectList = () => {
                   >
                     <Folder className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {section.name}
                   </h2>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     ({section.projects.length})
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
                     expandedCategories[section._id] ? "rotate-180" : ""
                   }`}
                 />
@@ -675,12 +675,12 @@ const ProjectList = () => {
           {groupedProjects.workspaceProjects && (
             <div
               key={groupedProjects.workspaceProjects._id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
             >
               {/* Section Header */}
               <button
                 onClick={() => toggleCategory(groupedProjects.workspaceProjects._id)}
-                className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
               >
                 <div className="flex items-center space-x-3">
                   <div
@@ -689,15 +689,15 @@ const ProjectList = () => {
                   >
                     <Folder className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {groupedProjects.workspaceProjects.name}
                   </h2>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     ({groupedProjects.workspaceProjects.projects.length})
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
                     expandedCategories[groupedProjects.workspaceProjects._id] ? "rotate-180" : ""
                   }`}
                 />
@@ -733,7 +733,7 @@ const ProjectList = () => {
         <div className="pb-8">
           <button
             onClick={() => navigate("/archived-projects")}
-            className="group flex items-center gap-2 px-4 py-2.5 text-gray-700 border border-gray-700 font-semibold rounded-xl hover:text-blue-700 hover:border-blue-700 transition-colors duration-300"
+            className="group flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 border border-gray-700 dark:border-gray-500 font-semibold rounded-xl hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-700 dark:hover:border-blue-400 transition-colors duration-300"
           >
             <Archive className="w-4 h-4" />
             <span>View All Closed Projects</span>
@@ -807,7 +807,7 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView =
             .catch((err) => console.error('Failed to record recently viewed', err));
         }
       }}
-      className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
+      className="group block bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 dark:border-gray-700 hover:border-primary-200 dark:hover:border-blue-600 overflow-hidden"
     >
       {/* Card Header with Gradient */}
       <div className="p-4 text-white bg-gradient-to-r from-blue-600 to-blue-700">
@@ -845,10 +845,10 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView =
 
             {/* Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 top-8 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+              <div className="absolute right-0 top-8 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
                 <button
                   onClick={handleEditProject}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>Project Details</span>
@@ -881,7 +881,7 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView =
           </span>
         </div> */}
 
-        <div className="flex items-center justify-between text-sm text-secondary-500 mb-4">
+        <div className="flex items-center justify-between text-sm text-secondary-500 dark:text-gray-400 mb-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
@@ -893,13 +893,13 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView =
               {project.members?.slice(0, 4).map((member, index) => (
                 <div
                   key={member.user?._id || member.user || index}
-                  className="border-2 border-white shadow-sm rounded-full"
+                  className="border-2 border-white dark:border-gray-800 shadow-sm rounded-full"
                 >
                   <Avatar user={member.user} size="sm" showTooltip={true} />
                 </div>
               ))}
               {project.members && project.members.length > 4 && (
-                <div className="w-8 h-8 bg-secondary-300 rounded-full border-2 border-white flex items-center justify-center text-xs text-secondary-600 font-medium shadow-sm">
+                <div className="w-8 h-8 bg-secondary-300 dark:bg-gray-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs text-secondary-600 dark:text-gray-300 font-medium shadow-sm">
                   +{project.members.length - 4}
                 </div>
               )}
@@ -918,16 +918,16 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView =
         {/* Team Members */}
         <div className="flex items-center justify-between">
           <div className="text-left">
-            <div className="text-xs text-secondary-500">Start Date</div>
-            <div className="text-sm font-medium text-secondary-900">
+            <div className="text-xs text-secondary-500 dark:text-gray-400">Start Date</div>
+            <div className="text-sm font-medium text-secondary-900 dark:text-gray-100">
               {formatDate(project.startDate)}
             </div>
           </div>
 
           {project.endDate ? (
             <div className="text-left">
-              <div className="text-xs text-secondary-500">End Date</div>
-              <div className="text-sm font-medium text-secondary-900">
+              <div className="text-xs text-secondary-500 dark:text-gray-400">End Date</div>
+              <div className="text-sm font-medium text-secondary-900 dark:text-gray-100">
                 {formatDate(project.endDate)}
               </div>
             </div>
@@ -936,12 +936,12 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {}, onView =
       </div>
 
       {/* Card Footer */}
-      <div className="px-6 py-3 bg-secondary-50 border-t border-secondary-100">
-        <div className="flex items-center justify-between text-xs text-secondary-500">
+      <div className="px-6 py-3 bg-secondary-50 dark:bg-gray-700 border-t border-secondary-100 dark:border-gray-600">
+        <div className="flex items-center justify-between text-xs text-secondary-500 dark:text-gray-400">
           <span className="font-medium">
             {project.clientName || "No client"}
           </span>
-          <span className="text-primary-600 font-medium group-hover:text-primary-700">
+          <span className="text-primary-600 dark:text-blue-400 font-medium group-hover:text-primary-700 dark:group-hover:text-blue-300">
             View Project
           </span>
         </div>

@@ -7,6 +7,7 @@ import { useProject } from "../contexts/ProjectContext";
 import Avatar from "./Avatar";
 import { useNavigate } from "react-router-dom";
 import CreateProjectModal from "./CreateProjectModal";
+import ThemeToggle from "./ThemeToggle";
 import emptyNotification from "../assets/empty-notification.png";
 
 const timeAgo = (dateString) => {
@@ -73,7 +74,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-2">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2 transition-colors duration-300">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Mobile Search */}
@@ -85,7 +86,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">P</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Project Management
             </h1>
           </div> */}
@@ -134,14 +135,17 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
             )}
           </div>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Notifications */}
           <div className="relative" ref={bellRef}>
             {/* Bell Icon */}
             <button
               onClick={() => setOpen(!open)}
-              className="p-2 rounded-lg hover:bg-gray-100 relative"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 relative transition-colors duration-200"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+              <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {unreadCount}
@@ -151,23 +155,23 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
             {/* Dropdown */}
             {open && (
-              <div className="absolute -right-12 top-12 mt-2 w-[26vw] bg-white shadow-2xl border border-gray-200 rounded-xl p-3 z-[100] opacity-0 translate-y-[-10px] animate-slideDownFade">
+              <div className="absolute -right-12 top-12 mt-2 w-[26vw] bg-white dark:bg-gray-800 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-xl p-3 z-[100] opacity-0 translate-y-[-10px] animate-slideDownFade">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-700">
+                  <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">
                     Notifications
                   </h3>
 
                   <div className="flex items-center space-x-2">
                     {/* Toggle unread */}
-                    <label className="flex items-center text-xs text-gray-600 cursor-pointer space-x-2">
+                    <label className="flex items-center text-xs text-gray-600 dark:text-gray-400 cursor-pointer space-x-2">
                       <span>Only show unread</span>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={showUnreadOnly}
                         onClick={() => setShowUnreadOnly(!showUnreadOnly)}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${showUnreadOnly ? "bg-blue-600" : "bg-gray-300"
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${showUnreadOnly ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
                           }`}
                       >
                         <span
@@ -181,7 +185,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                     {unreadCount > 0 && (
                       <button
                         onClick={markAllAsRead}
-                        className="flex items-center text-xs text-blue-600 hover:text-blue-700 font-medium space-x-1"
+                        className="flex items-center text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium space-x-1"
                       >
                         <Check className="w-3 h-3" />
                         <span>Mark all as read</span>
@@ -198,14 +202,14 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                         <img
                           src={emptyNotification}
                           alt="No unread notifications"
-                          className="w-24 h-24 mb-3 opacity-80"
+                          className="w-24 h-24 mb-3 opacity-80 dark:opacity-60"
                         />
-                        <p className="text-sm font-medium text-gray-600">
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                           Notification is not yet
                         </p>
                       </>
                     ) : (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         No notifications yet
                       </p>
                     )}
@@ -230,19 +234,19 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                               setOpen(false);
                               // navigate(redirectUri);
                             }}
-                            className={`relative rounded-xl border border-gray-200 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${!n.read
-                              ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent"
-                              : "bg-white"
+                            className={`relative rounded-xl border border-gray-200 dark:border-gray-700 p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-[2px] ${!n.read
+                              ? "bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent dark:from-blue-900/30 dark:via-indigo-900/20 dark:to-transparent"
+                              : "bg-white dark:bg-gray-800"
                               }`}
                           >
                             {/* Project name (Top Priority) */}
                             {n.relatedProject && (
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-2">
-                                  <span className="text-[15px] font-semibold text-gray-900">
+                                  <span className="text-[15px] font-semibold text-gray-900 dark:text-gray-100">
                                     {n.relatedProject?.name}
                                   </span>
-                                  <span className="text-[12px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                                  <span className="text-[12px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
                                     Project
                                   </span>
                                 </div>
@@ -255,16 +259,16 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                             )}
                             {/* Card title and message */}
                             <div className="ml-1 mb-3">
-                              <p className="text-[14px] text-gray-800 font-medium">
+                              <p className="text-[14px] text-gray-800 dark:text-gray-200 font-medium">
                                 🗂️ {n.title || "Card Update"}
                               </p>
-                              <p className="text-[13px] text-gray-600 mt-1 leading-snug">
+                              <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-1 leading-snug">
                                 {n.message ||
                                   "You have a new update on this card."}
                               </p>
                             </div>
                             {/* Divider */}
-                            <div className="border-t border-gray-200 my-2"></div>
+                            <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
                             {/* Sender Info */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
@@ -278,10 +282,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                                   {n.sender?.avatar || "U"}
                                 </div>
                                 <div>
-                                  <p className="text-[13px] font-semibold text-gray-900">
+                                  <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100">
                                     {n.sender?.name || "Unknown User"}
                                   </p>
-                                  <p className="text-[12px] text-gray-500">
+                                  <p className="text-[12px] text-gray-500 dark:text-gray-400">
                                     {timeAgo(n.createdAt)}
                                   </p>
                                 </div>
@@ -296,7 +300,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
                                     setOpen(false);
                                     navigate(redirectUri);
                                   }}
-                                  className="text-xs text-blue-600 hover:underline font-medium"
+                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                                 >
                                   View Card →
                                 </button>
@@ -309,10 +313,10 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
 
                     {/* View All / Less */}
                     {filteredNotifications.length > 4 && (
-                      <div className="mt-3 text-center border-t border-gray-200 pt-2">
+                      <div className="mt-3 text-center border-t border-gray-200 dark:border-gray-700 pt-2">
                         <button
                           onClick={() => setShowAll(!showAll)}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                         >
                           {showAll ? "View less ↑" : "View all ↓"}
                         </button>
@@ -328,29 +332,29 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200"
+              className="flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors duration-200"
             >
               <Avatar user={user} size="sm" />
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {user?.name}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
               </div>
             </button>
 
             {/* User Dropdown Menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 animate-slideDownFade">
+                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {user?.name}
                   </p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>

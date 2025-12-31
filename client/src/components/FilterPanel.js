@@ -445,7 +445,7 @@ const FilterPanel = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div
             ref={modalRef}
-            className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col"
           >
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
@@ -464,27 +464,27 @@ const FilterPanel = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               {/* Keyword */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Keyword
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <input
                     type="text"
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="Enter a keyword..."
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Search cards (#27), members, labels, and more.
                 </p>
               </div>
 
               {/* Members */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Members
                 </label>
                 <div className="space-y-2">
@@ -498,12 +498,12 @@ const FilterPanel = ({
                           noMembers: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-700">No members</span>
+                    <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">No members</span>
                     {memberFilters.noMembers && (
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         ({getNoMembersCount()})
                       </span>
                     )}
@@ -518,16 +518,16 @@ const FilterPanel = ({
                           assignedToMe: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
                     <div className="flex items-center space-x-2 flex-1">
                       <Avatar user={user} size="xs" />
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
                         Cards assigned to me
                       </span>
                     </div>
                     {memberFilters.assignedToMe && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         ({getAssignedToMeCount()})
                       </span>
                     )}
@@ -535,22 +535,22 @@ const FilterPanel = ({
                   <div className="relative" ref={memberDropdownRef}>
                     <button
                       onClick={() => setShowMemberDropdown(!showMemberDropdown)}
-                      className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                      className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm"
                     >
-                      <span className="text-gray-700">Select members</span>
+                      <span className="text-gray-700 dark:text-gray-300">Select members</span>
                       <ChevronDown
-                        className={`w-4 h-4 text-gray-400 transform transition-transform ${
+                        className={`w-4 h-4 text-gray-400 dark:text-gray-500 transform transition-transform ${
                           showMemberDropdown ? "rotate-180" : ""
                         }`}
                       />
                     </button>
                     {showMemberDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                         {projectMembers.length > 0 ? (
                           projectMembers.map((u) => (
                             <label
                               key={u._id || u.id}
-                              className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                              className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                             >
                               <input
                                 type="checkbox"
@@ -560,16 +560,16 @@ const FilterPanel = ({
                                 onChange={() =>
                                   handleMemberToggle(u._id || u.id)
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                               />
                               <Avatar user={u} size="xs" />
-                              <span className="text-sm text-gray-700">
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
                                 {u.name}
                               </span>
                             </label>
                           ))
                         ) : (
-                          <div className="px-3 py-2 text-sm text-gray-500">
+                          <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                             No project members found
                           </div>
                         )}
@@ -581,7 +581,7 @@ const FilterPanel = ({
 
               {/* Due Date */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Due date
                 </label>
                 <div className="space-y-2">
@@ -595,12 +595,12 @@ const FilterPanel = ({
                           noDates: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-700">No dates</span>
+                    <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">No dates</span>
                     {dueDateFilters.noDates && (
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         ({getNoDatesCount()})
                       </span>
                     )}
@@ -615,12 +615,12 @@ const FilterPanel = ({
                           overdue: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
                     <Clock className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-gray-700">Overdue</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Overdue</span>
                     {dueDateFilters.overdue && (
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         ({getOverdueCount()})
                       </span>
                     )}
@@ -635,14 +635,14 @@ const FilterPanel = ({
                           dueInNextDay: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
                     <Clock className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
                       Due in the next day
                     </span>
                     {dueDateFilters.dueInNextDay && (
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         ({getDueInNextDayCount()})
                       </span>
                     )}
@@ -657,14 +657,14 @@ const FilterPanel = ({
                           dueInNextWeek: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-700">
+                    <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
                       Due in the next week
                     </span>
                     {dueDateFilters.dueInNextWeek && (
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         ({getDueInNextWeekCount()})
                       </span>
                     )}
@@ -679,14 +679,14 @@ const FilterPanel = ({
                           dueInNextMonth: e.target.checked,
                         }))
                       }
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-700">
+                    <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
                       Due in the next month
                     </span>
                     {dueDateFilters.dueInNextMonth && (
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         ({getDueInNextMonthCount()})
                       </span>
                     )}
@@ -696,19 +696,19 @@ const FilterPanel = ({
 
               {/* Read/Unread Status */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   Read Status
                 </label>
-                
+
                 {/* Modern Segmented Control */}
-                <div className="bg-gray-100 p-1 rounded-lg inline-flex w-full">
+                <div className="bg-gray-100 dark:bg-gray-700 p-1 rounded-lg inline-flex w-full">
                   <button
                     type="button"
                     onClick={() => setReadStatusFilter("all")}
                     className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                       readStatusFilter === "all"
-                        ? "bg-white text-gray-900 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                     }`}
                   >
                     All Cards
@@ -718,8 +718,8 @@ const FilterPanel = ({
                     onClick={() => setReadStatusFilter("read")}
                     className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                       readStatusFilter === "read"
-                        ? "bg-white text-gray-900 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                     }`}
                   >
                     Read
@@ -729,17 +729,17 @@ const FilterPanel = ({
                     onClick={() => setReadStatusFilter("unread")}
                     className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
                       readStatusFilter === "unread"
-                        ? "bg-white text-gray-900 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                     }`}
                   >
                     Unread
                   </button>
                 </div>
-                
+
                 {/* Status Count Display */}
                 <div className="mt-3 px-1">
-                  <div className="text-xs text-gray-500 font-medium">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                     {readStatusFilter === "all" && (
                       <span>
                         Showing all cards ({cards.length} total)
@@ -761,7 +761,7 @@ const FilterPanel = ({
 
               {/* Labels */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Labels
                 </label>
                 <div className="space-y-2">
@@ -775,27 +775,27 @@ const FilterPanel = ({
                             setLabelFilters([]);
                           }
                         }}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                       />
-                      <Tag className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700">No labels</span>
+                      <Tag className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">No labels</span>
                     </label>
                   )}
                   {allLabels.length > 0 && (
                     <div className="relative" ref={labelDropdownRef}>
                       <button
                         onClick={() => setShowLabelDropdown(!showLabelDropdown)}
-                        className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                        className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-sm"
                       >
-                        <span className="text-gray-700">Select labels</span>
+                        <span className="text-gray-700 dark:text-gray-300">Select labels</span>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 transform transition-transform ${
+                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transform transition-transform ${
                             showLabelDropdown ? "rotate-180" : ""
                           }`}
                         />
                       </button>
                       {showLabelDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                           {allLabels.map((label) => {
                             const colorConfig = getLabelColorConfig(
                               label.color
@@ -803,13 +803,13 @@ const FilterPanel = ({
                             return (
                               <label
                                 key={label.name}
-                                className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                                className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                               >
                                 <input
                                   type="checkbox"
                                   checked={labelFilters.includes(label.name)}
                                   onChange={() => handleLabelToggle(label.name)}
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                                 />
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorConfig.bg} ${colorConfig.text}`}
@@ -817,7 +817,7 @@ const FilterPanel = ({
                                   {label.name}
                                 </span>
                                 {labelFilters.includes(label.name) && (
-                                  <span className="text-xs text-gray-500 ml-auto">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                                     ({getLabelCount(label.name)})
                                   </span>
                                 )}
@@ -833,11 +833,11 @@ const FilterPanel = ({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
               {hasActiveFilters() && (
                 <button
                   onClick={clearAllFilters}
-                  className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                  className="w-full py-2 px-4 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm font-medium"
                 >
                   Clear all filters
                 </button>

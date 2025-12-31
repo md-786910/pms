@@ -1097,16 +1097,16 @@ const EditProjectModal = ({ project, onClose }) => {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         ref={modalRef}
-        className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
+        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
       >
         {/* Sticky Close Button */}
         <div className="flex items-center">
           <button
             onClick={onClose}
-            className="absolute top-6 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+            className="absolute top-6 right-4 z-10 p-3 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-700 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
             title="Close modal"
           >
-            <X className="w-4 h-4 text-gray-600" />
+            <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </button>
           {isAdmin && activeTab === "info" && (
             <button
@@ -1144,14 +1144,14 @@ const EditProjectModal = ({ project, onClose }) => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="flex border-b border-gray-200 bg-white flex-shrink-0">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab("info")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "info"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
             }`}
           >
             <Info className="w-4 h-4" />
@@ -1163,8 +1163,8 @@ const EditProjectModal = ({ project, onClose }) => {
               onClick={() => setActiveTab("credentials")}
               className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === "credentials"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
               }`}
             >
               <Key className="w-4 h-4" />
@@ -1181,8 +1181,8 @@ const EditProjectModal = ({ project, onClose }) => {
             onClick={() => setActiveTab("descriptions")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "descriptions"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -1205,12 +1205,12 @@ const EditProjectModal = ({ project, onClose }) => {
                   className="space-y-8"
                 >
                   {/* Section 1: Project Information */}
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center mb-4">
                       <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mr-3">
                         <Save className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                         Project Information
                       </h3>
                     </div>
@@ -1220,7 +1220,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Project Name */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Project Name <span className="text-red-500">*</span>
                           </label>
                           <input
@@ -1228,7 +1228,7 @@ const EditProjectModal = ({ project, onClose }) => {
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             placeholder="Enter project name"
                             required
                             disabled={editMode}
@@ -1236,7 +1236,7 @@ const EditProjectModal = ({ project, onClose }) => {
                         </div>
                         {/* Client Name */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Client Name
                           </label>
                           <input
@@ -1244,14 +1244,14 @@ const EditProjectModal = ({ project, onClose }) => {
                             name="clientName"
                             value={formData.clientName}
                             onChange={handleChange}
-                            className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             placeholder="Enter client name"
                             disabled={editMode}
                           />
                         </div>
                         {/* Project Status */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Project Status{" "}
                             <span className="text-red-500">*</span>
                           </label>
@@ -1259,7 +1259,7 @@ const EditProjectModal = ({ project, onClose }) => {
                             name="projectStatus"
                             value={formData.projectStatus}
                             onChange={handleChange}
-                            className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                             required
                             disabled={editMode}
                           >
@@ -1275,14 +1275,14 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Project Type */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Project Type <span className="text-red-500">*</span>
                           </label>
                           <select
                             name="projectType"
                             value={formData.projectType}
                             onChange={handleChange}
-                            className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                             required
                             disabled={editMode}
                           >
@@ -1294,7 +1294,7 @@ const EditProjectModal = ({ project, onClose }) => {
                         </div>
                         {/* Start Date */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Start Date <span className="text-red-500">*</span>
                           </label>
                           <input
@@ -1319,14 +1319,14 @@ const EditProjectModal = ({ project, onClose }) => {
                             //     }
                             //   }
                             // }}
-                            className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
+                            className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                             required
                             disabled={editMode}
                           />
                         </div>
                         {/* End Date */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             End Date
                           </label>
                           <input
@@ -1351,7 +1351,7 @@ const EditProjectModal = ({ project, onClose }) => {
                             //     }
                             //   }
                             // }}
-                            className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
+                            className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-pointer"
                             disabled={editMode}
                           />
                         </div>
@@ -1359,16 +1359,16 @@ const EditProjectModal = ({ project, onClose }) => {
 
                       {/* Category */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Category
                         </label>
                         <div className="relative">
-                          <Folder className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Folder className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                           <select
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
-                            className="w-full h-12 pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
+                            className="w-full h-12 pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                             disabled={editMode}
                           >
                             <option value="">No Category</option>
@@ -1383,10 +1383,10 @@ const EditProjectModal = ({ project, onClose }) => {
 
                       {/* Description */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Description
                         </label>
-                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                        <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                           {!editMode ? (
                             <SimpleQuillEditor
                               value={formData.description}
@@ -1419,12 +1419,12 @@ const EditProjectModal = ({ project, onClose }) => {
                   </div>
 
                   {/* Section 2: Site URLs */}
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center mb-4">
                       <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
                         <Link className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                         Site URLs
                       </h3>
                     </div>
@@ -1432,7 +1432,7 @@ const EditProjectModal = ({ project, onClose }) => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Live Site URL */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Live Site URL
                         </label>
                         <input
@@ -1440,7 +1440,7 @@ const EditProjectModal = ({ project, onClose }) => {
                           name="liveSiteUrl"
                           value={formData.liveSiteUrl}
                           onChange={handleChange}
-                          className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                           placeholder="https://example.com"
                           disabled={editMode}
                         />
@@ -1448,7 +1448,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       {/* Demo Site URL */}
                       <div className="relative">
                         <div className="flex items-center justify-between mb-2">
-                          <label className="block text-sm font-semibold text-gray-700">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                             Demo Site URL
                           </label>
                         </div>
@@ -1464,7 +1464,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                 onChange={(e) =>
                                   handleDemoSiteUrlChange(index, e.target.value)
                                 }
-                                className="flex-1 h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                className="flex-1 h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                 placeholder="https://demo.example.com"
                                 disabled={editMode}
                               />
@@ -1497,7 +1497,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       </div>
                       {/* Markup URL */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Markup URL
                         </label>
                         <input
@@ -1505,7 +1505,7 @@ const EditProjectModal = ({ project, onClose }) => {
                           name="markupUrl"
                           value={formData.markupUrl}
                           onChange={handleChange}
-                          className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                           placeholder="https://markup.example.com"
                           disabled={editMode}
                         />
@@ -1515,7 +1515,7 @@ const EditProjectModal = ({ project, onClose }) => {
 
                   {/* Section 3: Files and Documents */}
                   <div
-                    className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                    className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
                     style={{
                       // editMode ? {pointerEvents: "none"} : {pointerEvents: "auto"}
                       cursor: editMode && isAdmin ? "not-allowed" : "default",
@@ -1525,7 +1525,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
                         <Upload className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                         Files and Documents
                       </h3>
                     </div>
@@ -1535,25 +1535,25 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div
                         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
                           isDragOver
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-300 hover:border-gray-400"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
+                            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
                         }`}
                         onClick={() => fileInputRef.current?.click()}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                       >
-                        <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                        <p className="text-gray-600 mb-2">
+                        <Upload className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+                        <p className="text-gray-600 dark:text-gray-300 mb-2">
                           Drag and drop files here, or{" "}
                           <button
                             type="button"
-                            className="text-blue-600 hover:text-blue-700 font-medium"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                           >
                             browse files
                           </button>
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Supports images, PDFs, documents (max 25MB each)
                         </p>
                         <input
@@ -1571,7 +1571,7 @@ const EditProjectModal = ({ project, onClose }) => {
                     {/* Uploaded Files List */}
                     {uploadedFiles.length > 0 && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Uploaded Files ({uploadedFiles.length})
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1652,20 +1652,20 @@ const EditProjectModal = ({ project, onClose }) => {
                 </form>
 
                 {/* Activity Log Section */}
-                <div className="mt-8 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="mt-8 bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
                         <Clock className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                         Project Activity
                       </h3>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowActivities(!showActivities)}
-                      className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center space-x-1"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-sm flex items-center space-x-1"
                     >
                       <span>{showActivities ? "Hide" : "Show"} Activity</span>
                       <MessageSquare className="w-4 h-4" />
@@ -1673,7 +1673,7 @@ const EditProjectModal = ({ project, onClose }) => {
                   </div>
 
                   {showActivities && (
-                    <div className="bg-white rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 max-h-64 overflow-y-auto">
                       {loadingActivities ? (
                         <div className="flex items-center justify-center p-8">
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -1828,7 +1828,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                     field.isPassword
                                                       ? "pr-10"
                                                       : ""
-                                                  } text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono`}
+                                                  } text-sm bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 font-mono`}
                                                   disabled={isSaving}
                                                 />
                                                 {field.isPassword && (
@@ -1839,7 +1839,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                         fieldKey
                                                       )
                                                     }
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
                                                     title={
                                                       isPasswordVisible
                                                         ? "Hide"
@@ -1877,7 +1877,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                     }
                                                   }}
                                                   disabled={isSaving}
-                                                  className="h-10 px-4 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+                                                  className="h-10 px-4 text-sm font-medium bg-slate-100 dark:bg-gray-600 text-slate-600 dark:text-gray-200 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
                                                 >
                                                   {isSaving ? "..." : "Save"}
                                                 </button>
@@ -1890,7 +1890,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                       )
                                                     }
                                                     disabled={credentialLoading}
-                                                    className="h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
+                                                    className="h-10 flex items-center justify-center text-slate-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
                                                     title="Delete"
                                                   >
                                                     <Trash2 className="w-4 h-4 flex-shrink-0" />
@@ -1941,7 +1941,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                 }))
                                               }
                                               placeholder="Enter value..."
-                                              className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                              className="flex-1 h-10 px-3 text-sm bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 font-mono"
                                               disabled={isSaving}
                                             />
                                             <div className="flex items-center">
@@ -1959,7 +1959,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                   );
                                                 }}
                                                 disabled={isSaving}
-                                                className="h-10 px-4 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+                                                className="h-10 px-4 text-sm font-medium bg-slate-100 dark:bg-gray-600 text-slate-600 dark:text-gray-200 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
                                               >
                                                 {isSaving ? "..." : "Save"}
                                               </button>
@@ -1971,7 +1971,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                   )
                                                 }
                                                 disabled={credentialLoading}
-                                                className="h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
+                                                className="h-10 flex items-center justify-center text-slate-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
                                                 title="Delete"
                                               >
                                                 <Trash2 className="w-4 h-4 flex-shrink-0" />
@@ -2011,7 +2011,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                             }))
                                           }
                                           placeholder="Field label..."
-                                          className="h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400"
+                                          className="h-10 px-3 text-sm bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100"
                                         />
                                         <input
                                           type="text"
@@ -2023,7 +2023,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                             }))
                                           }
                                           placeholder="Field value..."
-                                          className="h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                          className="h-10 px-3 text-sm bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 font-mono"
                                         />
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -2062,7 +2062,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                             });
                                             setShowCmsCustomField(false);
                                           }}
-                                          className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                          className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                         >
                                           Cancel
                                         </button>
@@ -2076,16 +2076,16 @@ const EditProjectModal = ({ project, onClose }) => {
                         })}
 
                       {/* Other / Custom Credentials */}
-                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-600 overflow-hidden">
                         {/* Card Header */}
-                        <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-b border-slate-200">
+                        <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-gray-700 border-b border-slate-200 dark:border-gray-600">
                           <div className="w-8 h-8 bg-gradient-to-br from-slate-500 to-slate-600 rounded-lg flex items-center justify-center shadow-sm">
                             <Key className="w-4 h-4 text-white" />
                           </div>
-                          <h4 className="text-sm font-semibold text-slate-700">
+                          <h4 className="text-sm font-semibold text-slate-700 dark:text-gray-200">
                             Other Credentials
                           </h4>
-                          <span className="ml-auto text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          <span className="ml-auto text-xs text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-gray-600 px-2 py-0.5 rounded-full">
                             {categorizeCredentials().other?.length || 0}
                           </span>
                         </div>
@@ -2101,7 +2101,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                 key={cred._id}
                                 className="grid grid-cols-[160px_1fr] gap-3 items-center group"
                               >
-                                <span className="text-sm font-medium text-slate-600">
+                                <span className="text-sm font-medium text-slate-600 dark:text-gray-300">
                                   {cred.label}
                                 </span>
                                 <div className="flex items-center gap-2">
@@ -2116,7 +2116,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                       }))
                                     }
                                     placeholder="Enter value..."
-                                    className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                    className="flex-1 h-10 px-3 text-sm bg-white dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 font-mono"
                                     disabled={isSaving}
                                   />
                                   <div className="flex items-center">
@@ -2131,7 +2131,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                         });
                                       }}
                                       disabled={isSaving}
-                                      className="h-10 px-4 text-sm font-medium bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
+                                      className="h-10 px-4 text-sm font-medium bg-slate-100 dark:bg-gray-600 text-slate-600 dark:text-gray-200 hover:bg-blue-600 hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50 whitespace-nowrap"
                                     >
                                       {isSaving ? "..." : "Save"}
                                     </button>
@@ -2141,7 +2141,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                         handleDeleteCredential(cred._id)
                                       }
                                       disabled={credentialLoading}
-                                      className="h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
+                                      className="h-10 flex items-center justify-center text-slate-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 w-0 opacity-0 group-hover:w-10 group-hover:opacity-100 group-hover:ml-2 overflow-hidden"
                                       title="Delete"
                                     >
                                       <Trash2 className="w-4 h-4 flex-shrink-0" />
@@ -2189,7 +2189,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                         value: e.target.value,
                                       }))
                                     }
-                                    className="flex-1 h-10 px-3 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                    className="flex-1 h-10 px-3 text-sm bg-slate-50 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 font-mono"
                                     disabled={isAddingSaving}
                                   />
                                   <button
@@ -2227,13 +2227,13 @@ const EditProjectModal = ({ project, onClose }) => {
                           return (
                             <div
                               key={catKey}
-                              className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm"
+                              className="bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-600 overflow-hidden shadow-sm"
                             >
                               {/* Category Header */}
                               <button
                                 type="button"
                                 onClick={() => toggleCategory(catKey)}
-                                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+                                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-gray-700 hover:bg-slate-100 dark:hover:bg-gray-600 transition-colors"
                               >
                                 <div className="flex items-center gap-3">
                                   <div
@@ -2241,7 +2241,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                   >
                                     <IconComponent className="w-4 h-4 text-white" />
                                   </div>
-                                  <span className="text-sm font-semibold text-slate-700">
+                                  <span className="text-sm font-semibold text-slate-700 dark:text-gray-200">
                                     {category.name}
                                   </span>
                                   <span
@@ -2251,15 +2251,15 @@ const EditProjectModal = ({ project, onClose }) => {
                                   </span>
                                 </div>
                                 {isExpanded ? (
-                                  <ChevronUp className="w-5 h-5 text-slate-400" />
+                                  <ChevronUp className="w-5 h-5 text-slate-400 dark:text-gray-500" />
                                 ) : (
-                                  <ChevronDown className="w-5 h-5 text-slate-400" />
+                                  <ChevronDown className="w-5 h-5 text-slate-400 dark:text-gray-500" />
                                 )}
                               </button>
 
                               {/* Credentials Table */}
                               {isExpanded && (
-                                <div className="divide-y divide-slate-100">
+                                <div className="divide-y divide-slate-100 dark:divide-gray-700">
                                   {catCredentials.map((credential) => {
                                     const isPassword = credential.label
                                       .toLowerCase()
@@ -2273,25 +2273,25 @@ const EditProjectModal = ({ project, onClose }) => {
                                       // View Mode for Members
                                       <div
                                         key={credential._id}
-                                        className="flex items-center px-4 py-3 hover:bg-slate-50 transition-colors group"
+                                        className="flex items-center px-4 py-3 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors group"
                                       >
                                         <div className="w-40 flex-shrink-0">
-                                          <span className="text-sm font-medium text-slate-600">
+                                          <span className="text-sm font-medium text-slate-600 dark:text-gray-300">
                                             {credential.label}
                                           </span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <span className="text-sm font-mono text-slate-800">
+                                          <span className="text-sm font-mono text-slate-800 dark:text-gray-200">
                                             {credential.value ? (
                                               isPassword && !isVisible ? (
-                                                <span className="text-slate-400">
+                                                <span className="text-slate-400 dark:text-gray-500">
                                                   ••••••••••••
                                                 </span>
                                               ) : (
                                                 credential.value
                                               )
                                             ) : (
-                                              <span className="text-slate-300 italic">
+                                              <span className="text-slate-300 dark:text-gray-500 italic">
                                                 Not set
                                               </span>
                                             )}
@@ -2306,7 +2306,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                   credential._id
                                                 )
                                               }
-                                              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                              className="p-2 text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                               title={
                                                 isVisible ? "Hide" : "Show"
                                               }
@@ -2327,7 +2327,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                   credential._id
                                                 )
                                               }
-                                              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                              className="p-2 text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                               title="Copy"
                                             >
                                               {isCopied ? (
@@ -2352,11 +2352,11 @@ const EditProjectModal = ({ project, onClose }) => {
 
                   {/* Empty State for Members */}
                   {!isAdmin && credentials.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                      <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-                        <Key className="w-8 h-8 text-slate-300" />
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-gray-500">
+                      <div className="w-16 h-16 bg-slate-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mb-4">
+                        <Key className="w-8 h-8 text-slate-300 dark:text-gray-500" />
                       </div>
-                      <p className="text-sm font-medium text-slate-500">
+                      <p className="text-sm font-medium text-slate-500 dark:text-gray-400">
                         No credentials available
                       </p>
                     </div>
@@ -2364,12 +2364,12 @@ const EditProjectModal = ({ project, onClose }) => {
 
                   {/* Admin: Access Control */}
                   {isAdmin && (
-                    <div className="bg-slate-50 rounded-xl p-5">
+                    <div className="bg-slate-50 dark:bg-gray-700/50 rounded-xl p-5">
                       <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-sm font-semibold text-slate-700">
+                        <h3 className="text-sm font-semibold text-slate-700 dark:text-gray-200">
                           Access Control
                         </h3>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 dark:text-gray-400">
                           {credentialAccess.length} of{" "}
                           {credentialAccess.length +
                             membersWithoutAccess.length}{" "}
@@ -2379,15 +2379,15 @@ const EditProjectModal = ({ project, onClose }) => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Members with Access */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-4">
-                          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
-                            <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <div className="bg-white dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-600 p-4">
+                          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100 dark:border-gray-700">
+                            <div className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <h4 className="text-xs font-semibold text-slate-600">
+                            <h4 className="text-xs font-semibold text-slate-600 dark:text-gray-300">
                               Has Access
                             </h4>
-                            <span className="ml-auto text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            <span className="ml-auto text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
                               {credentialAccess.length}
                             </span>
                           </div>
@@ -2400,11 +2400,11 @@ const EditProjectModal = ({ project, onClose }) => {
                                 return (
                                   <div
                                     key={userId}
-                                    className="flex items-center justify-between p-2 rounded-lg group hover:bg-slate-50 transition-colors"
+                                    className="flex items-center justify-between p-2 rounded-lg group hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
                                   >
                                     <div className="flex items-center gap-3 min-w-0">
                                       <Avatar user={userDetails} size="sm" />
-                                      <span className="text-sm text-slate-700 truncate">
+                                      <span className="text-sm text-slate-700 dark:text-gray-300 truncate">
                                         {userDetails.name}
                                       </span>
                                     </div>
@@ -2412,7 +2412,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                       type="button"
                                       onClick={() => handleRevokeAccess(userId)}
                                       disabled={credentialLoading}
-                                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                      className="p-1.5 text-slate-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md opacity-0 group-hover:opacity-100 transition-all"
                                       title="Revoke access"
                                     >
                                       <UserMinus className="w-4 h-4" />
@@ -2422,23 +2422,23 @@ const EditProjectModal = ({ project, onClose }) => {
                               })}
                             </div>
                           ) : (
-                            <div className="flex flex-col items-center justify-center py-6 text-slate-400">
-                              <User className="w-8 h-8 text-slate-200 mb-2" />
+                            <div className="flex flex-col items-center justify-center py-6 text-slate-400 dark:text-gray-500">
+                              <User className="w-8 h-8 text-slate-200 dark:text-gray-600 mb-2" />
                               <p className="text-xs">No members have access</p>
                             </div>
                           )}
                         </div>
 
                         {/* Grant Access */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-4">
-                          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
-                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                              <UserPlus className="w-3.5 h-3.5 text-blue-600" />
+                        <div className="bg-white dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-600 p-4">
+                          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100 dark:border-gray-700">
+                            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                              <UserPlus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <h4 className="text-xs font-semibold text-slate-600">
+                            <h4 className="text-xs font-semibold text-slate-600 dark:text-gray-300">
                               Available Members
                             </h4>
-                            <span className="ml-auto text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            <span className="ml-auto text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
                               {membersWithoutAccess.length}
                             </span>
                           </div>
@@ -2447,11 +2447,11 @@ const EditProjectModal = ({ project, onClose }) => {
                               {membersWithoutAccess.map((member) => (
                                 <div
                                   key={member.user._id}
-                                  className="flex items-center justify-between p-2 rounded-lg group hover:bg-slate-50 transition-colors"
+                                  className="flex items-center justify-between p-2 rounded-lg group hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
                                 >
                                   <div className="flex items-center gap-3 min-w-0">
                                     <Avatar user={member.user} size="sm" />
-                                    <span className="text-sm text-slate-700 truncate">
+                                    <span className="text-sm text-slate-700 dark:text-gray-300 truncate">
                                       {member.user.name}
                                     </span>
                                   </div>
@@ -2461,7 +2461,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                       handleGrantAccess(member.user._id)
                                     }
                                     disabled={credentialLoading}
-                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md opacity-0 group-hover:opacity-100 transition-all"
+                                    className="p-1.5 text-slate-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-md opacity-0 group-hover:opacity-100 transition-all"
                                     title="Grant access"
                                   >
                                     <UserPlus className="w-4 h-4" />
@@ -2470,8 +2470,8 @@ const EditProjectModal = ({ project, onClose }) => {
                               ))}
                             </div>
                           ) : (
-                            <div className="flex flex-col items-center justify-center py-6 text-slate-400">
-                              <Check className="w-8 h-8 text-emerald-200 mb-2" />
+                            <div className="flex flex-col items-center justify-center py-6 text-slate-400 dark:text-gray-500">
+                              <Check className="w-8 h-8 text-emerald-200 dark:text-emerald-700 mb-2" />
                               <p className="text-xs">All members have access</p>
                             </div>
                           )}
@@ -2487,17 +2487,17 @@ const EditProjectModal = ({ project, onClose }) => {
               <div className="space-y-6">
                 {/* Add New Description - Admin Only */}
                 {isAdmin && (
-                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-slate-200">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-600 overflow-hidden shadow-sm">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-b border-slate-200 dark:border-gray-600">
                       <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
                         <FileText className="w-4 h-4 text-white" />
                       </div>
-                      <h4 className="text-sm font-semibold text-slate-700">
+                      <h4 className="text-sm font-semibold text-slate-700 dark:text-gray-200">
                         Add New Note
                       </h4>
                     </div>
                     <div className="p-4">
-                      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                      <div className="border border-slate-200 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-700 shadow-sm">
                         <SimpleQuillEditor
                           value={newDescription}
                           onChange={(content) => setNewDescription(content)}
@@ -2533,9 +2533,9 @@ const EditProjectModal = ({ project, onClose }) => {
                 {descriptions.length > 0 ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-slate-600">
+                      <h3 className="text-sm font-semibold text-slate-600 dark:text-gray-300">
                         Saved Notes
-                        <span className="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">
+                        <span className="ml-2 px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
                           {descriptions.length}
                         </span>
                       </h3>
@@ -2547,16 +2547,16 @@ const EditProjectModal = ({ project, onClose }) => {
                       .map((desc, index) => (
                         <div
                           key={desc._id}
-                          className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
+                          className="bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-600 overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
                         >
                           {/* Card Header */}
-                          <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                          <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-gray-700 border-b border-slate-100 dark:border-gray-600">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm">
                                 {descriptions.length - index}
                               </div>
                               <div>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 dark:text-gray-400">
                                   {desc.createdBy?.name || "Unknown"} •{" "}
                                   {desc.createdAt
                                     ? new Date(
@@ -2588,7 +2588,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                     handleDeleteDescription(desc._id)
                                   }
                                   disabled={descriptionLoading}
-                                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  className="p-2 text-slate-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -2602,7 +2602,7 @@ const EditProjectModal = ({ project, onClose }) => {
                             {editingDescriptionId === desc._id ? (
                               /* Edit Mode */
                               <div className="space-y-3">
-                                <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                                <div className="border border-slate-200 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-700">
                                   <SimpleQuillEditor
                                     value={editingDescriptionContent}
                                     onChange={(content) =>
@@ -2618,7 +2618,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                     type="button"
                                     onClick={cancelEditingDescription}
                                     disabled={descriptionLoading}
-                                    className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                                    className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                   >
                                     Cancel
                                   </button>
@@ -2647,7 +2647,7 @@ const EditProjectModal = ({ project, onClose }) => {
                             ) : (
                               /* View Mode */
                               <div
-                                className="prose prose-sm prose-slate max-w-none text-slate-700 leading-relaxed [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&>h1]:text-xl [&>h2]:text-lg [&>h3]:text-base [&>h4]:text-sm [&>h5]:text-xs"
+                                className="prose prose-sm prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-gray-300 leading-relaxed [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&>h1]:text-xl [&>h2]:text-lg [&>h3]:text-base [&>h4]:text-sm [&>h5]:text-xs"
                                 dangerouslySetInnerHTML={{
                                   __html: desc.content,
                                 }}
@@ -2679,14 +2679,14 @@ const EditProjectModal = ({ project, onClose }) => {
                   </div>
                 ) : (
                   /* Empty State */
-                  <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-4">
-                      <FileText className="w-10 h-10 text-purple-300" />
+                  <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-gray-500">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-2xl flex items-center justify-center mb-4">
+                      <FileText className="w-10 h-10 text-purple-300 dark:text-purple-500" />
                     </div>
-                    <p className="text-base font-medium text-slate-500 mb-1">
+                    <p className="text-base font-medium text-slate-500 dark:text-gray-400 mb-1">
                       No notes yet
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-400 dark:text-gray-500">
                       {isAdmin
                         ? "Add your first note above"
                         : "No notes have been added to this project"}
@@ -2699,12 +2699,12 @@ const EditProjectModal = ({ project, onClose }) => {
         </div>
 
         {/* Sticky Footer */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-6">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
           <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-8 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-all duration-200 rounded-xl hover:bg-gray-100 border border-gray-300"
+              className="px-8 py-3 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"
               disabled={loading}
             >
               {activeTab === "info" && isAdmin ? "Cancel" : "Close"}

@@ -158,50 +158,50 @@ const AdminPanel = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="text-2xl font-bold text-gray-900">{projects?.length || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Projects</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{projects?.length || 0}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Settings className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+              <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Team Members</p>
-              <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Team Members</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{users.length}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Projects</p>
-              <p className="text-2xl font-bold text-gray-900">{projects?.filter((p) => p?.status === "active").length || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Projects</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{projects?.filter((p) => p?.status === "active").length || 0}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Projects Management */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
-              <p className="text-gray-600">Manage your projects and team assignments</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Projects</h2>
+              <p className="text-gray-600 dark:text-gray-400">Manage your projects and team assignments</p>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -214,36 +214,36 @@ const AdminPanel = () => {
 
           <div className="mt-4 flex items-center justify-between">
             <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search projects by name, client, description..."
-                className="w-full pl-9 pr-8 py-2 text-sm bg-gray-50 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-8 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
-            <div className="text-sm text-gray-500">{filteredProjects.length} results</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">{filteredProjects.length} results</div>
           </div>
         </div>
 
         <div className="p-6">
           {!projects || projects.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <Settings className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Settings className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
-              <p className="text-gray-500 mb-6">Create your first project to get started</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No projects yet</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first project to get started</p>
               <button onClick={() => setShowCreateModal(true)} className="bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-2 mx-auto">
                 <Plus className="w-4 h-4" />
                 <span>Create Project</span>
@@ -253,25 +253,25 @@ const AdminPanel = () => {
             <div className="space-y-4" key={refreshKey}>
               {filteredProjects.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Settings className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <Settings className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-                  <p className="text-gray-500 mb-6">{searchQuery ? "Try a different search term" : "No projects yet"}</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No projects found</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mb-6">{searchQuery ? "Try a different search term" : "No projects yet"}</p>
                 </div>
               ) : (
                 filteredProjects.map((project) => {
                   // Safety check for project object
                   if (!project || !project._id) return null;
                   return (
-                    <div key={project._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <div key={project._id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
                       <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Settings className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                          <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
                           <div className="flex items-center space-x-3 mb-1">
-                            <h3 className="font-medium text-gray-900">{project.name || "Unnamed Project"}</h3>
+                            <h3 className="font-medium text-gray-900 dark:text-gray-100">{project.name || "Unnamed Project"}</h3>
                             <div className="flex items-center space-x-2">
                               <span className={getStatusBadgeClasses("projectStatus", project.projectStatus)}>
                                 {getProjectStatusColors(project.projectStatus).label}
@@ -281,7 +281,7 @@ const AdminPanel = () => {
                               </span>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             {stripHtmlTags(project.description)?.length > 150
                               ? stripHtmlTags(project.description).substring(0, 150) + "..."
                               : stripHtmlTags(project.description) || "No description"}
@@ -290,35 +290,35 @@ const AdminPanel = () => {
                             <div className="flex items-center space-x-2">
                               <div className="flex -space-x-1">
                                 {project.members?.filter((member) => member && member.user)?.slice(0, 3).map((member, index) => (
-                                  <div key={member.user?._id || member.user || index} className="border-2 text-white border-white  shadow-sm rounded-full">
+                                  <div key={member.user?._id || member.user || index} className="border-2 text-white border-white dark:border-gray-700 shadow-sm rounded-full">
                                     <Avatar user={member.user} size="xs" showTooltip={true} />
                                   </div>
                                 ))}
                                 {project.members?.filter((member) => member && member.user)?.length > 3 && (
-                                  <div className="w-6 h-6  rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium shadow-sm">+{project.members.filter((member) => member && member.user).length - 3}</div>
+                                  <div className="w-6 h-6 rounded-full border-2 border-white dark:border-gray-700 flex items-center justify-center text-xs text-white font-medium shadow-sm bg-gray-400 dark:bg-gray-600">+{project.members.filter((member) => member && member.user).length - 3}</div>
                                 )}
                               </div>
-                              <span className="text-xs text-gray-500">{project.members?.filter((member) => member && member.user)?.length || 0} members</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{project.members?.filter((member) => member && member.user)?.length || 0} members</span>
                             </div>
-                            <span className="text-xs text-gray-500">Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Created {new Date(project.createdAt).toLocaleDateString()}</span>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <Link to={`/project/${project._id}`} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200" title="View Project">
+                        <Link to={`/project/${project._id}`} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200" title="View Project">
                           <Calendar className="w-4 h-4" />
                         </Link>
-                        <button onClick={() => handleEditProject(project)} className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors duration-200" title="Edit Project">
+                        <button onClick={() => handleEditProject(project)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-lg transition-colors duration-200" title="Edit Project">
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleInviteUsers(project)} className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200" title="Invite Users">
+                        <button onClick={() => handleInviteUsers(project)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors duration-200" title="Invite Users">
                           <UserPlus className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleAssignUsers(project)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200" title="Manage Members">
+                        <button onClick={() => handleAssignUsers(project)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors duration-200" title="Manage Members">
                           <Users className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleArchiveProject(project)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200" title="Archive Project">
+                        <button onClick={() => handleArchiveProject(project)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-200" title="Archive Project">
                           <Archive className="w-4 h-4" />
                         </button>
                       </div>

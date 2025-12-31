@@ -95,7 +95,7 @@ const ListColumn = React.memo(
           ref={setNodeRef}
           className={`transition-all duration-200 ${
             isOver
-              ? "bg-blue-50 border-2 border-blue-400 border-dashed rounded-lg"
+              ? "bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-400 dark:border-blue-500 border-dashed rounded-lg"
               : ""
           }`}
         >
@@ -106,14 +106,14 @@ const ListColumn = React.memo(
 
     return (
       <div
-        className={`bg-[#f1f2f4] rounded-lg border border-gray-200 h-[644px] transition-all duration-200 ${
+        className={`bg-[#f1f2f4] dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-[644px] transition-all duration-200 ${
           isHovered ? "shadow-lg" : "shadow-sm"
         }`}
         // onMouseEnter={() => setIsHovered(true)}
         // onMouseLeave={() => setIsHovered(false)}
       >
         {/* Column Header */}
-        <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1">
               {isEditing ? (
@@ -123,14 +123,14 @@ const ListColumn = React.memo(
                   onChange={(e) => setNewTitle(e.target.value)}
                   onBlur={handleRename}
                   onKeyPress={handleKeyPress}
-                  className="text-sm font-semibold bg-transparent border-none outline-none focus:outline-none flex-1"
+                  className="text-sm font-semibold bg-transparent dark:text-gray-100 border-none outline-none focus:outline-none flex-1"
                   autoFocus
                 />
               ) : (
                 <h3
-                  className={`text-sm font-semibold ${textColor} uppercase tracking-wide flex-1 ${
+                  className={`text-sm font-semibold ${textColor} dark:text-gray-200 uppercase tracking-wide flex-1 ${
                     status !== "archive"
-                      ? "cursor-pointer hover:bg-gray-100"
+                      ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                       : "cursor-not-allowed"
                   } px-2 py-1 rounded`}
                   onClick={() => {
@@ -146,7 +146,7 @@ const ListColumn = React.memo(
                 </h3>
               )}
               <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${textColor} bg-gray-100`}
+                className={`px-2 py-1 rounded-full text-xs font-medium ${textColor} dark:text-gray-300 bg-gray-100 dark:bg-gray-700`}
               >
                 {cards.length}
               </span>
@@ -157,8 +157,8 @@ const ListColumn = React.memo(
                 onClick={() => status !== "archive" && setShowMenu(!showMenu)}
                 className={`p-1.5 rounded ${
                   status !== "archive"
-                    ? "hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-                    : "text-gray-300 cursor-not-allowed"
+                    ? "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                    : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
                 } transition-colors duration-200`}
                 title={
                   status !== "archive"
@@ -170,13 +170,13 @@ const ListColumn = React.memo(
               </button>
 
               {showMenu && status !== "archive" && (
-                <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                <div className="absolute right-0 top-8 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-20">
                   <button
                     onClick={() => {
                       setIsEditing(true);
                       setShowMenu(false);
                     }}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Rename Column</span>
@@ -184,10 +184,10 @@ const ListColumn = React.memo(
                   {/* Only show delete button if column has no cards */}
                   {cards.length === 0 && (
                     <>
-                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                       <button
                         onClick={handleDelete}
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center space-x-2"
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Delete Column</span>
@@ -201,20 +201,20 @@ const ListColumn = React.memo(
                           onAddCard(status);
                           setShowMenu(false);
                         }}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2"
                       >
                         <Plus className="w-4 h-4" />
                         <span>Add Card</span>
                       </button>
                       {cards.length > 0 && onMoveAllCards && (
                         <>
-                          <div className="border-t border-gray-100 my-1"></div>
+                          <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                           <button
                             onClick={() => {
                               onMoveAllCards(status);
                               setShowMenu(false);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2"
                           >
                             <ArrowRight className="w-4 h-4" />
                             <span>Move all cards</span>
@@ -252,10 +252,10 @@ const ListColumn = React.memo(
               {/* Empty state for when no cards */}
               {cards.length === 0 && (
                 <div className="text-center py-8">
-                  <div className="w-8 h-8 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <span className="text-lg text-gray-400">📋</span>
+                  <div className="w-8 h-8 mx-auto mb-2 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-lg text-gray-400 dark:text-gray-500">📋</span>
                   </div>
-                  <p className="text-xs text-gray-400">No cards yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">No cards yet</p>
                 </div>
               )}
             </div>
@@ -264,7 +264,7 @@ const ListColumn = React.memo(
 
         {/* Add Card Button - Always Visible (except for Archive column) */}
         {status !== "archive" && (
-          <div className="p-3 border-t border-gray-100">
+          <div className="p-3 border-t border-gray-100 dark:border-gray-700">
             <button
               onClick={() => onAddCard(status)}
               className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-white hover:text-white  rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400 bg-[#4338ca] font-medium transition-all duration-300 hover:from-blue-400 hover:to-indigo-400

@@ -110,39 +110,39 @@ const Sidebar = ({
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${isCollapsed ? "w-16" : "w-72"
+        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col h-screen ${isCollapsed ? "w-16" : "w-72"
           } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
               <img src={Logo} alt="Logo" className="w-6 h-6" />
-              <h2 className="text-lg font-semibold text-gray-900">PMS</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">PMS</h2>
             </div>
           )}
           <button
             onClick={onToggleSidebar}
-            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             )}
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 lg:hidden"
           >
-            <X className="w-4 h-4 text-gray-600" />
+            <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
 
@@ -155,8 +155,8 @@ const Sidebar = ({
                 ? "justify-center px-2 py-3"
                 : "justify-between px-3 py-3"
               } rounded-lg transition-colors duration-200 ${!isOnProjectPage && location.pathname === "/"
-                ? "bg-blue-100 text-blue-700 border border-blue-200"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             title={isCollapsed ? "Dashboard" : ""}
           >
@@ -174,8 +174,8 @@ const Sidebar = ({
                 onClick={() => toggleCategory("projects")}
                 className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 ${
                   isOnProjectPage
-                    ? "bg-blue-100 text-blue-700 border border-blue-200"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
               >
                 <div className="flex items-center space-x-3 min-w-0">
@@ -183,7 +183,7 @@ const Sidebar = ({
                   <span className="font-medium">Projects</span>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
                     expandedCategories["projects"] ? "rotate-180" : ""
                   }`}
                 />
@@ -197,7 +197,7 @@ const Sidebar = ({
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="mt-1 space-y-0.5 ml-4 pl-3 border-l-2 border-gray-200">
+                <div className="mt-1 space-y-0.5 ml-4 pl-3 border-l-2 border-gray-200 dark:border-gray-700">
                   {/* Categories - each as expandable section */}
                   {groupedProjects.categories.map((category) => (
                     <div key={category._id}>
@@ -208,8 +208,8 @@ const Sidebar = ({
                           category.projects.some(
                             (p) => location.pathname === `/project/${p._id}`
                           )
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                            : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
                         }`}
                       >
                         <div className="flex items-center space-x-2 min-w-0">
@@ -224,7 +224,7 @@ const Sidebar = ({
                           </span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
                             expandedCategories[category._id] ? "rotate-180" : ""
                           }`}
                         />
@@ -238,7 +238,7 @@ const Sidebar = ({
                             : "max-h-0 opacity-0"
                         }`}
                       >
-                        <div className="mt-0.5 space-y-0.5 ml-3 pl-2 border-l border-gray-200">
+                        <div className="mt-0.5 space-y-0.5 ml-3 pl-2 border-l border-gray-200 dark:border-gray-700">
                           {category.projects.map((project) => {
                             const isProjectActive =
                               location.pathname === `/project/${project._id}`;
@@ -249,8 +249,8 @@ const Sidebar = ({
                                 onClick={onClose}
                                 className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 ${
                                   isProjectActive
-                                    ? "bg-blue-50 text-blue-600 font-medium"
-                                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium"
+                                    : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
                                 }`}
                               >
                                 <span className="text-sm truncate">{project.name}</span>
@@ -273,12 +273,12 @@ const Sidebar = ({
                         onClick={onClose}
                         className={`flex items-center px-2 py-2 rounded-md transition-colors duration-200 ${
                           isProjectActive
-                            ? "bg-blue-50 text-blue-600 font-medium"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium"
+                            : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
                         }`}
                       >
                         <div className="flex items-center space-x-2 min-w-0">
-                          <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center bg-gray-400">
+                          <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center bg-gray-400 dark:bg-gray-600">
                             <FolderOpen className="w-2.5 h-2.5 text-white" />
                           </div>
                           <span className="text-sm truncate">{project.name}</span>
@@ -297,8 +297,8 @@ const Sidebar = ({
                           groupedProjects.workspaceCategory.projects.some(
                             (p) => location.pathname === `/project/${p._id}`
                           )
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                            ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                            : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
                         }`}
                       >
                         <div className="flex items-center space-x-2 min-w-0">
@@ -313,7 +313,7 @@ const Sidebar = ({
                           </span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
                             expandedCategories[groupedProjects.workspaceCategory._id] ? "rotate-180" : ""
                           }`}
                         />
@@ -327,7 +327,7 @@ const Sidebar = ({
                             : "max-h-0 opacity-0"
                         }`}
                       >
-                        <div className="mt-0.5 space-y-0.5 ml-3 pl-2 border-l border-gray-200">
+                        <div className="mt-0.5 space-y-0.5 ml-3 pl-2 border-l border-gray-200 dark:border-gray-700">
                           {groupedProjects.workspaceCategory.projects.map((project) => {
                             const isProjectActive =
                               location.pathname === `/project/${project._id}`;
@@ -338,8 +338,8 @@ const Sidebar = ({
                                 onClick={onClose}
                                 className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 ${
                                   isProjectActive
-                                    ? "bg-blue-50 text-blue-600 font-medium"
-                                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium"
+                                    : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"
                                 }`}
                               >
                                 <span className="text-sm truncate">{project.name}</span>
@@ -360,8 +360,8 @@ const Sidebar = ({
             <div
               className={`flex items-center justify-center px-2 py-3 rounded-lg transition-colors duration-200 cursor-pointer ${
                 isOnProjectPage
-                  ? "bg-blue-100 text-blue-700 border border-blue-200"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
               title="Projects"
               onClick={() => setIsCollapsed(false)}
@@ -372,18 +372,18 @@ const Sidebar = ({
         </nav>
 
         {/* User info */}
-        <div className="relative border-t border-gray-200 mt-auto">
+        <div className="relative border-t border-gray-200 dark:border-gray-700 mt-auto">
           <div
-            className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+            className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
             onClick={() => setShowSettingsModal(true)}
           >
             <div
               className={`flex items-center ${isCollapsed ? "justify-center" : "space-x-3"
                 }`}
             >
-              <Settings className="w-5 h-5 text-gray-600" />
+              <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               {!isCollapsed && (
-                <p className="text-sm font-medium text-gray-900">Settings</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Settings</p>
               )}
             </div>
           </div>

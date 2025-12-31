@@ -80,18 +80,18 @@ const MoveAllCardsModal = ({
         <div
           ref={modalRef}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all"
+          className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-xl transition-all"
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Move All Cards
               </h3>
               <button
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -100,7 +100,7 @@ const MoveAllCardsModal = ({
 
           {/* Body */}
           <div className="px-6 py-4">
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
               Move all <strong>{cardCount}</strong> card
               {cardCount !== 1 ? "s" : ""} from{" "}
               <strong>"{sourceColumn?.name}"</strong> to:
@@ -108,7 +108,7 @@ const MoveAllCardsModal = ({
 
             {availableColumns.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
                   No other columns available to move cards to.
                 </p>
               </div>
@@ -118,7 +118,7 @@ const MoveAllCardsModal = ({
                   value={selectedColumnId}
                   onChange={(e) => setSelectedColumnId(e.target.value)}
                   disabled={isLoading || availableColumns.length === 0}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white text-gray-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select a column...</option>
                   {availableColumns.map((column) => (
@@ -135,11 +135,11 @@ const MoveAllCardsModal = ({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
+          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 flex justify-end space-x-3">
             <button
               onClick={handleCancel}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

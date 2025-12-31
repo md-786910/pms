@@ -4,106 +4,114 @@
 
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-gray-200 dark:border-gray-700;
+  }
+
+  html {
+    @apply transition-colors duration-300;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    @apply bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
   }
 
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200;
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500;
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all duration-200;
   }
 
   .modal-overlay {
-    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+    @apply fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50;
   }
 
   .modal-content {
-    @apply bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto;
   }
 
   /* Card Status Colors */
   .status-todo {
-    @apply bg-blue-50 text-blue-700 border-blue-200;
+    @apply bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700;
   }
 
   .status-doing {
-    @apply bg-yellow-50 text-yellow-700 border-yellow-200;
+    @apply bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700;
   }
 
   .status-review {
-    @apply bg-purple-50 text-purple-700 border-purple-200;
+    @apply bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700;
   }
 
   .status-done {
-    @apply bg-green-50 text-green-700 border-green-200;
+    @apply bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700;
   }
 
   /* Project Status Colors */
   .project-status-new {
-    @apply bg-blue-50 text-blue-700 border-blue-200;
+    @apply bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700;
   }
 
   .project-status-ongoing {
-    @apply bg-yellow-50 text-yellow-700 border-yellow-200;
+    @apply bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700;
   }
 
   .project-status-completed {
-    @apply bg-green-50 text-green-700 border-green-200;
+    @apply bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700;
   }
 
   .project-status-cancelled {
-    @apply bg-red-50 text-red-700 border-red-200;
+    @apply bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700;
   }
 
   /* Project Type Colors */
   .project-type-maintenance {
-    @apply bg-purple-50 text-purple-700 border-purple-200;
+    @apply bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700;
   }
 
   .project-type-ongoing {
-    @apply bg-indigo-50 text-indigo-700 border-indigo-200;
+    @apply bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700;
   }
 
   .project-type-one-time {
-    @apply bg-orange-50 text-orange-700 border-orange-200;
+    @apply bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700;
   }
 
   /* Priority Colors */
   .priority-low {
-    @apply bg-green-50 text-green-700 border-green-200;
+    @apply bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700;
   }
 
   .priority-medium {
-    @apply bg-yellow-50 text-yellow-700 border-yellow-200;
+    @apply bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700;
   }
 
   .priority-high {
-    @apply bg-orange-50 text-orange-700 border-orange-200;
+    @apply bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700;
   }
 
   .priority-urgent {
-    @apply bg-red-50 text-red-700 border-red-200;
+    @apply bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700;
   }
 
   /* Status Badge Base */
@@ -116,7 +124,7 @@
   }
 
   .notification-toast {
-    @apply fixed top-4 right-4 bg-white border border-secondary-200 rounded-lg shadow-lg p-4 max-w-sm z-50 animate-slide-up;
+    @apply fixed top-4 right-4 bg-white dark:bg-gray-800 border border-secondary-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-sm z-50 animate-slide-up;
   }
 
   .line-clamp-2 {
@@ -135,35 +143,51 @@
 
   /* Quill Editor Styles */
   .ql-editor {
-    @apply text-sm leading-relaxed;
+    @apply text-sm leading-relaxed text-gray-900 dark:text-gray-100;
   }
 
   .ql-toolbar {
-    @apply border-gray-300 rounded-t-lg;
+    @apply border-gray-300 dark:border-gray-600 rounded-t-lg bg-white dark:bg-gray-800;
+  }
+
+  .ql-toolbar .ql-stroke {
+    @apply dark:stroke-gray-300;
+  }
+
+  .ql-toolbar .ql-fill {
+    @apply dark:fill-gray-300;
+  }
+
+  .ql-toolbar .ql-picker {
+    @apply dark:text-gray-300;
   }
 
   .ql-container {
-    @apply border-gray-300 rounded-b-lg;
+    @apply border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-800;
   }
 
   /* Simple Quill Editor Styles */
   .simple-quill-editor .ql-toolbar {
-    @apply border-gray-300 rounded-t-lg bg-gray-50;
+    @apply border-gray-300 dark:border-gray-600 rounded-t-lg bg-gray-50 dark:bg-gray-700;
     border-bottom: 1px solid #e5e7eb;
   }
 
+  .dark .simple-quill-editor .ql-toolbar {
+    border-bottom-color: #4b5563;
+  }
+
   .simple-quill-editor .ql-container {
-    @apply border-gray-300 rounded-b-lg;
+    @apply border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-800;
     border-top: none;
   }
 
   .simple-quill-editor .ql-editor {
-    @apply text-sm leading-relaxed min-h-[100px];
+    @apply text-sm leading-relaxed min-h-[100px] text-gray-900 dark:text-gray-100;
     font-family: inherit;
   }
 
   .simple-quill-editor .ql-editor.ql-blank::before {
-    @apply text-gray-400 italic;
+    @apply text-gray-400 dark:text-gray-500 italic;
     font-style: italic;
   }
 
@@ -187,10 +211,8 @@
 
   /* Custom Mention Styles */
   .mention {
-    @apply bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-medium mx-1;
+    @apply bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-md font-medium mx-1;
     display: inline-block;
-    background-color: #e3f2fd !important;
-    color: #1976d2 !important;
     padding: 2px 6px !important;
     border-radius: 4px !important;
     font-weight: 500 !important;
@@ -199,8 +221,7 @@
   }
 
   .mention:hover {
-    background-color: #bbdefb !important;
-    color: #1565c0 !important;
+    @apply bg-blue-200 dark:bg-blue-800/50;
   }
 
   /* Comment editor specific styles */
@@ -209,16 +230,16 @@
   }
 
   .comment-editor .ql-toolbar {
-    @apply border-gray-300 rounded-t-lg bg-gray-50;
+    @apply border-gray-300 dark:border-gray-600 rounded-t-lg bg-gray-50 dark:bg-gray-700;
   }
 
   .comment-editor .ql-container {
-    @apply border-gray-300 rounded-b-lg;
+    @apply border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-800;
   }
 
   /* Custom Tag Styles */
   .tag {
-    @apply bg-purple-100 text-purple-800 px-2 py-1 rounded-md font-medium mx-1;
+    @apply bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-2 py-1 rounded-md font-medium mx-1;
     display: inline-block;
   }
 
@@ -228,11 +249,11 @@
   } */
 
   .activity-comment .prose {
-    @apply text-sm text-gray-700;
+    @apply text-sm text-gray-700 dark:text-gray-300;
   }
 
   .activity-comment .prose strong {
-    @apply text-blue-900 font-semibold;
+    @apply text-blue-900 dark:text-blue-300 font-semibold;
   }
 
   /* ContentEditable placeholder */
@@ -240,6 +261,10 @@
     content: attr(data-placeholder);
     color: #9ca3af;
     pointer-events: none;
+  }
+
+  .dark [contenteditable]:empty:before {
+    color: #6b7280;
   }
 
   /* Mention styling in contentEditable */
@@ -297,7 +322,7 @@
 
   /* Prose styling for rendered HTML content */
   .prose {
-    @apply text-gray-700 leading-relaxed;
+    @apply text-gray-700 dark:text-gray-300 leading-relaxed;
   }
 
   .prose p {
@@ -309,7 +334,7 @@
   }
 
   .prose strong {
-    @apply font-semibold text-gray-900;
+    @apply font-semibold text-gray-900 dark:text-gray-100;
   }
 
   .prose em {
@@ -326,13 +351,13 @@
   }
 
   .prose a {
-    @apply text-blue-600 hover:text-blue-800 underline;
+    @apply text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline;
   }
 
   .prose h1,
   .prose h2,
   .prose h3 {
-    @apply font-semibold text-gray-900 mb-2;
+    @apply font-semibold text-gray-900 dark:text-gray-100 mb-2;
   }
 
   .prose h1 {
@@ -359,20 +384,37 @@
   border-radius: 10px;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+}
+
 ::-webkit-scrollbar-thumb {
   background-color: #cbd5e1; /* gray-300 */
   border-radius: 10px;
   border: 2px solid #f1f5f9; /* Add border for better visibility */
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* gray-600 */
+  border-color: #1f2937;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8; /* gray-400 */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* gray-500 */
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.dark * {
+  scrollbar-color: #4b5563 #1f2937;
 }
 
 /* Group scrollbar styles - visible only on hover */
@@ -390,8 +432,16 @@
   border-radius: 10px;
 }
 
+.dark .group::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* Tailwind gray-600 */
+}
+
 .group::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8; /* Tailwind gray-400 */
+}
+
+.dark .group::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* Tailwind gray-500 */
 }
 
 .group::-webkit-scrollbar-track {
@@ -426,4 +476,12 @@ textarea:disabled {
   cursor: not-allowed;
   background-color: #d3d3d3;
   color: #000000;
+}
+
+.dark button:disabled,
+.dark input:disabled,
+.dark select:disabled,
+.dark textarea:disabled {
+  background-color: #374151;
+  color: #9ca3af;
 }

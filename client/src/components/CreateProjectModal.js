@@ -308,15 +308,15 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         ref={modalRef}
-        className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
+        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[90vh] overflow-hidden relative flex flex-col"
       >
         {/* Sticky Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-6 z-10 p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
+          className="absolute top-5 right-6 z-10 p-3 bg-white/90 dark:bg-gray-700/90 hover:bg-white dark:hover:bg-gray-600 rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
           title="Close modal"
         >
-          <X className="w-4 h-4 text-gray-600" />
+          <X className="w-4 h-4 text-gray-600 dark:text-gray-300" />
         </button>
 
         {/* Modal Header */}
@@ -343,12 +343,12 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
               className="space-y-8"
             >
               {/* Section 1: Project Information */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center mb-4">
                   <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mr-3">
                     <Plus className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                     Project Information
                   </h3>
                 </div>
@@ -358,7 +358,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Project Name */}
                     <div className="md:col-span-1">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Project Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -366,14 +366,14 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         placeholder="Enter project name"
                         required
                       />
                     </div>
                     {/* Client Name */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Client Name
                       </label>
                       <input
@@ -381,20 +381,20 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         name="clientName"
                         value={formData.clientName}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         placeholder="Enter client name"
                       />
                     </div>
                     {/* Project Status */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Project Status <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="projectStatus"
                         value={formData.projectStatus}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         required
                       >
                         <option value="new">New</option>
@@ -409,14 +409,14 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Project Type */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Project Type <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="projectType"
                         value={formData.projectType}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         required
                       >
                         <option value="">Select Project Type</option>
@@ -427,7 +427,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                     </div>
                     {/* Start Date */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Start Date <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -436,13 +436,13 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         name="startDate"
                         value={formData.startDate}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                         required
                       />
                     </div>
                     {/* End Date */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         End Date
                       </label>
                       <input
@@ -451,23 +451,23 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                         name="endDate"
                         value={formData.endDate}
                         onChange={handleChange}
-                        className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
                   </div>
 
                   {/* Category */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Category
                     </label>
                     <div className="relative">
-                      <Folder className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Folder className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                       <select
                         name="category"
                         value={formData.category}
                         onChange={handleChange}
-                        className="w-full h-12 pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
+                        className="w-full h-12 pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                       >
                         <option value="">No Category</option>
                         {categories.map((cat) => (
@@ -481,10 +481,10 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Description
                     </label>
-                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                       <SimpleQuillEditor
                         value={formData.description}
                         onChange={(content) =>
@@ -502,12 +502,12 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
               </div>
 
               {/* Section 2: Site URLs */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center mb-4">
                   <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
                     <Link className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                     Site URLs
                   </h3>
                 </div>
@@ -515,7 +515,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Live Site URL */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Live Site URL
                     </label>
                     <input
@@ -523,14 +523,14 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                       name="liveSiteUrl"
                       value={formData.liveSiteUrl}
                       onChange={handleChange}
-                      className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="https://example.com"
                     />
                   </div>
                   {/* Demo Site URL */}
                   <div className="relative">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-gray-700">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Demo Site URL
                       </label>
                     </div>
@@ -543,7 +543,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                             onChange={(e) =>
                               handleDemoSiteUrlChange(index, e.target.value)
                             }
-                            className="flex-1 h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="flex-1 h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                             placeholder="https://demo.example.com"
                           />
                           {formData.demoSiteUrls.length > 1 && (
@@ -572,7 +572,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                   </div>
                   {/* Markup URL */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Markup URL
                     </label>
                     <input
@@ -580,7 +580,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                       name="markupUrl"
                       value={formData.markupUrl}
                       onChange={handleChange}
-                      className="w-full h-12 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full h-12 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="https://markup.example.com"
                     />
                   </div>
@@ -588,12 +588,12 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
               </div>
 
               {/* Section 3: Files and Documents */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center mb-4">
                   <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
                     <Upload className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                     Files and Documents
                   </h3>
                 </div>
@@ -601,16 +601,16 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                 {/* Drag and Drop Area */}
                 <div
                   className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${isDragOver
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-300 hover:border-gray-400"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
                     }`}
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600 mb-2">
+                  <Upload className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">
                     Drag and drop files here, or{" "}
                     <button
                       type="button"
@@ -619,7 +619,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                       browse files
                     </button>
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Supports images, PDFs, documents (max 25MB each)
                   </p>
                   <input
@@ -717,12 +717,12 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
         </div>
 
         {/* Sticky Footer */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-6">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
           <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-8 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-all duration-200 rounded-xl hover:bg-gray-100 border border-gray-300"
+              className="px-8 py-3 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-semibold transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"
               disabled={loading}
             >
               Cancel

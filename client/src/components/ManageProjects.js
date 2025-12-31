@@ -218,12 +218,12 @@ const ManageProjects = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+          <Info className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5" />
           <div>
-            <h3 className="font-medium text-blue-800">About Categories</h3>
-            <p className="text-sm text-blue-700 mt-1">
+            <h3 className="font-medium text-blue-800 dark:text-blue-300">About Categories</h3>
+            <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
               Categories help organize your projects in the sidebar. Projects are grouped
               alphabetically within each category for easy navigation.
             </p>
@@ -232,18 +232,18 @@ const ManageProjects = () => {
       </div>
 
       {/* Categories List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Folder className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <Folder className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   Project Categories
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Organize projects into categories
                 </p>
               </div>
@@ -251,18 +251,18 @@ const ManageProjects = () => {
 
             {/* Search */}
             <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search categories..."
-                className="w-full pl-9 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-8 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -274,13 +274,13 @@ const ManageProjects = () => {
         <div className="p-6">
           {filteredCategories.length === 0 && uncategorizedCount === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <FolderOpen className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <FolderOpen className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 {searchQuery ? "No categories found" : "No categories yet"}
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
                 {searchQuery
                   ? "Try a different search term"
                   : "Create your first category to organize projects"}
@@ -301,7 +301,7 @@ const ManageProjects = () => {
               {filteredCategories.map((category) => (
                 <div
                   key={category._id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 border border-gray-200 group"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 border border-gray-200 dark:border-gray-600 group"
                 >
                   <div className="flex items-center space-x-3">
                     <div
@@ -310,7 +310,7 @@ const ManageProjects = () => {
                     >
                       <Folder className="w-4 h-4 text-white" />
                     </div>
-                    <h3 className="font-medium text-gray-900">{category.name}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{category.name}</h3>
                   </div>
                   <div className="flex items-center space-x-3">
                     <span
@@ -325,14 +325,14 @@ const ManageProjects = () => {
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditModal(category)}
-                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteClick(category)}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -350,15 +350,15 @@ const ManageProjects = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
-              <h2 className="text-base font-semibold text-gray-900">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                 {modalMode === "create" ? "Create Category" : "Edit Category"}
               </h2>
               <button
                 onClick={closeModal}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -367,7 +367,7 @@ const ManageProjects = () => {
             {/* Modal Body */}
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               {formError && (
-                <div className="flex items-center gap-2 p-2.5 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
+                <div className="flex items-center gap-2 p-2.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm border border-red-200 dark:border-red-700">
                   <Info className="w-4 h-4 flex-shrink-0" />
                   {formError}
                 </div>
@@ -375,7 +375,7 @@ const ManageProjects = () => {
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -385,14 +385,14 @@ const ManageProjects = () => {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="e.g., Web Development"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   autoFocus
                 />
               </div>
 
               {/* Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Color
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -405,7 +405,7 @@ const ManageProjects = () => {
                       }
                       className={`w-8 h-8 rounded-lg transition-all duration-200 flex items-center justify-center ${
                         formData.color === color.value
-                          ? "ring-2 ring-offset-2 ring-blue-500"
+                          ? "ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-800"
                           : "hover:scale-105"
                       }`}
                       style={{ backgroundColor: color.value }}
@@ -420,24 +420,24 @@ const ManageProjects = () => {
               </div>
 
               {/* Preview */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: formData.color }}
                 >
                   <Folder className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm font-medium text-gray-900 truncate">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                   {formData.name || "Category Name"}
                 </span>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-medium transition-colors"
                 >
                   Cancel
                 </button>

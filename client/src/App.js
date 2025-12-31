@@ -16,6 +16,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import { UserProvider } from "./contexts/UserContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import { SocketProvider } from "./contexts/SocketContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { useUser } from "./contexts/UserContext";
 import ResetPassword from "./components/ResetPassword";
 
@@ -26,13 +27,13 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
       </div>
     );
   }
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Routes>
         {!isAuthenticated ? (
           <>
@@ -43,7 +44,7 @@ function AppContent() {
           <Route
             path="*"
             element={
-              <div className="min-h-screen bg-gray-50 flex">
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex transition-colors duration-300">
                 <Sidebar
                   isOpen={sidebarOpen}
                   isCollapsed={sidebarCollapsed}
@@ -62,7 +63,7 @@ function AppContent() {
                     sidebarCollapsed={sidebarCollapsed}
                   />
 
-                  <main className="flex-1 pt-6 px-6 overflow-auto transition-all duration-300 bg-slate-200">
+                  <main className="flex-1 pt-6 px-6 overflow-auto transition-all duration-300 bg-slate-200 dark:bg-gray-900">
                     <Routes>
                       <Route path="/" element={<ProjectList />} />
                       <Route path="/admin" element={<AdminPanel />} />
@@ -107,15 +108,17 @@ function App() {
         <Route
           path="*"
           element={
-            <UserProvider>
-              <SocketProvider>
-                <ProjectProvider>
-                  <NotificationProvider>
-                    <AppContent />
-                  </NotificationProvider>
-                </ProjectProvider>
-              </SocketProvider>
-            </UserProvider>
+            <ThemeProvider>
+              <UserProvider>
+                <SocketProvider>
+                  <ProjectProvider>
+                    <NotificationProvider>
+                      <AppContent />
+                    </NotificationProvider>
+                  </ProjectProvider>
+                </SocketProvider>
+              </UserProvider>
+            </ThemeProvider>
           }
         />
       </Routes>

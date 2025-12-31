@@ -59,7 +59,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
       {/* Dropdown Menu - positioned relative to settings box */}
       <div className="absolute bottom-16 left-0 right-0 mx-auto w-[94%] z-50 pointer-events-auto">
-        <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -93,22 +93,22 @@ const SettingsModal = ({ isOpen, onClose }) => {
                   title={item.title}
                   className={`flex items-center space-x-3 px-1 py-1 mx-2 rounded-lg transition-all duration-200 ${
                     isActive
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "text-gray-700 hover:bg-gray-50"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   }`}
                 >
                   <div
                     className={`p-2 rounded-lg ${
                       isActive
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-600"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <span className="font-medium text-sm">{item.name}</span>
                   {isActive && (
-                    <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full" />
+                    <div className="ml-auto w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full" />
                   )}
                 </Link>
               );
