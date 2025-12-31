@@ -37,6 +37,7 @@ import ConfirmationModal from "./ConfirmationModal";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 import SimpleCommentEditor from "./SimpleCommentEditor";
 import LabelsModal from "./LabelsModal";
+import { TimeTrackerWidget } from "./TimeTracking";
 import { API_URL } from "../utils/endpoints";
 import { getCardStatusColors } from "../utils/statusColors";
 
@@ -2258,6 +2259,14 @@ const CardModal = ({
                     </div>
                   </div>
                 )}
+                {/* Time Tracking - Trello Style */}
+                <TimeTrackerWidget
+                  card={card}
+                  onCardUpdated={onCardUpdated}
+                  isArchived={isArchived}
+                  socket={socket}
+                />
+
                 <div className="space-y-4">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                     <MessageSquare className="w-4 h-4 text-gray-600" />

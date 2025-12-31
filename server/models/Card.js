@@ -175,6 +175,17 @@ const cardSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Time tracking fields
+    estimatedTime: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalTimeSpent: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,
