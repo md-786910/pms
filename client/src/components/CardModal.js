@@ -32,11 +32,11 @@ import { useNotification } from "../contexts/NotificationContext";
 import { useSocket } from "../contexts/SocketContext";
 import { cardAPI, cardItemAPI } from "../utils/api";
 import Avatar from "./Avatar";
-import AssignUserModal from "./AssignUserModal";
+import MembersDropdown from "./MembersDropdown";
 import ConfirmationModal from "./ConfirmationModal";
 import SimpleQuillEditor from "./SimpleQuillEditor";
 import SimpleCommentEditor from "./SimpleCommentEditor";
-import LabelsModal from "./LabelsModal";
+import LabelsDropdown from "./LabelsDropdown";
 import { TimeTrackerWidget } from "./TimeTracking";
 import { API_URL } from "../utils/endpoints";
 import { getCardStatusColors } from "../utils/statusColors";
@@ -127,48 +127,6 @@ const CardModal = ({
     { name: "Blue", value: "blue", bg: "bg-blue-500", text: "text-white" },
     { name: "Gray", value: "gray", bg: "bg-gray-500", text: "text-white" },
   ];
-
-  // Get existing labels from all cards in the project
-  const getExistingLabels = () => {
-    const allLabels = new Map();
-
-    // Collect labels from current project cards (if available)
-    if (currentProject && currentProject.cards) {
-      currentProject.cards.forEach((card) => {
-        if (card.labels) {
-          card.labels.forEach((label) => {
-            if (!allLabels.has(label.name)) {
-              allLabels.set(label.name, {
-                name: label.name,
-                color: label.color || "blue",
-                count: 1,
-              });
-            } else {
-              allLabels.get(label.name).count++;
-            }
-          });
-        }
-      });
-    }
-
-    // Also include labels from the current card
-    if (card && card.labels) {
-      card.labels.forEach((label) => {
-        if (!allLabels.has(label.name)) {
-          allLabels.set(label.name, {
-            name: label.name,
-            color: label.color || "blue",
-            count: 1,
-          });
-        } else {
-          allLabels.get(label.name).count++;
-        }
-      });
-    }
-
-    return Array.from(allLabels.values()).sort((a, b) => b.count - a.count);
-  };
-
   // Mention functionality - now handled by QuillEditor
   const handleMentionSelect = (mention, newText) => {
     setMentions((prev) => [...prev, mention]);
@@ -232,6 +190,8 @@ const CardModal = ({
   const initialDueDateRef = useRef(formData.dueDate);
   const cardIdRef = useRef(card._id);
   const dateInputRef = useRef(null);
+  const labelsButtonRef = useRef(null);
+  const membersButtonRef = useRef(null);
 
   // Mark card as read when modal opens
   useEffect(() => {
@@ -1509,39 +1469,11 @@ const CardModal = ({
     }
   };
 
-  const handleUserAssigned = async () => {
-    // Refresh the card data when users are assigned/unassigned
-    try {
-      const response = await cardAPI.getCard(card._id);
-      if (response.data.success) {
-        onCardUpdated(response.data.card);
-      }
-    } catch (error) {
-      console.error("Error refreshing card data:", error);
-    }
-    setShowAssignModal(false);
-  };
-
   // Markdown formatting helpers
 
   // Convert HTML back to markdown with better handling
 
   const assignees = getAssignees();
-  const projectMembers =
-    currentProject?.members
-      .map((member) => {
-        if (typeof member === "string") {
-          return users.find(
-            (user) => user._id === member || user.id === member
-          );
-        }
-        return member.user
-          ? users.find(
-            (user) => user._id === member.user || user.id === member.user
-          )
-          : member;
-      })
-      .filter(Boolean) || [];
 
   // Navigation helpers for next/prev cards in the same column
   const getCardsInSameColumn = () => {
@@ -2616,17 +2548,28 @@ const CardModal = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <Tag className="w-4 h-4 text-gray-700" />            
+                      <Tag className="w-4 h-4 text-gray-700" />
                       <label className="block text-sm font-semibold text-gray-700">
                         Labels ({card.labels?.length || 0})
                       </label>
-                    </div>  
-                    <button
-                      onClick={() => setShowLabelsModal(true)}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium"
-                    >
-                      Manage Labels
-                    </button>
+                    </div>
+                    <div className="relative">
+                      <button
+                        ref={labelsButtonRef}
+                        onClick={() => setShowLabelsModal(true)}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                      >
+                        Manage Labels
+                      </button>
+                      {/* Labels Dropdown */}
+                      <LabelsDropdown
+                        isOpen={showLabelsModal}
+                        onClose={() => setShowLabelsModal(false)}
+                        card={card}
+                        onCardUpdated={onCardUpdated}
+                        anchorRef={labelsButtonRef}
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-1 mb-2 max-h-32 overflow-y-auto">
@@ -2687,13 +2630,25 @@ const CardModal = ({
                       </label>
                     </div>
 
-                    <button
-                      onClick={() => setShowAssignModal(true)}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      Manage
-                    </button>
+                    <div className="relative">
+                      <button
+                        ref={membersButtonRef}
+                        onClick={() => setShowAssignModal(true)}
+                        className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+                      >
+                        Manage
+                      </button>
+                      {/* Members Dropdown */}
+                      <MembersDropdown
+                        isOpen={showAssignModal}
+                        onClose={() => setShowAssignModal(false)}
+                        card={card}
+                        onCardUpdated={onCardUpdated}
+                        anchorRef={membersButtonRef}
+                      />
+                    </div>
                   </div>
+
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {assignees.length > 0 ? (
                       assignees.map((user) => (
@@ -2922,16 +2877,6 @@ const CardModal = ({
 
       // image carousel helpers moved above
 
-      {/* Assign User Modal */}
-      {showAssignModal && (
-        <AssignUserModal
-          project={currentProject}
-          card={card}
-          onClose={() => setShowAssignModal(false)}
-          onUserAssigned={handleUserAssigned}
-        />
-      )}
-
       {/* Image Modal */}
       {showImageModal && (imageAttachments.length > 0 || selectedImage) && (
         <div className="modal-overlay bg-black bg-opacity-70">
@@ -3139,15 +3084,6 @@ const CardModal = ({
         cancelText="Cancel"
         type="danger"
         isLoading={deletingAttachment}
-      />
-
-      {/* Labels Modal */}
-      <LabelsModal
-        isOpen={showLabelsModal}
-        onClose={() => setShowLabelsModal(false)}
-        card={card}
-        onCardUpdated={onCardUpdated}
-        projectLabels={getExistingLabels()}
       />
 
       {/* Formatting Help Modal */}
