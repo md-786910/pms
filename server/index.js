@@ -17,6 +17,7 @@ const invitationRoutes = require("./routes/invitations");
 const activityRoutes = require("./routes/activities");
 const labelRoutes = require("./routes/labels");
 const categoryRoutes = require("./routes/categories");
+const timeEntryRoutes = require("./routes/timeEntries");
 
 const app = express();
 const PORT = config.PORT;
@@ -66,6 +67,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/time-entries", timeEntryRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

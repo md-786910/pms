@@ -295,4 +295,40 @@ export const activityAPI = {
     api.get(`/activities/recent?limit=${limit}`),
 };
 
+export const timeEntryAPI = {
+  // Timer operations
+  startTimer: (cardId) => api.post("/time-entries/timer/start", { cardId }),
+  stopTimer: () => api.post("/time-entries/timer/stop"),
+  getActiveTimer: () => api.get("/time-entries/timer/active"),
+  discardTimer: () => api.delete("/time-entries/timer/discard"),
+
+  // Manual time entries
+  addEntry: (data) => api.post("/time-entries", data),
+  updateEntry: (id, data) => api.put(`/time-entries/${id}`, data),
+  deleteEntry: (id) => api.delete(`/time-entries/${id}`),
+
+  // Queries
+  getCardEntries: (cardId, page = 1) =>
+    api.get(`/time-entries/cards/${cardId}?page=${page}`),
+  getProjectSummary: (projectId) =>
+    api.get(`/time-entries/projects/${projectId}/summary`),
+  getProjectEntries: (projectId, filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    if (filters.startDate) params.append("startDate", filters.startDate);
+    if (filters.endDate) params.append("endDate", filters.endDate);
+    if (filters.userId) params.append("userId", filters.userId);
+    if (filters.cardId) params.append("cardId", filters.cardId);
+    if (filters.entryType) params.append("entryType", filters.entryType);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+    return api.get(`/time-entries/projects/${projectId}/entries?${params.toString()}`);
+  },
+
+  // Estimated time
+  setEstimatedTime: (cardId, estimatedTime) =>
+    api.put(`/time-entries/cards/${cardId}/estimated`, { estimatedTime }),
+};
+
 export default api;

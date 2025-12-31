@@ -33,6 +33,7 @@ import {
   Users,
   UserPlus,
   UserMinus,
+  BarChart3,
 } from "lucide-react";
 import Avatar from "./Avatar";
 import InviteUserModal from "./InviteUserModal";
@@ -53,6 +54,7 @@ import {
   getProjectStatusColors,
   getCardStatusColors,
 } from "../utils/statusColors";
+import { TimeReportsModal } from "./TimeTracking";
 
 // Horizontal Scroll Position Indicator Component (Jira-style)
 const HorizontalScrollIndicator = React.memo(
@@ -223,6 +225,9 @@ const ProjectBoard = () => {
   const [filteredCards, setFilteredCards] = useState([]);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
+
+  // Time tracking modal state
+  const [showTimeReportsModal, setShowTimeReportsModal] = useState(false);
   const [showMembersPopover, setShowMembersPopover] = useState(false);
   const membersBtnRef = useRef(null);
   const membersPopoverRef = useRef(null);
@@ -1606,8 +1611,8 @@ const ProjectBoard = () => {
                   )}
                 </div>
               )}
-            {/* Filter button and Cancel Filter button */}
-            <div className="flex items-center gap-2">
+            {/* Filter, Time Reports, Settings buttons */}
+            <div className="flex items-center">
               <button
                 onClick={() => setShowFilterPanel(!showFilterPanel)}
                 className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors relative"
@@ -1618,25 +1623,31 @@ const ProjectBoard = () => {
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700"></span>
                 )}
               </button>
-              {hasActiveFilters && (
-                <button
-                  onClick={handleCancelFilter}
-                  className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5 px-3"
-                  title="Cancel all filters"
-                >
-                  <X className="w-4 h-4" />
-                  <span className="text-sm font-medium">Cancel Filter</span>
-                </button>
-              )}
+              <button
+                onClick={() => setShowTimeReportsModal(true)}
+                className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+                title="Time Reports"
+              >
+                <BarChart3 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleEditProject}
+                className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
+                title="Project Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
             </div>
-            {/* Settings button */}
-            <button
-              onClick={handleEditProject}
-              className="p-2 rounded-lg hover:bg-blue-500 text-white transition-colors"
-              title="Project Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+            {hasActiveFilters && (
+              <button
+                onClick={handleCancelFilter}
+                className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5 px-3"
+                title="Cancel all filters"
+              >
+                <X className="w-4 h-4" />
+                <span className="text-sm font-medium">Cancel Filter</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1947,6 +1958,14 @@ const ProjectBoard = () => {
           isLoading={isMovingCards}
         />
       )}
+
+      {/* Time Reports Modal */}
+      <TimeReportsModal
+        isOpen={showTimeReportsModal}
+        onClose={() => setShowTimeReportsModal(false)}
+        projectId={currentProject?._id}
+        projectName={currentProject?.name}
+      />
     </div>
   );
 };
