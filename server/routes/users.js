@@ -13,8 +13,8 @@ router.get("/profile", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select("-password -emailVerificationToken -passwordResetToken -passwordResetExpires")
-      .populate("pinnedProjects")
-      .populate({ path: "recentlyViewedProjects.project" });
+      .populate({ path: "pinnedProjects", populate: { path: "members.user", model: "User" } })
+      .populate({ path: "recentlyViewedProjects.project", populate: { path: "members.user", model: "User" } });
 
     if (!user) {
       return res.status(404).json({
@@ -427,7 +427,7 @@ router.put(
 // GET pinned projects for current user
 router.get('/me/pinned', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('pinnedProjects');
+    const user = await User.findById(req.user._id).populate({ path: 'pinnedProjects', populate: { path: 'members.user', model: 'User' } });
     res.json({ success: true, pinned: user.pinnedProjects || [] });
   } catch (error) {
     console.error('Get pinned projects error:', error);
@@ -509,7 +509,7 @@ router.post('/me/recently-viewed', [auth, body('projectId').notEmpty()], async (
     }
 
     await user.save();
-    await user.populate({ path: 'recentlyViewedProjects.project' });
+    await user.populate({ path: 'recentlyViewedProjects.project', populate: { path: 'members.user', model: 'User' } });
 
     res.json({ success: true, recentlyViewed: user.recentlyViewedProjects || [] });
   } catch (error) {
@@ -524,7 +524,7 @@ router.get('/me/recently-viewed', auth, async (req, res) => {
     const TTL = 1000 * 60 * 60; // 1 hour
     const cutoff = Date.now() - TTL;
 
-    const user = await User.findById(req.user._id).populate({ path: 'recentlyViewedProjects.project' });
+    const user = await User.findById(req.user._id).populate({ path: 'recentlyViewedProjects.project', populate: { path: 'members.user', model: 'User' } });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     const valid = (user.recentlyViewedProjects || [])
