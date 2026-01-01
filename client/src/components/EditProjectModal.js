@@ -1828,7 +1828,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                     field.isPassword
                                                       ? "pr-10"
                                                       : ""
-                                                  } text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono`}
+                                                  } text-sm font-semibold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400`}
                                                   disabled={isSaving}
                                                 />
                                                 {field.isPassword && (
@@ -1941,7 +1941,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                                 }))
                                               }
                                               placeholder="Enter value..."
-                                              className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                              className="flex-1 h-10 px-3 text-sm font-semibold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
                                               disabled={isSaving}
                                             />
                                             <div className="flex items-center">
@@ -2023,7 +2023,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                             }))
                                           }
                                           placeholder="Field value..."
-                                          className="h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                          className="h-10 px-3 text-sm font-semibold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder:text-slate-400"
                                         />
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -2116,7 +2116,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                       }))
                                     }
                                     placeholder="Enter value..."
-                                    className="flex-1 h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                    className="flex-1 h-10 px-3 text-sm font-semibold bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
                                     disabled={isSaving}
                                   />
                                   <div className="flex items-center">
@@ -2189,7 +2189,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                         value: e.target.value,
                                       }))
                                     }
-                                    className="flex-1 h-10 px-3 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 font-mono"
+                                    className="flex-1 h-10 px-3 text-sm font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
                                     disabled={isAddingSaving}
                                   />
                                   <button
@@ -2281,7 +2281,7 @@ const EditProjectModal = ({ project, onClose }) => {
                                           </span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <span className="text-sm font-mono text-slate-800">
+                                          <span className="text-sm font-semibold text-slate-800">
                                             {credential.value ? (
                                               isPassword && !isVisible ? (
                                                 <span className="text-slate-400">
