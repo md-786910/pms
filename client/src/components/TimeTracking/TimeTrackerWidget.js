@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Clock, Play, Square, X } from "lucide-react";
+import { Clock, Play, Square, X, ChevronDown, Pencil } from "lucide-react";
 import { timeEntryAPI } from "../../utils/api";
 import { useNotification } from "../../contexts/NotificationContext";
 import { useUser } from "../../contexts/UserContext";
@@ -464,16 +464,24 @@ const TimeTrackerWidget = ({
           </span>
         )}
 
-        <span className="text-gray-500 ml-2">Estimate:</span>
+        <span className="text-gray-500 ml-1">Estimate:</span>
         {/* Estimate button with dropdown */}
         <div className="relative inline-block">
           <button
             ref={estimateBtnRef}
             onClick={openEstimateDropdown}
-            className="font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+            className="font-medium text-blue-700 hover:text-blue-700 cursor-pointer flex items-center"
             disabled={isArchived}
+            title="Click to edit"
           >
-            {estimatedTime > 0 ? formatDuration(estimatedTime) : "-"}
+            {estimatedTime > 0 ? (
+              <>
+                {formatDuration(estimatedTime)}
+                <Pencil className="w-3 h-3 ml-1 text-blue-700 hover:text-blue-700" />
+              </>
+            ) : (
+              <ChevronDown className="w-4 h-4 text-blue-700 hover:text-blue-700 mt-1" />
+            )}
           </button>
 
           {/* Estimate Dropdown - positioned below the button */}
