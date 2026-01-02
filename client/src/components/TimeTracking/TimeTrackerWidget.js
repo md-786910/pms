@@ -440,15 +440,15 @@ const TimeTrackerWidget = ({
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 pt-4">
       {/* Header - Trello Style */}
       <div className="flex items-center gap-2 mb-2">
-        <Clock className="w-5 h-5 text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-700">Time Tracking</h3>
+        <Clock className="w-4 h-4 text-gray-700 " />
+        <h3 className="text-[16px] font-semibold text-gray-700">Time Tracking</h3>
       </div>
 
       {/* Time Info Row - Clickable */}
-      <div className="flex items-center gap-4 mb-3 text-sm">
+      <div className="flex items-center gap-4 mb-3 text-sm ml-2">
         <span className="text-gray-500">Time:</span>
         <span className={`font-medium ${getTimeColor()}`}>
           {displayTime > 0 ? formatDuration(displayTime) : "-"}
@@ -474,14 +474,7 @@ const TimeTrackerWidget = ({
             disabled={isArchived}
             title="Click to edit"
           >
-            {estimatedTime > 0 ? (
-              <>
-                {formatDuration(estimatedTime)}
-                <Pencil className="w-3 h-3 ml-1 text-blue-700 hover:text-blue-700" />
-              </>
-            ) : (
-              <ChevronDown className="w-4 h-4 text-blue-700 hover:text-blue-700 mt-1" />
-            )}
+            {estimatedTime > 0 ? formatDuration(estimatedTime) : "-"}
           </button>
 
           {/* Estimate Dropdown - positioned below the button */}
