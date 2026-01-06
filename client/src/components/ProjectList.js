@@ -28,6 +28,7 @@ import {
   getStatusBadgeClasses,
 } from "../utils/statusColors";
 import { cardAPI, userAPI } from "../utils/api";
+import { cardAPI, userAPI } from "../utils/api";
 
 const ProjectList = () => {
   const { projects, loading, fetchProjects } = useProject();
@@ -90,10 +91,28 @@ const ProjectList = () => {
       const res = await userAPI.getRecentlyViewed();
       const list = res.data?.recentlyViewed || [];
       setRecentProjects(list.map((it) => it.project).filter(Boolean));
+  // Recently viewed projects (fetched from server, server applies 1 hour TTL)
+  const [recentProjects, setRecentProjects] = useState([]);
+
+  const refreshRecentlyViewed = async () => {
+    if (!user) {
+      setRecentProjects([]);
+      return;
+    }
+    try {
+      const res = await userAPI.getRecentlyViewed();
+      const list = res.data?.recentlyViewed || [];
+      setRecentProjects(list.map((it) => it.project).filter(Boolean));
     } catch (e) {
       console.error("Failed to fetch recently viewed projects", e);
       setRecentProjects([]);
     }
+  };
+
+  useEffect(() => {
+    refreshRecentlyViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, projects]);
   };
 
   useEffect(() => {
@@ -140,6 +159,8 @@ const ProjectList = () => {
       .map((id) => projects.find((p) => p._id === id))
       .filter(Boolean);
 
+    // Other projects (include all projects). Pinned projects will appear both in Starred boards and in their original location.
+    const otherProjects = projects;
     // Other projects (include all projects). Pinned projects will appear both in Starred boards and in their original location.
     const otherProjects = projects;
 
@@ -541,6 +562,7 @@ const ProjectList = () => {
                 pinned={pinnedIds.includes(project._id)}
                 onTogglePin={togglePin}
                 onView={refreshRecentlyViewed}
+                onView={refreshRecentlyViewed}
               />
             ))}
           </div>
@@ -775,6 +797,7 @@ const ProjectCard = ({
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const { user } = useUser();
   const { user } = useUser();
 
   const formatDate = (dateString) => {
