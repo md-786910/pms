@@ -147,26 +147,26 @@ const AssignUserModal = ({
   return (
     <div className="modal-overlay">
       <div ref={modalRef} className="modal-content max-w-2xl">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-4">
+        <div className="bg-[#f1f2f4] flex items-center justify-between px-6 py-4">
           <div>
-            <h2 className="text-xl font-bold">
+            <h2 className="text-base font-semibold">
               {card ? "Assign Users to Card" : "Manage Project Members"}
             </h2>
-            <p className="text-primary-100 text-md">
+            <p className=" text-md">
               {card ? card.title : (localProject || project).name}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-secondary-100 bg-primary-100 transition-colors duration-200 hover:scale-105"
+            className="p-2 hover:bg-opacity-20 transition-colors duration-200 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
           >
-            <X className="w-5 h-5 text-secondary-600" />
+            <X className="w-5 h-5  " />
           </button>
         </div>
 
         <div className="p-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-secondary-900">
+            <h3 className="text-base font-semibold">
               {card ? "Project Members" : "All Users"}
             </h3>
 

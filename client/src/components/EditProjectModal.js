@@ -1103,7 +1103,7 @@ const EditProjectModal = ({ project, onClose }) => {
         <div className="flex items-center">
           <button
             onClick={onClose}
-            className="absolute top-6 right-4 z-10 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+            className="absolute top-6 right-4 z-10  p-2 hover:bg-white hover:bg-opacity-20 transition-colors duration-200 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
             title="Close modal"
           >
             <X className="w-4 h-4 text-gray-600" />
@@ -1129,14 +1129,14 @@ const EditProjectModal = ({ project, onClose }) => {
         </div>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex-shrink-0">
+        <div className="bg-[#f1f2f4]  p-4 flex-shrink-0">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-white/20 rounded-xl">
+            <div className="p-2 rounded-lg flex items-center justify-center">
               <Save className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Project Details</h2>
-              <p className="text-primary-100 text-md">
+              <h2 className="text-base font-semibold">Project Details</h2>
+              <p className="text-md">
                 Manage project information and credentials
               </p>
             </div>
@@ -1210,7 +1210,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center mr-3">
                         <Save className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-base font-semibold">
                         Project Information
                       </h3>
                     </div>
@@ -1424,7 +1424,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
                         <Link className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-base font-semibold">
                         Site URLs
                       </h3>
                     </div>
@@ -1525,7 +1525,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
                         <Upload className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-base font-semibold">
                         Files and Documents
                       </h3>
                     </div>
@@ -1658,7 +1658,7 @@ const EditProjectModal = ({ project, onClose }) => {
                       <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
                         <Clock className="w-5 h-5 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3 className="text-base font-semibold">
                         Project Activity
                       </h3>
                     </div>

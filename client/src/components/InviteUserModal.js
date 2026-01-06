@@ -138,7 +138,7 @@ const InviteUserModal = ({ project, onClose, onUserInvited }) => {
   return (
     <div className="modal-overlay">
       <div ref={modalRef} className="modal-content max-w-5xl">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center justify-between px-6 py-3">
+        <div className=" bg-[#f1f2f4]">
           <div>
             <h2 className="text-xl font-bold">Invite Users to Project</h2>
             <p className="text-primary-100 text-md">{project.name}</p>

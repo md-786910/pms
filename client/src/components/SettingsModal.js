@@ -61,20 +61,20 @@ const SettingsModal = ({ isOpen, onClose }) => {
       <div className="absolute bottom-16 left-0 right-0 mx-auto w-[94%] z-50 pointer-events-auto">
         <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
+          <div className="bg-[#f1f2f4] px-4 py-3 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-1 rounded-lg bg-white bg-opacity-20">
-                <Zap className="w-5 h-5 text-white" />
+                <Zap className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">Quick Access</h3>
+                <h3 className="text-sm font-bold">Quick Access</h3>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200"
+              className="p-1.5   bg-opacity-20 hover:bg-opacity-30 transition-all duration-200 "
             >
-              <X className="w-4 h-4 text-white" />
+              <X className="w-4 h-4 " />
             </button>
           </div>
 

@@ -312,11 +312,11 @@ const ProjectList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg  text-white">
+      <div className="  bg-white rounded-lg  border border-gray-200">
         <div>
           <div className="py-4 px-6">
-            <h1 className="text-xl font-bold mb-1">Your Projects</h1>
-            <p className="text-primary-100 text-md">
+            <h1 className="text-base font-semibold mb-1">Your Projects</h1>
+            <p className=" text-md">
               Manage your projects and collaborate with your team
             </p>
           </div>
@@ -326,7 +326,7 @@ const ProjectList = () => {
             <div className="bg-white border border-gray-200 p-4">
               <div className="flex items-center space-x-2 mb-4">
                 <Clock className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base font-semibold ">
                   Due Today
                 </h2>
                 {cardsDueToday.length > 0 && (
@@ -385,7 +385,7 @@ const ProjectList = () => {
             <div className="bg-white border border-gray-200 p-4">
               <div className="flex items-center space-x-2 mb-4">
                 <Clock className="w-5 h-5 text-red-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Pending</h2>
+                <h2 className="text-base font-semibold">Pending</h2>
                 {cardsBackDate.length > 0 && (
                   <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-1 rounded-full">
                     {cardsBackDate.length}
@@ -442,7 +442,7 @@ const ProjectList = () => {
             <div className="bg-white border border-gray-200 p-4 rounded-b-lg">
               <div className="flex items-center space-x-2 mb-4">
                 <Calendar className="w-5 h-5 text-green-600" />
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base font-semibold ">
                   Upcoming
                 </h2>
                 {cardsUpcoming.length > 0 && (
@@ -504,7 +504,7 @@ const ProjectList = () => {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Recently Viewed</h2>
+            <h2 className="text-base font-semibold">Recently Viewed</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {recentProjects.map((project) => (
@@ -523,7 +523,7 @@ const ProjectList = () => {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Starred boards</h2>
+            <h2 className="text-base font-semibold">Starred boards</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {groupedProjects.pinnedProjects.map((project) => (
@@ -543,7 +543,7 @@ const ProjectList = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FolderClosed className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">All Projects</h2>
+            <h2 className="text-base font-semibold">All Projects</h2>
           </div>
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-gray-500" />
@@ -563,7 +563,7 @@ const ProjectList = () => {
       {projects.length === 0 ? (
         <div className="text-center py-12">
           <FolderOpen className="w-16 h-16 text-secondary-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-secondary-900 mb-2">
+          <h3 className="text-base font-semibold mb-2">
             No projects yet
           </h3>
           <p className="text-secondary-600 mb-6">
@@ -600,7 +600,7 @@ const ProjectList = () => {
                   >
                     <Folder className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base font-semibold">
                     {section.name}
                   </h2>
                   <span className="text-sm text-gray-500">
@@ -668,7 +668,7 @@ const ProjectList = () => {
                   >
                     <Folder className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base font-semibold">
                     {groupedProjects.workspaceProjects.name}
                   </h2>
                   <span className="text-sm text-gray-500">
@@ -775,13 +775,13 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
   return (
     <Link
       to={`/project/${project._id}`}
-      className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-secondary-200 hover:border-primary-200 overflow-hidden"
+      className="group block bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border  overflow-hidden"
     >
       {/* Card Header with Gradient */}
-      <div className="p-4 text-white bg-gradient-to-r from-blue-600 to-blue-700">
+      <div className="p-4 bg-[#f1f2f4]">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold group-hover:text-primary-100 transition-colors duration-200">
+            <h3 className="text-base font-semibold">
               {project.name}
             </h3>
             {/* {project.description && !isEmptyHtml(project.description) && (
@@ -801,7 +801,7 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
               title={pinned ? "Unpin project" : "Pin project"}
               className="p-1 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors duration-200"
             >
-              <Star className={`w-4 h-4 ${pinned ? "fill-yellow-500 text-yellow-500" : "text-white/80"}`} />
+              <Star className={`w-4 h-4 ${pinned ? "fill-yellow-500 text-yellow-500" : ""}`} />
             </button>
 
             <button
@@ -904,7 +904,7 @@ const ProjectCard = ({ project, pinned = false, onTogglePin = () => {} }) => {
       </div>
 
       {/* Card Footer */}
-      <div className="px-6 py-3 bg-secondary-50 border-t border-secondary-100">
+      <div className="px-6 py-3   border-t border-secondary-100">
         <div className="flex items-center justify-between text-xs text-secondary-500">
           <span className="font-medium">
             {project.clientName || "No client"}

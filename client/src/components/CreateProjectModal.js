@@ -313,21 +313,21 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
         {/* Sticky Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-6 z-10 p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
+          className="absolute top-5 right-6 z-10 p-2 hover:bg-white hover:bg-opacity-20 transition-colors duration-200 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
           title="Close modal"
         >
           <X className="w-4 h-4 text-gray-600" />
         </button>
 
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex-shrink-0">
+        <div className="bg-gradient-to-rbg-[#f1f2f4] px-6 py-4 flex-shrink-0">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-white/20 rounded-xl">
+            <div className="p-2 bg-primary-500 rounded-lg flex items-center justify-center text-white">
               <Plus className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-xl font-bold">Create New Project</h2>
-              <p className="text-primary-100 text-md">
+              <p className=" text-md">
                 Set up a comprehensive project with all necessary details
               </p>
             </div>
@@ -563,7 +563,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
                       <button
                         type="button"
                         onClick={addDemoSiteUrl}
-                        className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 hover:scale-105"
+                        className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 "
                         title="Add demo site URL"
                       >
                         <Plus className="w-4 h-4" />
@@ -730,7 +730,7 @@ const CreateProjectModal = ({ onClose, onSuccess }) => {
             <button
               type="submit"
               form="create-project-form"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-8 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 font-semibold py-3 px-8 rounded-xl transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform "
               disabled={loading}
             >
               {loading ? (

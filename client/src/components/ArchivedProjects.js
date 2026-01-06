@@ -101,19 +101,19 @@ const ArchivedProjects = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
+      <div className=" bg-white  border border-gray-200  rounded-lg px-5 py-4   mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
               to="/admin"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
+              className="p-2 rounded-lg bg-primary-500 text-white hover:text-white transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div>
-              <h1 className="text-xl font-bold mb-1">Archived Projects</h1>
-              <p className="text-primary-100 text-md">
+              <h1 className="text-base font-semibold  mb-1">Archived Projects</h1>
+              <p className="  text-md">
                 Restore or permanently delete archived projects
               </p>
             </div>
@@ -121,10 +121,10 @@ const ArchivedProjects = () => {
 
           <div className="flex items-center space-x-3">
             <div className="text-center">
-              <div className="text-xl font-bold">
+              <div className="text-base font-semibold w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-1 text-blue-700">
                 {archivedProjects?.length || 0}
               </div>
-              <div className="text-primary-100 text-sm">Archived</div>
+              <div className="  text-sm">Archived</div>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@ const ArchivedProjects = () => {
         <div className="flex items-start space-x-3">
           <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
           <div>
-            <h3 className="font-medium text-amber-800">
+            <h3 className="text-base font-semibold  mb-1 text-amber-800">
               About Archived Projects
             </h3>
             <p className="text-sm text-amber-700 mt-1">
@@ -155,10 +155,10 @@ const ArchivedProjects = () => {
               <Archive className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-base font-semibold  mb-1">
                 Archived Projects
               </h2>
-              <p className="text-gray-600">
+              <p className="">
                 Projects that have been archived
               </p>
             </div>
@@ -174,7 +174,7 @@ const ArchivedProjects = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 No archived projects
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className=" mb-6">
                 When you archive a project, it will appear here
               </p>
               <Link

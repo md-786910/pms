@@ -130,7 +130,7 @@ const ListColumn = React.memo(
                 <h3
                   className={`text-sm font-semibold ${textColor} uppercase tracking-wide flex-1 ${
                     status !== "archive"
-                      ? "cursor-pointer hover:bg-gray-100"
+                      ? "cursor-pointer"
                       : "cursor-not-allowed"
                   } px-2 py-1 rounded`}
                   onClick={() => {
@@ -253,7 +253,7 @@ const ListColumn = React.memo(
               {cards.length === 0 && (
                 <div className="text-center py-8">
                   <div className="w-8 h-8 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
-                    <span className="text-lg text-gray-400">📋</span>
+                    <span className="text-base font-semibold">📋</span>
                   </div>
                   <p className="text-xs text-gray-400">No cards yet</p>
                 </div>
@@ -264,11 +264,10 @@ const ListColumn = React.memo(
 
         {/* Add Card Button - Always Visible (except for Archive column) */}
         {status !== "archive" && (
-          <div className="p-3 border-t border-gray-100">
+          <div className="pt-3 pb-3 border-t border-gray-100">
             <button
               onClick={() => onAddCard(status)}
-              className="w-full flex items-center justify-center space-x-2 py-2 px-3 text-sm text-white hover:text-white  rounded-lg transition-colors duration-200 border border-dashed border-gray-300 hover:border-gray-400 bg-[#4338ca] font-medium transition-all duration-300 hover:from-blue-400 hover:to-indigo-400
-        hover:scale-105 hover:shadow-blue-500/40"
+              className="w-full flex items-center justify-center space-x-1 py-2 px-3 text-sm text-white hover:text-white  rounded-lg   bg-blue-600 font-base align-middle transition-all duration-300 hover:bg-blue-700 "
             >
               <Plus className="w-4 h-4" />
               <span>Add a card</span>

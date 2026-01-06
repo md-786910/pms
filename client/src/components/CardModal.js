@@ -1733,7 +1733,7 @@ const CardModal = ({
           className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden relative"
         >
           {/* Modal Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-2">
+          <div className="bg-gradient-to-r bg-[#f1f2f4] px-3 py-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 flex-1 min-w-0">
                 <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -1759,7 +1759,7 @@ const CardModal = ({
                       card.title
                     )}
                   </h2>
-                  <p className="text-blue-100 text-sm">
+                  <p className="text-md">
                     {!isEditing && "Click to edit"}
                   </p>
                 </div>
@@ -2288,7 +2288,7 @@ const CardModal = ({
                 </div>
 
                 {/* Comments */}
-                <div className="bg-white p-6">
+                <div className="bg-white pt-3 pb-3">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Comments ({card.comments.length})
@@ -2309,7 +2309,7 @@ const CardModal = ({
                         return (
                           <div
                             key={comment._id || comment.id}
-                            className="bg-gray-50 rounded-lg p-4 transition-colors duration-200 group"
+                            className="border rounded-lg p-4 transition-colors duration-200 group"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-3">
@@ -2422,7 +2422,7 @@ const CardModal = ({
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto px-2">
+              <div className="lg:col-span-1 space-y-3 max-h-[70vh] overflow-y-auto px-2">
                 {/* Navigation Buttons */}
                 <div className="flex items-center justify-between gap-2 pt-4">
                   <button
@@ -2451,6 +2451,8 @@ const CardModal = ({
                   </button>
                 </div>
 
+
+<div className="status-date bg-gray-50 rounded-lg p-4 transition-colors duration-200 group">
                 {/* Status */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2484,7 +2486,7 @@ const CardModal = ({
 
                 {/* Due Date */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 mt-4">
                     <div className="flex items-center gap-2">
                       <Clock4 className="w-4 h-4 text-gray-700" />
 
@@ -2574,6 +2576,10 @@ const CardModal = ({
                   </div> */}
                 </div>
 
+ </div>
+<div className="priority bg-gray-50 rounded-lg p-4 transition-colors duration-200 group">
+
+
                 {/* Priority */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -2602,7 +2608,9 @@ const CardModal = ({
                     ))}
                   </div>
                 </div>
+ </div>
 
+<div className="label bg-gray-50 rounded-lg p-4 transition-colors duration-200 group">
                 {/* Labels */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -2667,6 +2675,9 @@ const CardModal = ({
                     </div>
                   )}
                 </div>
+ </div>
+
+<div className="assignees bg-gray-50 rounded-lg p-4 transition-colors duration-200 group">
 
                 {/* Assignees */}
                 <div>
@@ -2715,6 +2726,11 @@ const CardModal = ({
                     )}
                   </div>
                 </div>
+
+</div>
+
+
+
 
                 {/* File Attachments */}
                 <div>
@@ -2807,7 +2823,7 @@ const CardModal = ({
                         />
                         <label
                           htmlFor="file-upload"
-                          className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-1.5 px-2 rounded-lg transition-colors duration-200 text-xs cursor-pointer flex items-center justify-center space-x-1"
+                          className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-medium py-2 px-2 rounded-lg transition-colors duration-200 text-xs cursor-pointer flex items-center justify-center space-x-1"
                         >
                           <Upload className="w-3 h-3" />
                           <span>Upload Files (Max 5)</span>
@@ -2819,7 +2835,7 @@ const CardModal = ({
                     </div>
 
                     {/* URL Attachment */}
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1 mt-2">
                       <input
                         type="url"
                         value={attachmentUrl}

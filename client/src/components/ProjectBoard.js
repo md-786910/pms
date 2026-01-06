@@ -1344,7 +1344,7 @@ const ProjectBoard = () => {
   return (
     <div className="h-full flex flex-col max-h-full">
       {/* Compact Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-5 py-4 text-white mb-4 flex-shrink-0">
+      <div className="   bg-white  border border-gray-200  rounded-lg px-5 py-4   mb-4 flex-shrink-0">
         <div className="flex items-center justify-between gap-3">
           {/* Left: Back + title + description */}
           <div className="flex items-center gap-3 min-w-0">
@@ -1356,7 +1356,7 @@ const ProjectBoard = () => {
               <ArrowLeft className="w-5 h-5" />
             </Link> */}
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold truncate max-w-[40vw]">
+              <h1 className="text-base font-semibold truncate max-w-[40vw]">
                 {currentProject.name}
               </h1>
               {/* <p className="text-blue-100 text-sm truncate max-w-[50vw]">
@@ -1584,15 +1584,15 @@ const ProjectBoard = () => {
                 <div className="flex items-center gap-1.5">
                   {/* Start Date */}
                   {projectData?.project?.startDate && (
-                    <div className="flex bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
-                      <div className="w-6 h-6 text-white bg-[#26de81] rounded-full flex items-center justify-center">
-                        <Calendar className="w-3.5 h-3.5 " />
+                    <div className="flex border bg-white/15 items-center gap-1.5 rounded-full px-2 py-1.5">
+                      <div className="w-6 h-6  bg-[#26de81] rounded-full flex items-center justify-center">
+                        <Calendar className="w-3.5 h-3.5 stroke-white " />
                       </div>
                       <div className="text-xs">
-                        <div className="text-white/80 font-medium text-[10px] leading-none">
+                        <div className=" font-medium text-[10px] leading-none">
                           Start Date
                         </div>
-                        <div className="text-white font-semibold leading-tight">
+                        <div className=" font-semibold leading-tight">
                           {formatDate(projectData?.project?.startDate)}
                         </div>
                       </div>
@@ -1600,15 +1600,15 @@ const ProjectBoard = () => {
                   )}
                   {/* End Date */}
                   {projectData?.project?.endDate && (
-                    <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-2 py-1.5">
+                    <div className="flex items-center gap-1.5 border bg-white/15 rounded-full px-2 py-1.5">
                       <div className="w-6 h-6 bg-[#fa8231] rounded-full flex items-center justify-center">
-                        <Calendar className="w-3.5 h-3.5" />
+                        <Calendar className="w-3.5 h-3.5 stroke-white" />
                       </div>
                       <div className="text-xs">
-                        <div className="text-white/80 font-medium text-[10px] leading-none">
+                        <div className=" font-medium text-[10px] leading-none">
                           End Date
                         </div>
-                        <div className="text-white font-semibold leading-tight">
+                        <div className=" font-semibold leading-tight">
                           {formatDate(projectData?.project?.endDate)}
                         </div>
                       </div>
@@ -1652,7 +1652,7 @@ const ProjectBoard = () => {
       </div>
 
       {/* Board */}
-      <div className="relative border-4 rounded-t-xl flex-1 overflow-hidden min-h-0">
+      <div className="relative p-2 border-4 rounded-t-xl flex-1 overflow-hidden min-h-0">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1668,7 +1668,7 @@ const ProjectBoard = () => {
             onScroll={handleScroll}
             className="h-full overflow-x-auto rounded-lg  pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
           >
-            <div className="flex gap-4 rounded-lg  lg:gap-6 min-w-max h-full">
+            <div className="flex gap-4  rounded-lg  lg:gap-6 min-w-max ">
               {columns.map((column) => {
                 const config = getColumnConfig(column);
                 const colKey = column._id || column.status;
@@ -1676,7 +1676,7 @@ const ProjectBoard = () => {
                 return (
                   <div
                     key={colKey}
-                    className={`w-80  flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing ${draggingColumnId === colKey
+                    className={`w-80  flex-shrink-0 transition-all duration-150 cursor-grab active:cursor-grabbing   ${draggingColumnId === colKey
                       ? "opacity-100 scale-[0.98]"
                       : "opacity-100"
                       } ${dragOverColumnId === colKey
@@ -1800,7 +1800,7 @@ const ProjectBoard = () => {
             ref={addColumnModalRef}
             className="bg-white rounded-lg p-6 w-96 max-w-md mx-4"
           >
-            <h3 className="text-lg font-semibold mb-4">Add New Column</h3>
+            <h3 className="text-base font-semibold mb-4">Add New Column</h3>
 
             <div className="space-y-4">
               <div>

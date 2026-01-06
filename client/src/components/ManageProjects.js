@@ -183,19 +183,19 @@ const ManageProjects = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
+      <div className=" bg-white  border border-gray-200  rounded-lg px-5 py-4   mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link
               to="/"
-              className="p-2 rounded-lg hover:bg-blue-500 text-white hover:text-white transition-colors duration-200"
+              className="p-2 rounded-lg bg-primary-500 text-white hover:text-white transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div>
-              <h1 className="text-xl font-bold mb-1">Manage Projects</h1>
-              <p className="text-primary-100 text-md">
+              <h1 className="text-base font-semibold  mb-1">Manage Projects</h1>
+              <p className="  text-md">
                 Create and manage project categories
               </p>
             </div>
@@ -203,12 +203,12 @@ const ManageProjects = () => {
 
           <div className="flex items-center space-x-4">
             <div className="text-center">
-              <div className="text-xl font-bold">{categories.length}</div>
-              <div className="text-primary-100 text-sm">Categories</div>
+              <div className="text-base font-semibold w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-1 text-blue-700">{categories.length}</div>
+              <div className="  text-sm">Categories</div>
             </div>
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+              className=" border-blue-200 border text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200 flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               New Category
@@ -240,7 +240,7 @@ const ManageProjects = () => {
                 <Folder className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-base font-semibold  mb-1">
                   Project Categories
                 </h2>
                 <p className="text-gray-600">

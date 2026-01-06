@@ -427,3 +427,10 @@ textarea:disabled {
   background-color: #d3d3d3;
   color: #000000;
 }
+
+ /* ==================leanport override css=========== */
+ body{
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.6;
+ }

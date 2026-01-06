@@ -295,17 +295,17 @@ const UserManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg px-6 py-4 text-white">
+      <div className=" bg-white  border border-gray-200  rounded-lg px-5 py-4   mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold mb-1">User Management</h1>
-            <p className="text-primary-100 text-md">
+            <h1 className="text-base font-semibold  mb-1">User Management</h1>
+            <p className="  text-md">
               Manage users and their access to the system
             </p>
           </div>
           <button
             onClick={() => setShowAddUser(true)}
-            className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200 flex items-center space-x-2"
+            className=" border-blue-200 border text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors duration-200 flex items-center space-x-2"
           >
             <Plus className="w-4 h-4" />
             <span>Add User</span>
