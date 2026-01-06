@@ -2694,7 +2694,7 @@ const CardModal = ({
                     <div className="flex items-center gap-2 mb-2">
                       <UserPlus className="w-4 h-4 text-gray-700" />
                       <label className="text-sm font-semibold text-gray-700">
-                        Members ({card.members?.length || 0})
+                        Members ({card.assignees?.length || 0})
                       </label>
                     </div>
 

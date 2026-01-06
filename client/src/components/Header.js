@@ -12,14 +12,27 @@ import emptyNotification from "../assets/empty-notification.png";
 const timeAgo = (dateString) => {
   const now = new Date();
   const past = new Date(dateString);
-  const diff = (now - past) / 1000; // seconds
+  const diff = Math.floor((now - past) / 1000); // seconds
 
   if (diff < 60) return "Just now";
   if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} day ago`;
-  return past.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+  const days = Math.floor(diff / 86400);
+
+  // Show "X day ago" up to 30 days
+  if (days <= 30) {
+    return `${days} day ago`;
+  }
+
+  // After 30 days → show date with year
+  return past.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
+
 
 const Header = ({ onMenuClick, onToggleSidebar, sidebarCollapsed }) => {
   const { user, logout } = useUser();
